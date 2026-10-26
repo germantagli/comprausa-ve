@@ -14,6 +14,7 @@ import {
 } from "@comprausa/api-client";
 import { catalogPriceLabel } from "@comprausa/utils";
 import { spaceTokens } from "@comprausa/design-tokens";
+import Link from "next/link";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { apiBase } from "../lib/api";
 import { bodyStyle, buttonStyle, cardStyle, colors, errorStyle, headingStyle, inputStyle, sectionStyle } from "./styles";
@@ -160,7 +161,11 @@ function ProductCard({ card }: { card: ProductCardData }) {
           Ficticio
         </span>
       </p>
-      <h3 style={{ ...headingStyle, margin: 0 }}>{card.item.name}</h3>
+      <h3 style={{ ...headingStyle, margin: 0 }}>
+        <Link href={`/producto/${card.item.id}`} style={{ color: colors.text }}>
+          {card.item.name}
+        </Link>
+      </h3>
       <p style={bodyStyle}>{catalogPriceLabel(card.pricing)}</p>
       <p style={bodyStyle}>{card.availability.note}</p>
       <p style={{ ...bodyStyle, margin: 0 }}>{card.item.disclaimer}</p>

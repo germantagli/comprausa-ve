@@ -2,7 +2,8 @@ import type { AuthenticatedSession } from "@comprausa/api-client";
 import { colorTokens, fontTokens, spaceTokens } from "@comprausa/design-tokens";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { CartScreen, ExploreScreen, HelpScreen, HomeScreen, OrdersScreen, ProfileScreen } from "./catalog-screens";
+import { ExploreScreen, HelpScreen, HomeScreen, OrdersScreen, ProfileScreen } from "./catalog-screens";
+import { MobileCartScreen, MobileProductScreen, MobileQuoteScreen } from "./commerce-screens";
 import { hasSeenOnboarding, markOnboardingSeen, resetOnboarding } from "./onboarding-memory";
 import { OnboardingScreen } from "./onboarding-screen";
 import { SignInScreen } from "./sign-in-screen";
@@ -25,6 +26,8 @@ export function ClientShell() {
   const [help, setHelp] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
   const [session, setSession] = useState<AuthenticatedSession | null>(null);
+  const [productId, setProductId] = useState<string | null>(null);
+  const [quoteId, setQuoteId] = useState<string | null>(null);
 
   if (!seen) {
     return (
@@ -62,13 +65,34 @@ export function ClientShell() {
             }}
           />
         ) : null}
-        {!help && tab === "inicio" ? (
-          <HomeScreen session={session} onOpenCart={() => setTab("carrito")} onOpenOrders={() => setTab("pedidos")} />
+        {!help && productId ? (
+          <MobileProductScreen
+            productId={productId}
+            session={session}
+            onBack={() => setProductId(null)}
+            onOpenCart={() => {
+              setProductId(null);
+              setTab("carrito");
+            }}
+          />
         ) : null}
-        {!help && tab === "explorar" ? <ExploreScreen /> : null}
-        {!help && tab === "carrito" ? <CartScreen /> : null}
-        {!help && tab === "pedidos" ? <OrdersScreen /> : null}
-        {!help && tab === "perfil" ? (
+        {!help && !productId && quoteId ? (
+          <MobileQuoteScreen quoteId={quoteId} session={session} onBack={() => setQuoteId(null)} />
+        ) : null}
+        {!help && !productId && !quoteId && tab === "inicio" ? (
+          <HomeScreen
+            session={session}
+            onOpenCart={() => setTab("carrito")}
+            onOpenOrders={() => setTab("pedidos")}
+            onOpenProduct={setProductId}
+          />
+        ) : null}
+        {!help && !productId && !quoteId && tab === "explorar" ? <ExploreScreen onOpenProduct={setProductId} /> : null}
+        {!help && !productId && !quoteId && tab === "carrito" ? (
+          <MobileCartScreen session={session} onOpenProduct={setProductId} onOpenQuote={setQuoteId} onSignIn={() => setSigningIn(true)} />
+        ) : null}
+        {!help && !productId && !quoteId && tab === "pedidos" ? <OrdersScreen /> : null}
+        {!help && !productId && !quoteId && tab === "perfil" ? (
           <ProfileScreen
             session={session}
             onSignIn={() => setSigningIn(true)}
@@ -87,6 +111,8 @@ export function ClientShell() {
               accessibilityState={{ selected }}
               onPress={() => {
                 setHelp(false);
+                setProductId(null);
+                setQuoteId(null);
                 setTab(item.id);
               }}
               style={styles.tab}

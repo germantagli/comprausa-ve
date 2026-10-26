@@ -54,6 +54,9 @@ importers:
       '@comprausa/types':
         specifier: workspace:*
         version: link:../../packages/types
+      '@comprausa/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@comprausa/validation':
         specifier: workspace:*
         version: link:../../packages/validation

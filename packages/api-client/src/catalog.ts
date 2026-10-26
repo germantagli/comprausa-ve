@@ -39,14 +39,33 @@ const pricingSchema = z
   })
   .strict();
 
-const availabilitySchema = z
-  .object({
-    productId: z.string(),
-    status: z.literal("UNKNOWN"),
-    quantity: z.null(),
-    note: z.string(),
+const detailSchema = summarySchema
+  .extend({
+    description: z.string(),
+    brand: z.string().nullable(),
+    store: z.object({ id: z.string(), name: z.string() }).strict().nullable(),
+    photos: z.array(z.string()),
+    variants: z.array(z.object({ id: z.string(), name: z.string() }).strict()),
   })
   .strict();
+
+const filtersSchema = z
+  .object({
+    fields: z.array(z.object({ id: z.literal("text"), label: z.string() }).strict()),
+  })
+  .strict();
+
+const availabilitySchema = z.discriminatedUnion("status", [
+  z.object({ productId: z.string(), status: z.literal("UNKNOWN"), quantity: z.null(), note: z.string() }).strict(),
+  z
+    .object({
+      productId: z.string(),
+      status: z.literal("KNOWN"),
+      quantity: z.number().int().nonnegative(),
+      note: z.string(),
+    })
+    .strict(),
+]);
 
 const profileSchema = z
   .object({
@@ -56,6 +75,8 @@ const profileSchema = z
   .strict();
 
 export type CatalogSummary = z.infer<typeof summarySchema>;
+export type CatalogDetail = z.infer<typeof detailSchema>;
+export type CatalogFilters = z.infer<typeof filtersSchema>;
 export type CatalogPricing = z.infer<typeof pricingSchema>;
 export type CatalogAvailability = z.infer<typeof availabilitySchema>;
 export type AccountProfile = z.infer<typeof profileSchema>;
@@ -84,6 +105,14 @@ export async function searchCatalog(
 ): Promise<z.infer<typeof searchSchema>> {
   const path = text.trim().length > 0 ? `/v1/catalog/products?text=${encodeURIComponent(text.trim())}` : "/v1/catalog/products";
   return searchSchema.parse(await getJson(baseUrl, path, undefined, fetchImpl));
+}
+
+export async function getCatalogProduct(baseUrl: string, productId: string, fetchImpl: typeof fetch = fetch): Promise<CatalogDetail> {
+  return detailSchema.parse(await getJson(baseUrl, `/v1/catalog/products/${encodeURIComponent(productId)}`, undefined, fetchImpl));
+}
+
+export async function listCatalogFilters(baseUrl: string, fetchImpl: typeof fetch = fetch): Promise<CatalogFilters> {
+  return filtersSchema.parse(await getJson(baseUrl, "/v1/catalog/filters", undefined, fetchImpl));
 }
 
 export async function listCatalogCategories(baseUrl: string, fetchImpl: typeof fetch = fetch): Promise<NamedCatalogList> {

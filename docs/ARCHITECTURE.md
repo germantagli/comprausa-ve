@@ -53,7 +53,7 @@ docs/
 
 - Identidad: usuario, perfil, identidad, sesión, dispositivo, OTP, alta y guard de administración. El envío del código sigue simulado en desarrollo.
 - Catálogo: búsqueda y ficha a través de `ProductProvider`.
-- Cotización: enlace pegado, revisión humana, sin precio automático. El schema ya tiene `Quote` y `QuoteItem`. La API todavía no los escribe.
+- Cotización: enlace pegado, revisión humana, sin precio automático. La API guarda la URL como texto, deja la cotización en `PENDING_VALIDATION` y no la descarga. El cliente no puede pasarla a final.
 - Pedido: estados propios, separados de pago, compra y envío.
 - Pagos: estados propios. Ningún proveedor está conectado.
 - Logística: almacén, paquete, tracking y entrega. Sin API de carrier.
@@ -75,7 +75,7 @@ Los totales del pedido y de la cotización son nulos hasta que una persona fije 
 
 `ProductProvider` expone `searchProducts`, `getProduct`, `getAvailability` y `getPricing`. El demo devuelve artículos con `fictional: true`, disponibilidad `UNKNOWN` y precio `UNPRICED`. No descarga imágenes ni usa marcas de terceros.
 
-El flujo de enlace, todavía sin endpoint, será: la persona pega una URL, se guarda el texto, el pedido o la cotización queda en revisión y un operador cotiza a mano. El servidor no hace scraping ni llama a la tienda.
+El flujo de enlace ya tiene endpoint: la persona pega una URL, se guarda el texto y la cotización queda pendiente de validación. Un precio faltante no se convierte en cero. El servidor no hace scraping ni llama a la tienda. La instantánea final no la dispara el cliente.
 
 ## Pagos, en arquitectura
 

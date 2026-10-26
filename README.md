@@ -79,4 +79,4 @@ pnpm --filter @comprausa/api exec prisma migrate deploy
 
 ## Qué falta
 
-Cotización por enlace, checkout, pagos, compras en tienda, logística, panel y despliegue. El orden propuesto está en `docs/PROGRESS.md`.
+Checkout, pagos, compras en tienda, logística, panel y despliegue. La cotización por enlace ya se guarda pendiente, sin precio inventado. El orden propuesto está en `docs/PROGRESS.md`.

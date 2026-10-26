@@ -20,14 +20,28 @@ export interface ProductSearchResult {
   source: "internal-demo";
 }
 
+export interface CatalogStoreRef {
+  id: string;
+  name: string;
+}
+
+export interface ProductVariantOption {
+  id: string;
+  name: string;
+}
+
 export interface ProductDetails extends ProductSummary {
   description: string;
+  brand: string | null;
+  store: CatalogStoreRef | null;
+  photos: readonly string[];
+  variants: readonly ProductVariantOption[];
 }
 
 export interface ProductAvailability {
   productId: string;
-  status: "UNKNOWN";
-  quantity: null;
+  status: "UNKNOWN" | "KNOWN";
+  quantity: number | null;
   note: string;
 }
 

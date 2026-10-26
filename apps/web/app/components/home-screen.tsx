@@ -2,6 +2,7 @@
 
 import { getAccountProfile } from "@comprausa/api-client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { apiBase } from "../lib/api";
 import { readSession } from "../lib/session";
@@ -10,8 +11,8 @@ import { bannerStyle, bodyStyle, colors, headingStyle, linkStyle, pageStyle, tit
 
 export function HomeScreen() {
   const greeting = useGreeting();
+  const router = useRouter();
   const [draft, setDraft] = useState("");
-  const [query, setQuery] = useState("");
 
   return (
     <main style={pageStyle}>
@@ -24,10 +25,17 @@ export function HomeScreen() {
           Carrito
         </Link>
       </p>
-      <SearchForm value={draft} onChange={setDraft} onSubmit={() => setQuery(draft.trim())} />
+      <SearchForm
+        value={draft}
+        onChange={setDraft}
+        onSubmit={() => {
+          const text = draft.trim();
+          router.push(text.length > 0 ? `/explorar?text=${encodeURIComponent(text)}` : "/explorar");
+        }}
+      />
       <CategoryList />
       <StoreList title="Tiendas destacadas" label="Tiendas destacadas" />
-      <ProductList query={query} />
+      <ProductList query="" />
       <section aria-label="De Estados Unidos a Venezuela" style={bannerStyle}>
         <h2 style={{ ...headingStyle, color: colors.primaryOn }}>De Estados Unidos a Venezuela</h2>
         <p style={{ margin: 0 }}>
