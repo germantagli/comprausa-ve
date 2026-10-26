@@ -10,12 +10,12 @@ import {
 } from "@comprausa/api-client";
 import { colorTokens, fontTokens, radiusTokens, spaceTokens } from "@comprausa/design-tokens";
 import { otpCodeSchema, personNameSchema, phoneE164Schema, emailSchema } from "@comprausa/validation";
+import Link from "next/link";
 import { useEffect, useId, useState, type FormEvent } from "react";
+import { apiBase } from "../lib/api";
+import { clearSession, DEVICE_KEY, readSession, saveSession } from "../lib/session";
 
 const colors = colorTokens.light;
-const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:3001";
-const SESSION_KEY = "comprausa.session";
-const DEVICE_KEY = "comprausa.deviceId";
 
 type Channel = "email" | "phone";
 type Step = "channel" | "destination" | "code" | "name" | "done";
@@ -32,38 +32,6 @@ function readDeviceId(): string {
   const created = createDeviceId();
   localStorage.setItem(DEVICE_KEY, created);
   return created;
-}
-
-function readSession(): AuthenticatedSession | null {
-  const raw = sessionStorage.getItem(SESSION_KEY);
-  if (!raw) {
-    return null;
-  }
-  try {
-    const parsed = JSON.parse(raw) as Partial<AuthenticatedSession>;
-    if (typeof parsed.accessToken === "string" && typeof parsed.refreshToken === "string") {
-      return {
-        status: "authenticated",
-        accessToken: parsed.accessToken,
-        refreshToken: parsed.refreshToken,
-        expiresInSeconds: typeof parsed.expiresInSeconds === "number" ? parsed.expiresInSeconds : 0,
-      };
-    }
-  } catch {
-    sessionStorage.removeItem(SESSION_KEY);
-  }
-  return null;
-}
-
-function saveSession(session: AuthenticatedSession): void {
-  sessionStorage.setItem(
-    SESSION_KEY,
-    JSON.stringify({
-      accessToken: session.accessToken,
-      refreshToken: session.refreshToken,
-      expiresInSeconds: session.expiresInSeconds,
-    }),
-  );
 }
 
 export function SignInForm() {
@@ -193,7 +161,7 @@ export function SignInForm() {
     setError(null);
     try {
       await revokeSession(apiBase, session.accessToken);
-      sessionStorage.removeItem(SESSION_KEY);
+      clearSession();
       setSession(null);
       setStep("channel");
     } catch (caught) {
@@ -226,6 +194,11 @@ export function SignInForm() {
           <button className="entrar-control" type="button" style={buttonStyle} onClick={() => void logout()} disabled={loading}>
             {loading ? "Espera…" : "Cerrar sesión"}
           </button>
+          <p style={bodyStyle}>
+            <Link href="/" style={{ color: colors.primary, display: "inline-flex", alignItems: "center", minHeight: 44 }}>
+              Ir al inicio
+            </Link>
+          </p>
           {error ? (
             <p id={errorId} role="alert" style={errorStyle}>
               {error}

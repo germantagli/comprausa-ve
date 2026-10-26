@@ -8,7 +8,9 @@
   "dependencies": {
     "@comprausa/api-client": "workspace:*",
     "@comprausa/design-tokens": "workspace:*",
+    "@comprausa/types": "workspace:*",
     "@comprausa/ui": "workspace:*",
+    "@comprausa/utils": "workspace:*",
     "@comprausa/validation": "workspace:*",
     "next": "^16.4.3",
     "react": "19.3.1",

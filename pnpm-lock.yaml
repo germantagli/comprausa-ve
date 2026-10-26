@@ -112,6 +112,12 @@ importers:
       '@comprausa/design-tokens':
         specifier: workspace:*
         version: link:../../packages/design-tokens
+      '@comprausa/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+      '@comprausa/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@comprausa/validation':
         specifier: workspace:*
         version: link:../../packages/validation
@@ -140,9 +146,15 @@ importers:
       '@comprausa/design-tokens':
         specifier: workspace:*
         version: link:../../packages/design-tokens
+      '@comprausa/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       '@comprausa/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@comprausa/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@comprausa/validation':
         specifier: workspace:*
         version: link:../../packages/validation

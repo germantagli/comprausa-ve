@@ -2,15 +2,13 @@
 
 ## En este corte
 
-- Decisiones de stack escritas: Expo, Next.js para el sitio y para el admin, NestJS, Prisma 6.19.3, Postgres, Railway como plan.
-- Documentos de arquitectura, requisitos, diseño, integraciones, seguridad, despliegue, operación y dependencias legales.
-- Registro de 21 tiendas y 4 medios de pago. Ninguno está `AVAILABLE`. Ninguno se probó contra un servidor externo.
-- Schema Prisma con las entidades pedidas, estados de pedido y de pago, montos en centavos y migración inicial.
-- API con salud, OpenAPI fuera de producción, catálogo demo e ingreso por OTP.
-- Sesión con rotación de refresh token, revocación, dispositivo y guard de administración que exige MFA. Roles sembrados. Sin panel.
-- OTP simulado solo en desarrollo, con lectura del código por `peekCode()` y por `POST /v1/auth/dev/otp-code`. Límite de tasa en memoria.
-- Pantallas mínimas de ingreso en web (`/entrar`) y móvil.
-- Tokens, Zod, cliente de salud y de ingreso, y CI de install, typecheck y test. Las pruebas de auth no levantan Postgres.
+- App de cliente en web (Next.js) y móvil (Expo), en español de Venezuela, con los tokens de `packages/design-tokens`.
+- Introducción de tres pasos, una sola vez, con Continuar y Omitir. En web queda marcada en `localStorage`. En móvil queda en memoria del proceso. Se puede repetir desde Ayuda. El hueco de video está vacío: no hay archivo ni URL.
+- Inicio con marca, saludo, búsqueda, acceso al carrito, categorías, tiendas destacadas, artículos del catálogo demo, aviso de compras de Estados Unidos a Venezuela y acceso a pedidos.
+- Navegación inferior: Inicio, Explorar, Carrito, Pedidos y Perfil.
+- Explorar lista el catálogo demo y las tiendas internas. Carrito y Pedidos muestran el vacío real. Perfil muestra el nombre de `GET /v1/account/profile` y cierra sesión.
+- Categorías y tiendas internas salen de la API y hoy llegan vacías. Los artículos demo siguen marcados como ficticios. Sin precio se lee «Precio por cotización».
+- El ingreso por OTP del corte anterior sigue en `/entrar` y dentro de Perfil en móvil. La sesión web no cambió de almacén.
 
 ## Siguiente incremento
 

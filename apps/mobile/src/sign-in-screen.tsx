@@ -35,7 +35,13 @@ function createDeviceId(): string {
 
 const platform = Platform.OS === "ios" ? "IOS" : Platform.OS === "android" ? "ANDROID" : "WEB";
 
-export function SignInScreen() {
+export function SignInScreen({
+  onAuthenticated,
+  onCancel,
+}: {
+  onAuthenticated?: (session: AuthenticatedSession) => void;
+  onCancel?: () => void;
+} = {}) {
   const [deviceId] = useState(createDeviceId);
   const [step, setStep] = useState<Step>("channel");
   const [channel, setChannel] = useState<Channel>("email");
@@ -101,6 +107,7 @@ export function SignInScreen() {
         setSession(result);
         setCode("");
         setStep("done");
+        onAuthenticated?.(result);
       } catch (caught) {
         setError(failureMessage(caught, "code"));
       } finally {
@@ -125,6 +132,7 @@ export function SignInScreen() {
       });
       setSession(result);
       setStep("done");
+      onAuthenticated?.(result);
     } catch (caught) {
       setError(failureMessage(caught, "name"));
     } finally {
@@ -151,6 +159,11 @@ export function SignInScreen() {
 
   return (
     <View style={styles.page}>
+      {onCancel ? (
+        <Pressable accessibilityRole="button" onPress={onCancel} style={styles.choice}>
+          <Text style={styles.body}>Volver</Text>
+        </Pressable>
+      ) : null}
       <Text accessibilityRole="header" style={styles.title}>
         Entrar
       </Text>

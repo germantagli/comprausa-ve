@@ -30,6 +30,11 @@ export class MemoryAuthRepository implements AuthRepository {
   >();
   private readonly grants = new Map<string, RegistrationGrantRecord>();
 
+  async findUserById(id: string): Promise<AuthUser | null> {
+    const user = this.users.get(id);
+    return user ? this.toUser(user) : null;
+  }
+
   async findUserByDestination(channel: AuthChannel, destination: string): Promise<AuthUser | null> {
     for (const user of this.users.values()) {
       const value = channel === "email" ? user.email : user.phoneE164;

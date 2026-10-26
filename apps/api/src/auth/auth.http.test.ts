@@ -156,6 +156,11 @@ describe("auth HTTP", () => {
     expect(registered.status).toBe(200);
     const first = registered.json as { accessToken: string; refreshToken: string; status: string };
     expect(first.status).toBe("authenticated");
+    const profile = await fetch(new URL("/v1/account/profile", booted.base), {
+      headers: { authorization: `Bearer ${first.accessToken}` },
+    });
+    expect(profile.status).toBe(200);
+    expect(await profile.json()).toEqual({ givenName: "Ana", familyName: "Pérez" });
     const refreshed = await post(booted.base, "/v1/auth/sessions/refresh", { refreshToken: first.refreshToken });
     const second = refreshed.json as { accessToken: string; refreshToken: string };
     expect(refreshed.status).toBe(200);

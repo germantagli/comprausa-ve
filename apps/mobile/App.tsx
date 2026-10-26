@@ -1,5 +1,5 @@
-import { SignInScreen } from "./src/sign-in-screen";
+import { ClientShell } from "./src/client-shell";
 
 export default function App() {
-  return <SignInScreen />;
+  return <ClientShell />;
 }
