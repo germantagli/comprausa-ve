@@ -52,7 +52,7 @@ export class AuthModule {
       AccessGuard,
       AdminGuard,
     ];
-    const exportsList: NonNullable<DynamicModule["exports"]> = [AuthService, TokenService, AUTH_REPOSITORY];
+    const exportsList: NonNullable<DynamicModule["exports"]> = [AuthService, TokenService, AccessGuard, AUTH_REPOSITORY, AUTH_CLOCK];
 
     if (env.databaseUrl === undefined) {
       providers.push(MemoryAuthRepository, { provide: AUTH_REPOSITORY, useExisting: MemoryAuthRepository });
@@ -81,6 +81,7 @@ export class AuthModule {
 
     return {
       module: AuthModule,
+      global: true,
       controllers,
       providers,
       exports: exportsList,

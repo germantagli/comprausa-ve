@@ -3,8 +3,10 @@ export { orderStatuses, paymentStatuses, procurementStatuses } from "./money";
 export type {
   CatalogKind,
   ProductAvailability,
+  CatalogStoreRef,
   ProductDetails,
   ProductPricing,
+  ProductVariantOption,
   ProductProvider,
   ProductSearchQuery,
   ProductSearchResult,

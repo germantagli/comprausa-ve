@@ -107,6 +107,38 @@ export const refreshSessionSchema = z
   })
   .strict();
 
+export const venezuelaAddressSchema = z
+  .object({
+    state: z.string().trim().min(1).max(80),
+    city: z.string().trim().min(1).max(80),
+    municipality: z.string().trim().min(1).max(80),
+    reference: z.string().trim().min(1).max(160),
+  })
+  .strict();
+
+export const pastedUrlSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(2000)
+  .refine((value) => /^https?:\/\/\S+$/i.test(value));
+
+export const cartQuantitySchema = z.number().int().min(1).max(20);
+
+export const quoteRequestSchema = z
+  .object({
+    address: venezuelaAddressSchema,
+    pastedUrl: pastedUrlSchema.optional(),
+  })
+  .strict();
+
+export const cartItemSchema = z
+  .object({
+    productId: z.string().trim().min(1).max(80),
+    quantity: cartQuantitySchema.default(1),
+  })
+  .strict();
+
 export type MoneyInput = z.infer<typeof moneySchema>;
 export type CatalogSearchInput = z.infer<typeof catalogSearchSchema>;
 export type OtpChallengeInput = z.infer<typeof otpChallengeSchema>;

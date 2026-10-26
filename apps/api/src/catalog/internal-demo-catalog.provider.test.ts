@@ -16,11 +16,16 @@ describe("InternalDemoCatalogProvider", () => {
       const availability = await provider.getAvailability(item.id);
       expect(pricing).toMatchObject({ status: "UNPRICED", amount: null });
       expect(availability).toMatchObject({ status: "UNKNOWN", quantity: null });
+      expect(item.brand).toBeNull();
+      expect(item.store).toBeNull();
+      expect(item.photos).toEqual([]);
+      expect(item.variants).toEqual([]);
     }
   });
 
   it("does not list categories or internal stores", () => {
     const controller = new CatalogController();
+    expect(controller.filters()).toEqual({ fields: [{ id: "text", label: "Nombre" }] });
     expect(controller.categories()).toEqual({ items: [] });
     expect(controller.stores()).toEqual({ items: [] });
     const blob = JSON.stringify([controller.categories(), controller.stores()]);

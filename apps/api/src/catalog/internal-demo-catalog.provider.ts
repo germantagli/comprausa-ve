@@ -18,6 +18,10 @@ const ITEMS: readonly ProductDetails[] = [
     fictional: true,
     catalog: "internal-demo",
     disclaimer: DISCLAIMER,
+    brand: null,
+    store: null,
+    photos: [],
+    variants: [],
   },
   {
     id: "demo-centro",
@@ -26,6 +30,10 @@ const ITEMS: readonly ProductDetails[] = [
     fictional: true,
     catalog: "internal-demo",
     disclaimer: DISCLAIMER,
+    brand: null,
+    store: null,
+    photos: [],
+    variants: [],
   },
   {
     id: "demo-sur",
@@ -34,6 +42,10 @@ const ITEMS: readonly ProductDetails[] = [
     fictional: true,
     catalog: "internal-demo",
     disclaimer: DISCLAIMER,
+    brand: null,
+    store: null,
+    photos: [],
+    variants: [],
   },
 ];
 

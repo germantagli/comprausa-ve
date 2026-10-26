@@ -34,10 +34,12 @@ export function HomeScreen({
   session,
   onOpenCart,
   onOpenOrders,
+  onOpenProduct,
 }: {
   session: AuthenticatedSession | null;
   onOpenCart: () => void;
   onOpenOrders: () => void;
+  onOpenProduct: (productId: string) => void;
 }) {
   const greeting = useGreeting(session);
   const [draft, setDraft] = useState("");
@@ -55,7 +57,7 @@ export function HomeScreen({
       <SearchBox draft={draft} onChange={setDraft} onSubmit={() => setQuery(draft.trim())} />
       <NamedSection title="Categorías" empty="Todavía no hay categorías." failure="No pudimos cargar las categorías." load={() => listCatalogCategories(apiBase)} />
       <NamedSection title="Tiendas destacadas" empty="Todavía no hay tiendas internas." failure="No pudimos cargar las tiendas." load={() => listInternalStores(apiBase)} />
-      <ProductSection query={query} />
+      <ProductSection query={query} onOpenProduct={onOpenProduct} />
       <View accessibilityLabel="De Estados Unidos a Venezuela" style={styles.banner}>
         <Text style={styles.bannerTitle}>De Estados Unidos a Venezuela</Text>
         <Text style={styles.bannerBody}>
@@ -69,7 +71,7 @@ export function HomeScreen({
   );
 }
 
-export function ExploreScreen() {
+export function ExploreScreen({ onOpenProduct }: { onOpenProduct: (productId: string) => void }) {
   const [draft, setDraft] = useState("");
   const [query, setQuery] = useState("");
   return (
@@ -78,21 +80,9 @@ export function ExploreScreen() {
         Explorar
       </Text>
       <SearchBox draft={draft} onChange={setDraft} onSubmit={() => setQuery(draft.trim())} />
-      <ProductSection query={query} />
+      <Text style={styles.body}>El único filtro del catálogo demo es el nombre.</Text>
+      <ProductSection query={query} onOpenProduct={onOpenProduct} />
       <NamedSection title="Tiendas internas" empty="Todavía no hay tiendas internas." failure="No pudimos cargar las tiendas." load={() => listInternalStores(apiBase)} />
-    </ScrollView>
-  );
-}
-
-export function CartScreen() {
-  return (
-    <ScrollView contentContainerStyle={styles.page}>
-      <Text accessibilityRole="header" style={styles.title}>
-        Carrito
-      </Text>
-      <Text accessibilityLiveRegion="polite" style={styles.body}>
-        Tu carrito está vacío. Todavía no se puede agregar un artículo.
-      </Text>
     </ScrollView>
   );
 }
@@ -249,7 +239,7 @@ function SearchBox({ draft, onChange, onSubmit }: { draft: string; onChange: (va
   );
 }
 
-function ProductSection({ query }: { query: string }) {
+function ProductSection({ query, onOpenProduct }: { query: string; onOpenProduct: (productId: string) => void }) {
   const load = useLoad(() => loadProducts(query), [query]);
   return (
     <View style={styles.section}>
@@ -269,13 +259,13 @@ function ProductSection({ query }: { query: string }) {
           ) : (
             <View>
               {cards.map((card) => (
-                <View key={card.item.id} style={styles.card}>
+                <Pressable key={card.item.id} accessibilityRole="button" onPress={() => onOpenProduct(card.item.id)} style={styles.card}>
                   <Text style={styles.badge}>Ficticio</Text>
                   <Text style={styles.heading}>{card.item.name}</Text>
                   <Text style={styles.body}>{catalogPriceLabel(card.pricing)}</Text>
                   <Text style={styles.body}>{card.availability.note}</Text>
                   <Text style={styles.caption}>{card.item.disclaimer}</Text>
-                </View>
+                </Pressable>
               ))}
             </View>
           )

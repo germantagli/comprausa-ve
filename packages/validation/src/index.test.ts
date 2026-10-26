@@ -7,6 +7,7 @@ import {
   otpChallengeSchema,
   otpCodeSchema,
   personNameSchema,
+  quoteRequestSchema,
   phoneE164Schema,
   registrationSchema,
   usdMinorSchema,
@@ -80,5 +81,16 @@ describe("catalog search", () => {
     });
     expect(catalogSearchSchema.safeParse({ text: "x".repeat(81), limit: 5 }).success).toBe(false);
     expect(catalogSearchSchema.safeParse({ text: "a", limit: 21 }).success).toBe(false);
+  });
+});
+
+describe("quote request", () => {
+  const address = { state: "Miranda", city: "Caracas", municipality: "Baruta", reference: "Frente a la plaza" };
+
+  it("requires the Venezuela address and rejects a client status", () => {
+    expect(quoteRequestSchema.parse({ address })).toEqual({ address });
+    expect(quoteRequestSchema.safeParse({ address, status: "FINAL" }).success).toBe(false);
+    expect(quoteRequestSchema.safeParse({ address, pastedUrl: "javascript:alert(1)" }).success).toBe(false);
+    expect(quoteRequestSchema.parse({ address, pastedUrl: "https://example.com/item" }).pastedUrl).toBe("https://example.com/item");
   });
 });

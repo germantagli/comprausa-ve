@@ -11,11 +11,23 @@ export {
   getAccountProfile,
   getCatalogAvailability,
   getCatalogPricing,
+  getCatalogProduct,
   listCatalogCategories,
+  listCatalogFilters,
   listInternalStores,
   searchCatalog,
 } from "./catalog";
-export type { AccountProfile, CatalogAvailability, CatalogPricing, CatalogSummary, NamedCatalogList } from "./catalog";
+export type { AccountProfile, CatalogAvailability, CatalogDetail, CatalogFilters, CatalogPricing, CatalogSummary, NamedCatalogList } from "./catalog";
+export {
+  addCartItem,
+  createQuote,
+  getCart,
+  getQuote,
+  removeCartItem,
+  saveCartItem,
+  setCartQuantity,
+} from "./commerce";
+export type { CartView, QuoteView, VenezuelaAddressInput } from "./commerce";
 
 import { z } from "zod";
 
