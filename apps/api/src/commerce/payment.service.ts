@@ -63,6 +63,25 @@ export class PaymentService {
     if (order.status === "PAID" || order.status === "PAYMENT_UNDER_REVIEW") {
       throw new HttpException({ error: "forbidden" }, HttpStatus.FORBIDDEN);
     }
+    if (input.method === "PAGO_MOVIL" && input.amountMinor !== order.grandTotalMinor) {
+      throw new HttpException({ error: "invalid_request" }, HttpStatus.BAD_REQUEST);
+    }
+    if (input.method === "STRIPE") {
+      const byKey = this.repository.findByIdempotency(input.idempotencyKey);
+      if (byKey && byKey.userId !== userId) {
+        throw new HttpException({ error: "duplicate_reference" }, HttpStatus.CONFLICT);
+      }
+    }
+    if (
+      (input.method === "ZELLE" || input.method === "PAGO_MOVIL") &&
+      this.repository.findByReference(input.method, normalizeReference(input.reference))
+    ) {
+      throw new HttpException({ error: "duplicate_reference" }, HttpStatus.CONFLICT);
+    }
+    const open = this.repository.openPaymentForOrder(order.id);
+    if (open) {
+      return this.replay(open, input.method);
+    }
     if (input.method === "STRIPE") {
       return this.createStripe(userId, order, input.idempotencyKey);
     }
@@ -77,9 +96,6 @@ export class PaymentService {
         payerPhone: null,
         amountMinor: order.grandTotalMinor,
       });
-    }
-    if (input.amountMinor !== order.grandTotalMinor) {
-      throw new HttpException({ error: "invalid_request" }, HttpStatus.BAD_REQUEST);
     }
     return this.createManual(userId, order, {
       method: "PAGO_MOVIL",
@@ -232,6 +248,21 @@ export class PaymentService {
       metadata: { eventId: event.eventId, type: event.type, applied: true },
     });
     return { status: "recorded" as const, payment: this.present(next) };
+  }
+
+  private replay(payment: StoredPayment, method: PaymentRequestInput["method"]) {
+    if (method === "STRIPE") {
+      return { payment: this.present(payment), clientSecret: null, idempotent: true };
+    }
+    if (method === "PAYPAL") {
+      return {
+        payment: this.present(payment),
+        capture: false as const,
+        detail: "PayPal no captura el pago en este corte.",
+        idempotent: true,
+      };
+    }
+    return { payment: this.present(payment), idempotent: true };
   }
 
   private async createStripe(userId: string, order: StoredOrder, idempotencyKey: string) {

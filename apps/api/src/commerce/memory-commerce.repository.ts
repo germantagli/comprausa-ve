@@ -108,8 +108,22 @@ export class MemoryCommerceRepository {
     return payment ? this.readPayment(payment.id) : null;
   }
 
+  listPayments(): StoredPayment[] {
+    return [...this.payments.values()].map((payment) => this.readPayment(payment.id) as StoredPayment);
+  }
+
   listPaymentsByStatus(status: StoredPayment["status"]): StoredPayment[] {
     return [...this.payments.values()].filter((payment) => payment.status === status).map((payment) => this.readPayment(payment.id) as StoredPayment);
+  }
+
+  listPaymentsForOrder(orderId: string): StoredPayment[] {
+    return this.listPayments().filter((payment) => payment.orderId === orderId);
+  }
+
+  /** A payment still attached to the checkout. A rejected one can be replaced. */
+  openPaymentForOrder(orderId: string): StoredPayment | null {
+    const payment = [...this.payments.values()].filter((item) => item.orderId === orderId && item.status !== "REJECTED").at(-1);
+    return payment ? this.readPayment(payment.id) : null;
   }
 
   findByIdempotency(key: string): StoredPayment | null {

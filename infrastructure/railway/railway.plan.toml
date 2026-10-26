@@ -1,5 +1,13 @@
 # Plan de staging. Railway no debe autodetectar este archivo: el nombre no es railway.toml.
 # No hay proyecto Railway vinculado desde este repositorio y nadie desplegó esta rama.
+# No hay URL de staging.
+#
+# El proceso en producción exige, fuera de este archivo:
+# DATABASE_URL, AUTH_TOKEN_SECRET de 32 caracteres o más y distinto del marcador de desarrollo,
+# OTP_PROVIDER distinto de simulated, y PORT (la API escucha ese valor; si falta, 3001).
+# Opcionales y vacíos hoy: STRIPE_SECRET_KEY que empiece por sk_test_, STRIPE_WEBHOOK_SECRET que empiece por whsec_,
+# ZELLE_INSTRUCTIONS, PAGO_MOVIL_BANK, PAGO_MOVIL_PHONE, PAGO_MOVIL_HOLDER, WEB_ORIGIN.
+# Redis no es dependencia de este esqueleto.
 
 [api]
 service = "comprausa-api"
