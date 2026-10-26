@@ -6,8 +6,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@comprausa/api-client": "workspace:*",
     "@comprausa/design-tokens": "workspace:*",
     "@comprausa/ui": "workspace:*",
+    "@comprausa/validation": "workspace:*",
     "next": "^16.4.3",
     "react": "19.3.1",
     "react-dom": "19.3.1"

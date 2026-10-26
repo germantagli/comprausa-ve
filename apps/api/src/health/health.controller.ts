@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, ServiceUnavailableException } from "@nestjs/common";
+import { Controller, Get, Inject, Optional, ServiceUnavailableException } from "@nestjs/common";
 import { ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
 import type { AppEnv } from "@comprausa/config";
 import type { HealthReport } from "@comprausa/types";
@@ -10,7 +10,7 @@ import { PrismaService } from "../prisma/prisma.service";
 export class HealthController {
   constructor(
     @Inject(APP_ENV) private readonly env: AppEnv,
-    private readonly prisma: PrismaService,
+    @Optional() @Inject(PrismaService) private readonly prisma?: PrismaService,
   ) {}
 
   @Get()
@@ -31,6 +31,9 @@ export class HealthController {
   @Get("ready")
   @ApiOperation({ summary: "Readiness. Falla si Postgres no responde." })
   async ready(): Promise<{ status: "ready" }> {
+    if (!this.prisma) {
+      throw new ServiceUnavailableException({ status: "not_ready" });
+    }
     try {
       await this.prisma.$queryRaw`SELECT 1`;
     } catch {
