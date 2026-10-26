@@ -1,11 +1,12 @@
 import type { ReactNode } from "react";
 import { colorTokens, fontTokens } from "@comprausa/design-tokens";
+import "./globals.css";
 
 const colors = colorTokens.light;
 
 export const metadata = {
   title: "CompraUSA VE",
-  description: "App de cliente con catálogo de demostración. Sin checkout ni páginas para indexar.",
+  description: "Compra en tiendas de USA y recíbelo en Venezuela. Catálogo de demostración sin checkout indexable.",
   robots: { index: false, follow: false },
 };
 

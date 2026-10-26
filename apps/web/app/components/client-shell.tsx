@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { ONBOARDING_KEY } from "../lib/api";
+import { AppHeader } from "./app-header";
 import { BottomNav } from "./bottom-nav";
 import { Onboarding } from "./onboarding";
 import { colors, pageStyle } from "./styles";
@@ -32,7 +33,9 @@ export function ClientShell({ children }: { children: ReactNode }) {
   if (seen === null) {
     return (
       <main style={pageStyle} aria-busy="true">
-        <p style={{ margin: 0 }}>Cargando…</p>
+        <div className="cve-page">
+          <p style={{ margin: 0 }}>Cargando…</p>
+        </div>
       </main>
     );
   }
@@ -43,8 +46,11 @@ export function ClientShell({ children }: { children: ReactNode }) {
 
   return (
     <ReplayContext.Provider value={replay}>
-      <div style={{ background: colors.background, minHeight: "100vh" }}>{children}</div>
-      <BottomNav />
+      <div className="cve-shell" style={{ background: colors.background, minHeight: "100vh" }}>
+        <AppHeader />
+        {children}
+        <BottomNav />
+      </div>
     </ReplayContext.Provider>
   );
 }
