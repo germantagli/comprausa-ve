@@ -28,6 +28,7 @@ export function BottomNav() {
         left: 0,
         position: "fixed",
         right: 0,
+        /* display lo controla .cve-bottom-nav en globals.css (oculto desde 768px) */
         zIndex: 2,
       }}
     >

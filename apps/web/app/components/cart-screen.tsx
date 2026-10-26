@@ -207,6 +207,11 @@ export function CartScreen() {
               {busy ? "Espera…" : "Pedir cotización"}
             </button>
             <p style={mutedStyle}>El pago llega después de que el equipo publique el importe de la cotización.</p>
+            <p style={mutedStyle}>
+              <Link href="/pago" style={linkStyle}>
+                Ver maqueta de checkout
+              </Link>
+            </p>
           </form>
         </div>
 
@@ -220,6 +225,9 @@ export function CartScreen() {
           <p style={{ ...headingStyle, margin: 0 }}>Total estimado</p>
           <p style={{ ...bodyStyle, fontWeight: 700, margin: 0 }}>{subtotalLabel(cart.subtotal)}</p>
           <p style={mutedStyle}>Sin montos inventados. El total final sale de la cotización revisada.</p>
+          <Link href="/pago" style={{ ...buttonStyle, alignItems: "center", display: "inline-flex", justifyContent: "center", textDecoration: "none" }}>
+            Continuar al pago →
+          </Link>
         </aside>
       </div>
     </PageFrame>

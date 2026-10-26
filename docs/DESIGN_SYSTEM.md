@@ -26,6 +26,8 @@ Tokens en `packages/design-tokens`. El esquema activo es claro. El oscuro está 
 
 La maqueta de producto (web + móvil) guía la composición: cabecera de escritorio, héroe USA→Venezuela, chips de tiendas sin logos de marca, categorías en círculo, grilla de fichas, resumen de carrito con líneas de envío/comisión «por cotización», pedidos con pestañas Activos/Historial y menú de perfil. No se inventan precios ni se usan logos de Amazon, Walmart u otras tiendas.
 
+En web, desde `768px` el sitio usa chrome de escritorio (cabecera horizontal a todo el ancho, sin barra inferior). En viewports más chicos queda la columna y la navegación inferior. El contenido usa una grilla ancha (`--cve-page-max`), no una columna de teléfono estirada.
+
 Contraste calculado el 26 de octubre de 2026 con la fórmula WCAG:
 
 | Par | Relación | Texto normal AA |

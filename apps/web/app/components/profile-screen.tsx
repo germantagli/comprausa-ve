@@ -28,7 +28,7 @@ type Phase =
 const menu = [
   { href: "/pedidos", label: "Mis pedidos" },
   { href: "/carrito", label: "Direcciones", note: "La dirección se pide al cotizar." },
-  { href: "/ayuda", label: "Métodos de pago", note: "Disponibles en la cotización aceptada." },
+  { href: "/pago", label: "Métodos de pago", note: "Maqueta de checkout; el cobro sale de la cotización." },
   { href: "/ayuda", label: "Favoritos", note: "Todavía no está disponible." },
   { href: "/ayuda", label: "Notificaciones", note: "Todavía no está disponible." },
   { href: "/ayuda", label: "Ayuda" },

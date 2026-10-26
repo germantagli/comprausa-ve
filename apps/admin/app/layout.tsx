@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
+import "./globals.css";
 
 export const metadata = {
-  title: "CompraUSA VE — administración",
+  title: "CompraUSA — administración",
+  description: "Panel interno separado del sitio público.",
   robots: { index: false, follow: false },
 };
 

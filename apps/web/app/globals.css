@@ -10,6 +10,8 @@
   --cve-radius-sm: 8px;
   --cve-radius-md: 12px;
   --cve-radius-lg: 16px;
+  --cve-page-max: 1280px;
+  --cve-gutter: 16px;
 }
 
 *,
@@ -34,11 +36,13 @@ a {
 
 .cve-page {
   margin: 0 auto;
-  max-width: 1120px;
-  padding: 24px 16px 96px;
+  max-width: var(--cve-page-max);
+  padding: 24px var(--cve-gutter) 96px;
+  width: 100%;
 }
 
-.cve-desktop-only {
+.cve-desktop-only,
+.cve-site-header {
   display: none;
 }
 
@@ -59,15 +63,7 @@ a {
   padding: 0;
 }
 
-.cve-category-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
+.cve-category-row,
 .cve-store-row {
   display: flex;
   flex-wrap: wrap;
@@ -77,17 +73,11 @@ a {
   padding: 0;
 }
 
-.cve-listing-layout {
-  display: grid;
-  gap: 24px;
-}
-
-.cve-pdp-layout {
-  display: grid;
-  gap: 24px;
-}
-
-.cve-cart-layout {
+.cve-listing-layout,
+.cve-pdp-layout,
+.cve-cart-layout,
+.cve-steps-grid,
+.cve-checkout-layout {
   display: grid;
   gap: 24px;
 }
@@ -109,52 +99,153 @@ a {
   gap: 12px;
 }
 
-@media (min-width: 768px) {
-  .cve-product-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .cve-search-bar {
-    grid-template-columns: 1fr auto;
-  }
-
-  .cve-hero {
-    grid-template-columns: 1.2fr 1fr;
-  }
-
-  .cve-listing-layout {
-    grid-template-columns: 240px 1fr;
-  }
-
-  .cve-pdp-layout {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .cve-cart-layout {
-    grid-template-columns: 1.4fr 0.8fr;
-    align-items: start;
-  }
+.cve-site-header {
+  background: var(--cve-primary);
+  color: #fff;
+  width: 100%;
 }
 
-@media (min-width: 960px) {
+.cve-site-header-inner {
+  align-items: center;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: auto 1fr auto;
+  margin: 0 auto;
+  max-width: var(--cve-page-max);
+  min-height: 72px;
+  padding: 12px 24px;
+  width: 100%;
+}
+
+.cve-site-header-nav {
+  align-items: center;
+  display: none;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+}
+
+.cve-site-header-search {
+  display: none;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-width: 0;
+}
+
+.cve-store-strip {
+  background: var(--cve-surface);
+  border: 1px solid var(--cve-border);
+  border-radius: var(--cve-radius-lg);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 24px;
+  padding: 16px;
+}
+
+.cve-stepper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 0 0 24px;
+  padding: 0;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --cve-gutter: 28px;
+  }
+
   .cve-desktop-only {
     display: block;
   }
 
+  .cve-site-header {
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 3;
+  }
+
   .cve-mobile-only {
-    display: none;
+    display: none !important;
   }
 
   .cve-bottom-nav {
-    display: none;
+    display: none !important;
   }
 
   .cve-page {
-    padding: 32px 24px 48px;
+    padding: 28px var(--cve-gutter) 56px;
+  }
+
+  .cve-search-bar {
+    align-items: end;
+    grid-template-columns: 1fr auto;
+  }
+
+  .cve-hero {
+    align-items: center;
+    gap: 32px;
+    grid-template-columns: minmax(0, 1.35fr) minmax(220px, 0.85fr);
   }
 
   .cve-product-grid {
+    gap: 20px;
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .cve-listing-layout {
+    align-items: start;
+    grid-template-columns: 260px minmax(0, 1fr);
+  }
+
+  .cve-pdp-layout,
+  .cve-checkout-layout {
+    gap: 32px;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.9fr);
+  }
+
+  .cve-cart-layout {
+    align-items: start;
+    gap: 28px;
+    grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.75fr);
+  }
+
+  .cve-steps-grid {
+    gap: 20px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .cve-site-header-nav {
+    display: flex;
+  }
+
+  .cve-site-header-search {
+    display: grid;
+  }
+
+  .cve-site-header-inner {
+    grid-template-columns: auto auto minmax(220px, 1fr) auto;
+  }
+}
+
+@media (min-width: 1100px) {
+  .cve-product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .cve-site-header-inner {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}
+
+@media (min-width: 1400px) {
+  :root {
+    --cve-gutter: 32px;
+    --cve-page-max: 1360px;
   }
 }
 
@@ -169,10 +260,6 @@ a {
 
   .cve-hero-art-motion {
     animation: cve-float 6s ease-in-out infinite;
-  }
-
-  .cve-chip-in {
-    animation: cve-fade-up 480ms ease both;
   }
 }
 
