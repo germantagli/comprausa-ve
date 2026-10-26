@@ -164,6 +164,14 @@ export class AuthService {
     };
   }
 
+  async profile(userId: string): Promise<{ givenName: string | null; familyName: string | null } | null> {
+    const user = await this.repository.findUserById(userId);
+    if (!user) {
+      return null;
+    }
+    return { givenName: user.givenName, familyName: user.familyName };
+  }
+
   async revoke(sessionId: string): Promise<void> {
     await this.repository.revokeSession(sessionId, new Date(this.clock.now()));
   }

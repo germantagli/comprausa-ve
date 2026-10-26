@@ -23,6 +23,11 @@ type UserWithAccess = Prisma.UserGetPayload<{ include: typeof userInclude }>;
 export class PrismaAuthRepository implements AuthRepository {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
+  async findUserById(id: string): Promise<AuthUser | null> {
+    const user = await this.prisma.user.findUnique({ where: { id }, include: userInclude });
+    return user ? this.toUser(user) : null;
+  }
+
   async findUserByDestination(channel: AuthChannel, destination: string): Promise<AuthUser | null> {
     const user = await this.prisma.user.findFirst({
       where: channel === "email" ? { email: destination } : { phoneE164: destination },

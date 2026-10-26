@@ -47,6 +47,7 @@ export interface RegistrationGrantRecord {
 
 export interface AuthRepository {
   findUserByDestination(channel: AuthChannel, destination: string): Promise<AuthUser | null>;
+  findUserById(id: string): Promise<AuthUser | null>;
   createCustomer(input: {
     channel: AuthChannel;
     destination: string;

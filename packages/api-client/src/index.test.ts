@@ -1,6 +1,7 @@
 import { jsonResponse } from "@comprausa/testing";
 import { describe, expect, it } from "vitest";
 import { challengeResponseSchema } from "./auth";
+import { searchCatalog } from "./catalog";
 import { getHealth, requestOtpChallenge } from "./index";
 
 describe("getHealth", () => {
@@ -34,6 +35,26 @@ describe("getHealth", () => {
       async () => jsonResponse({ status: "throttled" }),
     );
     expect(challenge).toEqual({ status: "throttled" });
+  });
+
+  it("rejects a catalog item that includes a price", async () => {
+    await expect(
+      searchCatalog("http://127.0.0.1:3001", "", async () =>
+        jsonResponse({
+          source: "internal-demo",
+          items: [
+            {
+              id: "demo-norte",
+              name: "Caja de demostración Norte",
+              fictional: true,
+              catalog: "internal-demo",
+              disclaimer: "Ficticio",
+              amountMinor: 100,
+            },
+          ],
+        }),
+      ),
+    ).rejects.toThrow();
   });
 
   it("rejects a payload that claims a live payment integration", async () => {

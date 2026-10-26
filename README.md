@@ -2,7 +2,7 @@
 
 Plataforma en construcción para que una persona en Venezuela pida productos de tiendas de Estados Unidos y los reciba en Venezuela, sin administrar un casillero. El nombre es provisional y sale de `APP_DISPLAY_NAME`. La moneda de trabajo es USD.
 
-Este repositorio tiene la arquitectura de la fase 1 y el ingreso por OTP. No hay tienda, checkout, pagos ni panel.
+Este repositorio tiene la arquitectura de la fase 1, el ingreso por OTP y la app de cliente. No hay checkout, pagos ni panel.
 
 ## Qué está de verdad
 
@@ -12,7 +12,7 @@ Este repositorio tiene la arquitectura de la fase 1 y el ingreso por OTP. No hay
 - Roles sembrados y una ruta `GET /v1/admin/access` que exige MFA. El OTP no marca MFA, así que esa ruta responde prohibido. No hay panel.
 - Catálogo interno de demostración, con artículos ficticios, sin precio ni existencia.
 - Esquemas Zod para dinero en centavos, correo, teléfono y el ingreso.
-- Pantallas mínimas de ingreso en `apps/web` (`/entrar`) y `apps/mobile`.
+- App de cliente en `apps/web` y `apps/mobile`: introducción, inicio, explorar, carrito, pedidos y perfil. El ingreso sigue en `/entrar`.
 - Validación de entorno: en producción hacen falta `DATABASE_URL` y `AUTH_TOKEN_SECRET`. `OTP_PROVIDER=simulated` solo arranca con `NODE_ENV=development`.
 
 ## Qué está simulado
@@ -64,7 +64,7 @@ curl -s -X POST http://127.0.0.1:3001/v1/auth/dev/otp-code \
   -d '{"channel":"email","destination":"ana@example.com"}'
 ```
 
-El sitio, en `http://localhost:3000/entrar`, pide el código y no lo muestra. El móvil apunta a `http://127.0.0.1:3001`.
+El sitio, en `http://127.0.0.1:3000`, abre la introducción y después el inicio. El ingreso está en `/entrar`, pide el código y no lo muestra. El móvil apunta a `http://127.0.0.1:3001`.
 
 ```bash
 pnpm --filter @comprausa/web exec next dev --port 3000
@@ -79,4 +79,4 @@ pnpm --filter @comprausa/api exec prisma migrate deploy
 
 ## Qué falta
 
-Cotización por enlace, catálogo comercial, pagos, compras, logística, panel y despliegue. El orden propuesto está en `docs/PROGRESS.md`.
+Cotización por enlace, checkout, pagos, compras en tienda, logística, panel y despliegue. El orden propuesto está en `docs/PROGRESS.md`.

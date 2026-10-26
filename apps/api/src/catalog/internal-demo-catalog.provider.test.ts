@@ -1,5 +1,6 @@
 import { storeIntegrationRegistry } from "@comprausa/types";
 import { describe, expect, it } from "vitest";
+import { CatalogController } from "./catalog.controller";
 import { demoCatalogItems, InternalDemoCatalogProvider } from "./internal-demo-catalog.provider";
 
 describe("InternalDemoCatalogProvider", () => {
@@ -15,6 +16,16 @@ describe("InternalDemoCatalogProvider", () => {
       const availability = await provider.getAvailability(item.id);
       expect(pricing).toMatchObject({ status: "UNPRICED", amount: null });
       expect(availability).toMatchObject({ status: "UNKNOWN", quantity: null });
+    }
+  });
+
+  it("does not list categories or internal stores", () => {
+    const controller = new CatalogController();
+    expect(controller.categories()).toEqual({ items: [] });
+    expect(controller.stores()).toEqual({ items: [] });
+    const blob = JSON.stringify([controller.categories(), controller.stores()]);
+    for (const store of storeIntegrationRegistry) {
+      expect(blob.includes(store.code)).toBe(false);
     }
   });
 

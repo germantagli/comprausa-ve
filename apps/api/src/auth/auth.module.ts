@@ -1,6 +1,7 @@
 import { Module, type DynamicModule, type Type } from "@nestjs/common";
 import type { AppEnv } from "@comprausa/config";
 import { parseAppEnv } from "@comprausa/config";
+import { AccountController } from "./account.controller";
 import { AccessGuard } from "./access.guard";
 import { AdminAccessController } from "./admin-access.controller";
 import { AdminGuard } from "./admin.guard";
@@ -32,7 +33,7 @@ export class AuthModule {
     const clock = options?.clock ?? systemClock;
     const ratePolicy = options?.ratePolicy ?? defaultAuthRatePolicy;
     const simulated = env.simulatedOtpAllowed && env.nodeEnv === "development" && env.otpProvider === "simulated";
-    const controllers: Type[] = [AuthController, AdminAccessController];
+    const controllers: Type[] = [AuthController, AccountController, AdminAccessController];
     const providers: NonNullable<DynamicModule["providers"]> = [
       { provide: AUTH_CLOCK, useValue: clock },
       { provide: AUTH_RATE_POLICY, useValue: ratePolicy },

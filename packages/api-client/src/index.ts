@@ -7,6 +7,15 @@ export {
   verifyOtp,
 } from "./auth";
 export type { AuthenticatedSession, OtpChallengeResponse, OtpDestination, OtpVerificationResponse } from "./auth";
+export {
+  getAccountProfile,
+  getCatalogAvailability,
+  getCatalogPricing,
+  listCatalogCategories,
+  listInternalStores,
+  searchCatalog,
+} from "./catalog";
+export type { AccountProfile, CatalogAvailability, CatalogPricing, CatalogSummary, NamedCatalogList } from "./catalog";
 
 import { z } from "zod";
 
