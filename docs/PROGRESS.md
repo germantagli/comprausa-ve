@@ -16,5 +16,6 @@
 2. Transiciones manuales de logística en el admin, sin fechas prometidas. El panel sigue sin construirse.
 3. Pagos únicamente cuando la elegibilidad esté resuelta. El primer paso, si Stripe sigue vetado para la entidad, no es integrar Stripe: es decidir el medio permitido.
 4. Proveedor real de OTP y límite de tasa compartido entre instancias, cuando haya un entorno que lo justifique.
+5. Aplicar `.railway/railway.ts` en Railway (login o token), dominio público de la API y `AUTH_TOKEN_SECRET` de staging.
 
-No desplegar en ese incremento salvo que se pida aparte.
+La definición de staging ya está en el repo (IaC + Dockerfile + workflow de config). Falta autenticar Railway para el apply.

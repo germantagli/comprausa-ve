@@ -25,7 +25,7 @@ Este repositorio tiene la arquitectura de la fase 1, el ingreso por OTP y la app
 
 - Compra en Amazon, Walmart, eBay y el resto de tiendas de la lista. No hay conector autorizado en este repositorio.
 - Stripe, PayPal, Zelle y Pago Móvil. No hay cobros, ni de prueba.
-- Despliegue. Railway está descrito y no está ejecutado.
+- Despliegue. Railway está definido en `.railway/railway.ts` y todavía no está vinculado ni aplicado.
 
 El detalle está en `docs/API_INTEGRATIONS.md` y `docs/LEGAL_DEPENDENCIES.md`.
 
