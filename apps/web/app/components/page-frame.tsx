@@ -17,7 +17,10 @@ export function PageFrame({
         ...(style ?? {}),
       }}
     >
-      <div className="cve-page" style={wide ? { maxWidth: 1200 } : undefined}>
+      <div
+        className="cve-page"
+        style={wide ? { maxWidth: "min(1360px, var(--cve-page-max, 1280px))" } : undefined}
+      >
         {children}
       </div>
     </main>

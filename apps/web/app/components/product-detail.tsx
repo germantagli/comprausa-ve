@@ -130,6 +130,10 @@ export function ProductDetail({ productId }: { productId: string }) {
   return (
     <PageFrame wide>
       <p style={mutedStyle}>
+        <Link href="/" style={linkStyle}>
+          Inicio
+        </Link>
+        {" / "}
         <Link href="/explorar" style={linkStyle}>
           Catálogo
         </Link>

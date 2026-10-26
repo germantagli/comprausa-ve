@@ -1,0 +1,61 @@
+:root {
+  --adm-bg: #f3f7fc;
+  --adm-surface: #ffffff;
+  --adm-text: #14243b;
+  --adm-muted: #5b6b82;
+  --adm-border: #d7e0ec;
+  --adm-primary: #1054b8;
+  --adm-deep: #092c62;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+}
+
+body {
+  background: var(--adm-bg);
+  color: var(--adm-text);
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.adm-shell {
+  display: grid;
+  min-height: 100vh;
+}
+
+.adm-side {
+  background: var(--adm-deep);
+  color: #fff;
+  padding: 24px 20px;
+}
+
+.adm-main {
+  padding: 28px 24px 48px;
+}
+
+.adm-card {
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.adm-grid {
+  display: grid;
+  gap: 16px;
+}
+
+@media (min-width: 900px) {
+  .adm-shell {
+    grid-template-columns: 240px 1fr;
+  }
+
+  .adm-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { PageFrame } from "./page-frame";
 import {
@@ -8,6 +9,7 @@ import {
   cardStyle,
   colors,
   headingStyle,
+  linkStyle,
   mutedStyle,
   secondaryButtonStyle,
   spaceTokens,
@@ -27,15 +29,14 @@ export function OrdersScreen() {
   const [tab, setTab] = useState<"activos" | "historial">("activos");
 
   return (
-    <PageFrame>
-      <h1 style={titleStyle}>Mis pedidos</h1>
+    <PageFrame wide>
+      <div style={{ alignItems: "baseline", display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "space-between" }}>
+        <h1 style={titleStyle}>Mis pedidos</h1>
+        <p style={{ ...mutedStyle, margin: 0 }}>Seguimiento visual. Todavía no hay pedidos reales en esta pantalla.</p>
+      </div>
+
       <div style={{ display: "flex", gap: spaceTokens[2], marginBottom: spaceTokens[4] }}>
-        <button
-          type="button"
-          style={tab === "activos" ? buttonStyle : secondaryButtonStyle}
-          onClick={() => setTab("activos")}
-          aria-pressed={tab === "activos"}
-        >
+        <button type="button" style={tab === "activos" ? buttonStyle : secondaryButtonStyle} onClick={() => setTab("activos")} aria-pressed={tab === "activos"}>
           Activos
         </button>
         <button
@@ -48,64 +49,68 @@ export function OrdersScreen() {
         </button>
       </div>
 
-      <article style={cardStyle}>
-        <p style={{ ...headingStyle, margin: 0 }}>
-          {tab === "activos" ? "No tienes pedidos activos." : "Todavía no hay historial."}
-        </p>
-        <p role="status" style={bodyStyle}>
-          Cuando exista un pedido, aquí verás el estado y el seguimiento.
-        </p>
-      </article>
-
-      <section aria-label="Seguimiento de ejemplo" style={{ ...cardStyle, marginTop: spaceTokens[4] }}>
-        <div style={{ alignItems: "center", display: "flex", justifyContent: "space-between", gap: 12 }}>
-          <h2 style={{ ...headingStyle, margin: 0 }}>Seguimiento</h2>
-          <span
-            style={{
-              background: colors.background,
-              border: `1px solid ${colors.border}`,
-              borderRadius: 999,
-              color: colors.primary,
-              fontSize: 12,
-              fontWeight: 700,
-              padding: "4px 10px",
-            }}
-          >
-            Sin pedido
-          </span>
-        </div>
-        <p style={mutedStyle}>Estructura visual del diseño. No hay un envío real asociado.</p>
-        <ol style={{ listStyle: "none", margin: 0, padding: 0 }}>
-          {timeline.map((step, index) => (
-            <li
-              key={step.id}
+      <div className="cve-cart-layout">
+        <article style={cardStyle}>
+          <div style={{ alignItems: "center", display: "flex", gap: 12, justifyContent: "space-between" }}>
+            <h2 style={{ ...headingStyle, margin: 0 }}>{tab === "activos" ? "No tienes pedidos activos." : "Todavía no hay historial."}</h2>
+            <span
               style={{
-                display: "grid",
-                gap: 4,
-                gridTemplateColumns: "20px 1fr",
-                paddingBottom: index === timeline.length - 1 ? 0 : spaceTokens[4],
-                position: "relative",
+                background: colors.background,
+                border: `1px solid ${colors.border}`,
+                borderRadius: 999,
+                color: colors.primary,
+                fontSize: 12,
+                fontWeight: 700,
+                padding: "4px 10px",
+                whiteSpace: "nowrap",
               }}
             >
-              <span
-                aria-hidden="true"
+              Sin pedido
+            </span>
+          </div>
+          <p role="status" style={bodyStyle}>
+            Cuando exista un pedido, aquí verás el estado y el seguimiento.
+          </p>
+          <p style={mutedStyle}>Ejemplo de ficha: #CUA— — — —</p>
+          <Link href="/pago" style={linkStyle}>
+            Ver maqueta de pago
+          </Link>
+        </article>
+
+        <section aria-label="Seguimiento" style={cardStyle}>
+          <h2 style={{ ...headingStyle, margin: 0 }}>Seguimiento</h2>
+          <p style={mutedStyle}>Estructura de la maqueta. No hay un envío real asociado.</p>
+          <ol style={{ listStyle: "none", margin: 0, padding: 0 }}>
+            {timeline.map((step, index) => (
+              <li
+                key={step.id}
                 style={{
-                  background: colors.border,
-                  borderRadius: "50%",
-                  display: "inline-block",
-                  height: 12,
-                  marginTop: 4,
-                  width: 12,
+                  display: "grid",
+                  gap: 4,
+                  gridTemplateColumns: "20px 1fr",
+                  paddingBottom: index === timeline.length - 1 ? 0 : spaceTokens[4],
                 }}
-              />
-              <div>
-                <p style={{ ...headingStyle, margin: 0 }}>{step.label}</p>
-                <p style={{ ...mutedStyle, margin: 0 }}>{step.detail}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </section>
+              >
+                <span
+                  aria-hidden="true"
+                  style={{
+                    background: index === 3 ? colors.primary : colors.border,
+                    borderRadius: "50%",
+                    display: "inline-block",
+                    height: 12,
+                    marginTop: 4,
+                    width: 12,
+                  }}
+                />
+                <div>
+                  <p style={{ ...headingStyle, margin: 0 }}>{step.label}</p>
+                  <p style={{ ...mutedStyle, margin: 0 }}>{step.detail}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+      </div>
     </PageFrame>
   );
 }
