@@ -6,6 +6,6 @@ import { HealthModule } from "./health/health.module";
 import { PrismaModule } from "./prisma/prisma.module";
 
 @Module({
-  imports: [AppConfigModule, PrismaModule, HealthModule, CatalogModule, AuthModule.register()],
+  imports: [AppConfigModule, PrismaModule.register(), HealthModule, CatalogModule, AuthModule.register()],
 })
 export class AppModule {}

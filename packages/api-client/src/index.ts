@@ -1,3 +1,13 @@
+export {
+  ApiClientError,
+  refreshSession,
+  registerAccount,
+  requestOtpChallenge,
+  revokeSession,
+  verifyOtp,
+} from "./auth";
+export type { AuthenticatedSession, OtpChallengeResponse, OtpDestination, OtpVerificationResponse } from "./auth";
+
 import { z } from "zod";
 
 const healthSchema = z
