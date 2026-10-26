@@ -8,7 +8,9 @@ import { ZodExceptionFilter } from "./http/zod-exception.filter";
 
 async function bootstrap(): Promise<void> {
   const env = parseAppEnv(process.env);
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, { cors: false, rawBody: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { cors: false, rawBody: true, bodyParser: false });
+  app.useBodyParser("json", { limit: "4mb" });
+  app.useBodyParser("urlencoded", { extended: true, limit: "4mb" });
   app.set("trust proxy", false);
   if (env.webOrigin) {
     const origins =
