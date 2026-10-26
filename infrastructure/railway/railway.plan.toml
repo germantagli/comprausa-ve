@@ -1,0 +1,18 @@
+# Plan de staging. Railway no debe autodetectar este archivo: el nombre no es railway.toml.
+# No hay proyecto Railway vinculado desde este repositorio y nadie desplegó esta rama.
+
+[api]
+service = "comprausa-api"
+dockerfile = "infrastructure/docker/api.Dockerfile"
+healthcheck_path = "/health"
+
+[worker]
+service = "comprausa-worker"
+note = "No existe todavía. Reservado para BullMQ cuando haya jobs reales."
+
+[postgres]
+plugin = "postgresql"
+
+[redis]
+plugin = "redis"
+required_for_skeleton = false
