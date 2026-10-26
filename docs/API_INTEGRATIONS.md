@@ -142,7 +142,7 @@ Ninguno está integrado. Subir un comprobante no verifica un pago. No hay modo d
 
 El diseño previsto es Payment Intents, webhooks firmados, idempotencia y ningún PAN guardado por nosotros. Stripe deja probar el sandbox después de crear una cuenta, y el modo live pide verificar el negocio. El país de origen no se cambia después de activar el servicio.
 
-El 26 de octubre de 2026, el HTML de [stripe.com/global](https://stripe.com/global) listaba 44 enlaces de registro (`register?country=`). Venezuela no estaba. La misma página dice que Payments no está disponible para un negocio fuera de un país o región soportada. Por eso Stripe queda bloqueado hasta que una entidad elegible exista y alguien confirme el alta. No se enciende ni el modo de prueba en este corte.
+El 26 de octubre de 2026, el HTML de [stripe.com/global](https://stripe.com/global) listaba 44 enlaces de registro (`register?country=`). Venezuela no estaba. La misma página dice que Payments no está disponible para un negocio fuera de un país o región soportada. El registro sigue `RESTRICTED`. El código acepta solo una clave `sk_test_` que no está en el repositorio. Sin esa clave no hay llamada. CI usa un cliente falso. Una clave viva se rechaza.
 
 Fuentes: [disponibilidad](https://stripe.com/global), [Payment Intents](https://docs.stripe.com/payments/payment-intents), [webhooks](https://docs.stripe.com/webhooks), [alta de cuenta](https://docs.stripe.com/get-started/account/set-up).
 

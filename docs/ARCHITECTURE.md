@@ -55,7 +55,7 @@ docs/
 - Catálogo: búsqueda y ficha a través de `ProductProvider`.
 - Cotización: enlace pegado, revisión humana, sin precio automático. La API guarda la URL como texto, deja la cotización en `PENDING_VALIDATION` y no la descarga. El cliente no puede pasarla a final.
 - Pedido: estados propios, separados de pago, compra y envío.
-- Pagos: estados propios. Ningún proveedor está conectado.
+- Pagos: estados propios. Stripe de prueba solo con clave `sk_test_`. PayPal sin captura. Zelle y Pago Móvil con comprobante y revisión humana.
 - Logística: almacén, paquete, tracking y entrega. Sin API de carrier.
 - Auditoría, soporte, reglas de precio y tasas: tablas vacías. Ninguna regla trae un monto.
 
@@ -81,10 +81,10 @@ El flujo de enlace ya tiene endpoint: la persona pega una URL, se guarda el text
 
 Cuando estén permitidos:
 
-- Stripe: Payment Intents, webhooks con firma, clave de idempotencia, sin guardar PAN. Solo después de elegibilidad legal y geográfica. El modo de prueba es un incremento posterior, no este.
-- PayPal: Orders v2 oficial, misma regla de elegibilidad.
-- Zelle: no hay API pública que este producto pueda asumir. Flujo manual únicamente si la modalidad está permitida.
-- Pago Móvil: instrucciones configurables, comprobante y conciliación humana. Subir el comprobante deja el pago en `PROOF_SUBMITTED` o `UNDER_REVIEW`. No lo pasa a `VERIFIED`.
+- Stripe: Payment Intents del SDK oficial, webhook firmado e idempotencia, sin PAN. Solo con `sk_test_` en el entorno. Sin clave no se llama a Stripe. Una clave viva se rechaza. El registro de integración sigue bloqueado hasta que haya una entidad elegible.
+- PayPal: puerto sin captura. No es Orders v2 en producción.
+- Zelle: instrucciones configurables y comprobante. No hay API de cobro.
+- Pago Móvil: banco, teléfono, referencia e importe, más el comprobante. Subirlo deja el pago en `PROOF_SUBMITTED` y el pedido en `PAYMENT_UNDER_REVIEW`. No lo pasa a `VERIFIED`. El operador verifica o rechaza. `PAID` no compra en la tienda.
 
 Estados de pago: PENDING, PROOF_SUBMITTED, UNDER_REVIEW, VERIFIED, REJECTED, FAILED, REFUNDED, PARTIALLY_REFUNDED.
 

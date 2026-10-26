@@ -63,6 +63,13 @@ export class CommerceController {
     return this.commerce.readQuote(request.accessContext.userId, id);
   }
 
+  @Post("quotes/:id/accept")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "El cliente acepta una cotización que ya tiene importe final." })
+  accept(@Req() request: { accessContext: RequestAccess }, @Param("id") id: string) {
+    return this.commerce.acceptQuote(request.accessContext.userId, id);
+  }
+
   @Post("quotes/:id/finalize")
   @HttpCode(HttpStatus.FORBIDDEN)
   @ApiOperation({ summary: "El cliente no puede cerrar una cotización final." })

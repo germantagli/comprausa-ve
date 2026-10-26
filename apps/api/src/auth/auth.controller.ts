@@ -5,16 +5,21 @@ import {
   otpVerificationSchema,
   refreshSessionSchema,
   registrationSchema,
+  totpCodeSchema,
 } from "@comprausa/validation";
 import type { RequestAccess } from "./access.guard";
 import { AccessGuard } from "./access.guard";
 import { AuthService } from "./auth.service";
 import { clientAddress } from "./client-address";
+import { TotpService } from "./totp.service";
 
 @ApiTags("auth")
 @Controller("v1/auth")
 export class AuthController {
-  constructor(@Inject(AuthService) private readonly auth: AuthService) {}
+  constructor(
+    @Inject(AuthService) private readonly auth: AuthService,
+    @Inject(TotpService) private readonly totp: TotpService,
+  ) {}
 
   @Post("otp/challenges")
   @HttpCode(HttpStatus.OK)
@@ -73,5 +78,24 @@ export class AuthController {
   async revoke(@Req() request: { accessContext: RequestAccess }) {
     await this.auth.revoke(request.accessContext.sessionId);
     return { status: "revoked" };
+  }
+
+  @Post("totp/enrollments")
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AccessGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Inicia TOTP para un operador. El OTP solo no habilita la revisión." })
+  enrollTotp(@Req() request: { accessContext: RequestAccess }) {
+    return this.totp.enroll(request.accessContext);
+  }
+
+  @Post("totp/verifications")
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AccessGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Confirma el TOTP y emite un access token con MFA." })
+  verifyTotp(@Req() request: { accessContext: RequestAccess }, @Body() body: unknown) {
+    const parsed = totpCodeSchema.parse(body);
+    return this.totp.verify(request.accessContext, parsed.code);
   }
 }

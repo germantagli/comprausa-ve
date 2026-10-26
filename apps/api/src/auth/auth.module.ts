@@ -7,7 +7,10 @@ import { AdminAccessController } from "./admin-access.controller";
 import { AdminGuard } from "./admin.guard";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
-import { AUTH_CLOCK, AUTH_RATE_POLICY, AUTH_REPOSITORY, OTP_PROVIDER, RATE_LIMITER } from "./auth.tokens";
+import { developmentOperator } from "./development-operator";
+import { FinanceGuard } from "./finance.guard";
+import { AUTH_CLOCK, AUTH_RATE_POLICY, AUTH_REPOSITORY, DEV_OPERATOR, OTP_PROVIDER, RATE_LIMITER, TOTP_KEY } from "./auth.tokens";
+import { TotpService } from "./totp.service";
 import type { Clock } from "./clock";
 import { systemClock } from "./clock";
 import { DevOtpController } from "./dev-otp.controller";
@@ -51,8 +54,23 @@ export class AuthModule {
       AuthService,
       AccessGuard,
       AdminGuard,
+      FinanceGuard,
+      TotpService,
+      { provide: DEV_OPERATOR, useValue: developmentOperator(env.nodeEnv) },
+      {
+        provide: TOTP_KEY,
+        useFactory: (appEnv: AppEnv) => appEnv.authTokenSecret,
+        inject: [MODULE_ENV],
+      },
     ];
-    const exportsList: NonNullable<DynamicModule["exports"]> = [AuthService, TokenService, AccessGuard, AUTH_REPOSITORY, AUTH_CLOCK];
+    const exportsList: NonNullable<DynamicModule["exports"]> = [
+      AuthService,
+      TokenService,
+      AccessGuard,
+      FinanceGuard,
+      AUTH_REPOSITORY,
+      AUTH_CLOCK,
+    ];
 
     if (env.databaseUrl === undefined) {
       providers.push(MemoryAuthRepository, { provide: AUTH_REPOSITORY, useExisting: MemoryAuthRepository });

@@ -105,11 +105,13 @@ export function ProfileScreen({
   onSignIn,
   onSignedOut,
   onHelp,
+  onReview,
 }: {
   session: AuthenticatedSession | null;
   onSignIn: () => void;
   onSignedOut: () => void;
   onHelp: () => void;
+  onReview: () => void;
 }) {
   const [phase, setPhase] = useState<Load<AccountProfile>>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
@@ -118,7 +120,7 @@ export function ProfileScreen({
 
   useEffect(() => {
     if (!session) {
-      setPhase({ status: "ready", data: { givenName: null, familyName: null } });
+      setPhase({ status: "ready", data: { givenName: null, familyName: null, role: "CUSTOMER", mfaSatisfied: false } });
       return;
     }
     let cancelled = false;
@@ -197,6 +199,9 @@ export function ProfileScreen({
           ) : null}
         </View>
       ) : null}
+      <Pressable accessibilityRole="button" onPress={onReview} style={styles.linkHit}>
+        <Text style={styles.link}>Revisión de pagos</Text>
+      </Pressable>
       <Pressable accessibilityRole="button" onPress={onHelp} style={styles.linkHit}>
         <Text style={styles.link}>Ayuda</Text>
       </Pressable>

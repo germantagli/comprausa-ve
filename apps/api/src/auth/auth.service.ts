@@ -1,10 +1,11 @@
 import { randomUUID } from "node:crypto";
-import { Inject, Injectable } from "@nestjs/common";
+import { Inject, Injectable, Optional } from "@nestjs/common";
 import type { OtpProvider } from "@comprausa/types";
 import type { AuthRepository, AuthUser, ClientPlatform } from "./auth.repository";
-import { AUTH_CLOCK, AUTH_RATE_POLICY, AUTH_REPOSITORY, OTP_PROVIDER, RATE_LIMITER } from "./auth.tokens";
+import { AUTH_CLOCK, AUTH_RATE_POLICY, AUTH_REPOSITORY, DEV_OPERATOR, OTP_PROVIDER, RATE_LIMITER } from "./auth.tokens";
 import type { Clock } from "./clock";
 import type { AuthChannel } from "./destination";
+import type { RoleCode } from "./roles";
 import { normalizeDestination, otpDestinationKey } from "./destination";
 import type { AuthRatePolicy, RateLimiter } from "./rate-limiter";
 import { hashOpaqueToken, TokenService } from "./token.service";
@@ -50,6 +51,7 @@ export class AuthService {
     @Inject(TokenService) private readonly tokens: TokenService,
     @Inject(AUTH_CLOCK) private readonly clock: Clock,
     @Inject(AUTH_RATE_POLICY) private readonly policy: AuthRatePolicy,
+    @Optional() @Inject(DEV_OPERATOR) private readonly devOperator: { email: string; role: RoleCode } | null = null,
   ) {}
 
   async challenge(input: {
@@ -98,7 +100,8 @@ export class AuthService {
       const registrationToken = await this.issueRegistration(input.channel, destination);
       return { status: "profile_required", registrationToken };
     }
-    return this.openSession(existing, { clientDeviceId: input.deviceId, platform: input.platform });
+    const user = await this.withDevelopmentRole(existing, input.channel, destination);
+    return this.openSession(user, { clientDeviceId: input.deviceId, platform: input.platform });
   }
 
   async register(input: {
@@ -117,7 +120,7 @@ export class AuthService {
       return { status: "unauthorized" };
     }
     const existing = await this.repository.findUserByDestination(grant.channel, grant.destination);
-    const user =
+    const created =
       existing ??
       (await this.repository.createCustomer({
         channel: grant.channel,
@@ -125,6 +128,7 @@ export class AuthService {
         givenName: input.givenName.trim(),
         familyName: input.familyName.trim(),
       }));
+    const user = await this.withDevelopmentRole(created, grant.channel, grant.destination);
     return this.openSession(user, { clientDeviceId: input.deviceId, platform: input.platform });
   }
 
@@ -164,12 +168,28 @@ export class AuthService {
     };
   }
 
-  async profile(userId: string): Promise<{ givenName: string | null; familyName: string | null } | null> {
+  async profile(
+    userId: string,
+    access: { role: RoleCode; mfaSatisfied: boolean },
+  ): Promise<{ givenName: string | null; familyName: string | null; role: RoleCode; mfaSatisfied: boolean } | null> {
     const user = await this.repository.findUserById(userId);
     if (!user) {
       return null;
     }
-    return { givenName: user.givenName, familyName: user.familyName };
+    return {
+      givenName: user.givenName,
+      familyName: user.familyName,
+      role: access.role,
+      mfaSatisfied: access.mfaSatisfied,
+    };
+  }
+
+  private async withDevelopmentRole(user: AuthUser, channel: AuthChannel, destination: string): Promise<AuthUser> {
+    if (!this.devOperator || channel !== "email" || destination !== this.devOperator.email) {
+      return user;
+    }
+    await this.repository.assignRole(user.id, this.devOperator.role);
+    return { ...user, roleCode: this.devOperator.role };
   }
 
   async revoke(sessionId: string): Promise<void> {

@@ -11,6 +11,12 @@ const envSchema = z.object({
   OTP_PROVIDER: z.enum(["simulated", "none"]).default("none"),
   AUTH_TOKEN_SECRET: z.string().optional(),
   WEB_ORIGIN: z.string().trim().min(1).optional(),
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  ZELLE_INSTRUCTIONS: z.string().optional(),
+  PAGO_MOVIL_BANK: z.string().optional(),
+  PAGO_MOVIL_PHONE: z.string().optional(),
+  PAGO_MOVIL_HOLDER: z.string().optional(),
 });
 
 export interface AppEnv {
@@ -23,6 +29,11 @@ export interface AppEnv {
   simulatedOtpAllowed: boolean;
   authTokenSecret: string;
   webOrigin: string | undefined;
+  /** Present only for an sk_test_ key. Live keys are refused. */
+  stripeTestKey: string | undefined;
+  stripeWebhookSecret: string | undefined;
+  zelleInstructions: string | undefined;
+  pagoMovil: { bank: string; phone: string; holder: string } | undefined;
 }
 
 export interface EnvSource {
@@ -33,12 +44,24 @@ export interface EnvSource {
   OTP_PROVIDER?: string;
   AUTH_TOKEN_SECRET?: string;
   WEB_ORIGIN?: string;
+  STRIPE_SECRET_KEY?: string;
+  STRIPE_WEBHOOK_SECRET?: string;
+  ZELLE_INSTRUCTIONS?: string;
+  PAGO_MOVIL_BANK?: string;
+  PAGO_MOVIL_PHONE?: string;
+  PAGO_MOVIL_HOLDER?: string;
 }
 
 export function parseAppEnv(source: EnvSource): AppEnv {
   const databaseUrl = blankToUndefined(source.DATABASE_URL);
   const authTokenSecret = blankToUndefined(source.AUTH_TOKEN_SECRET);
   const webOrigin = blankToUndefined(source.WEB_ORIGIN);
+  const stripeSecretKey = blankToUndefined(source.STRIPE_SECRET_KEY);
+  const stripeWebhookSecret = blankToUndefined(source.STRIPE_WEBHOOK_SECRET);
+  const zelleInstructions = blankToUndefined(source.ZELLE_INSTRUCTIONS);
+  const pagoMovilBank = blankToUndefined(source.PAGO_MOVIL_BANK);
+  const pagoMovilPhone = blankToUndefined(source.PAGO_MOVIL_PHONE);
+  const pagoMovilHolder = blankToUndefined(source.PAGO_MOVIL_HOLDER);
   const input: Record<string, string> = {};
   if (source.NODE_ENV) {
     input.NODE_ENV = source.NODE_ENV;
@@ -61,6 +84,24 @@ export function parseAppEnv(source: EnvSource): AppEnv {
   if (webOrigin) {
     input.WEB_ORIGIN = webOrigin;
   }
+  if (stripeSecretKey) {
+    input.STRIPE_SECRET_KEY = stripeSecretKey;
+  }
+  if (stripeWebhookSecret) {
+    input.STRIPE_WEBHOOK_SECRET = stripeWebhookSecret;
+  }
+  if (zelleInstructions) {
+    input.ZELLE_INSTRUCTIONS = zelleInstructions;
+  }
+  if (pagoMovilBank) {
+    input.PAGO_MOVIL_BANK = pagoMovilBank;
+  }
+  if (pagoMovilPhone) {
+    input.PAGO_MOVIL_PHONE = pagoMovilPhone;
+  }
+  if (pagoMovilHolder) {
+    input.PAGO_MOVIL_HOLDER = pagoMovilHolder;
+  }
   const parsed = envSchema.safeParse(input);
   if (!parsed.success) {
     throw new Error(`Invalid environment: ${parsed.error.issues.map((issue) => issue.message).join("; ")}`);
@@ -82,6 +123,14 @@ export function parseAppEnv(source: EnvSource): AppEnv {
       issues.push("AUTH_TOKEN_SECRET must not be the development placeholder in production");
     }
   }
+  if (stripeSecretKey?.startsWith("sk_live_") || stripeSecretKey?.startsWith("rk_live_")) {
+    issues.push("Stripe live keys are refused");
+  } else if (stripeSecretKey !== undefined && !stripeSecretKey.startsWith("sk_test_")) {
+    issues.push("STRIPE_SECRET_KEY must be a test key");
+  }
+  if (stripeWebhookSecret !== undefined && !stripeWebhookSecret.startsWith("whsec_")) {
+    issues.push("STRIPE_WEBHOOK_SECRET must be a webhook signing secret");
+  }
   if (issues.length > 0) {
     throw new Error(issues.join("; "));
   }
@@ -95,6 +144,13 @@ export function parseAppEnv(source: EnvSource): AppEnv {
     simulatedOtpAllowed: nodeEnv === "development" && otpProvider === "simulated",
     authTokenSecret: authTokenSecret ?? DEVELOPMENT_AUTH_TOKEN_SECRET,
     webOrigin: webOrigin ?? (nodeEnv === "development" ? "http://localhost:3000" : undefined),
+    stripeTestKey: stripeSecretKey,
+    stripeWebhookSecret,
+    zelleInstructions,
+    pagoMovil:
+      pagoMovilBank && pagoMovilPhone && pagoMovilHolder
+        ? { bank: pagoMovilBank, phone: pagoMovilPhone, holder: pagoMovilHolder }
+        : undefined,
   };
 }
 

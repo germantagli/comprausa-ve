@@ -71,6 +71,16 @@ const profileSchema = z
   .object({
     givenName: z.string().nullable(),
     familyName: z.string().nullable(),
+    role: z.enum([
+      "SUPER_ADMIN",
+      "OPERATIONS_ADMIN",
+      "PROCUREMENT_AGENT",
+      "FINANCE_AGENT",
+      "LOGISTICS_AGENT",
+      "SUPPORT_AGENT",
+      "CUSTOMER",
+    ]),
+    mfaSatisfied: z.boolean(),
   })
   .strict();
 
