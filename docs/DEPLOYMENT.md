@@ -38,7 +38,7 @@ Rollback previsto, cuando exista un release: volver la imagen anterior de la API
 
 ## Variables
 
-`.env.example` lista `NODE_ENV`, `PORT`, `APP_DISPLAY_NAME`, `DATABASE_URL` local, `SIMULATED_OTP_ENABLED` y huecos vacíos para Stripe, PayPal y Redis. Ningún valor de ese archivo es una credencial de un proveedor.
+`.env.example` lista `NODE_ENV`, `PORT`, `APP_DISPLAY_NAME`, `DATABASE_URL` local, `OTP_PROVIDER` y huecos vacíos para `AUTH_TOKEN_SECRET`, Stripe, PayPal y Redis. Ningún valor de ese archivo es una credencial de un proveedor.
 
 ## Local
 

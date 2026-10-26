@@ -8,7 +8,7 @@ Un monorepo que compila, un schema Prisma con la migración inicial, un contrato
 
 ## Qué queda para después
 
-Pantallas, cotización por enlace ya persistida, sesiones, pagos, compra en tienda, logística, panel y despliegue. Redis y BullMQ se usarán cuando exista un job real. Hoy no están instalados y la API arranca sin ellos.
+Cotización por enlace ya persistida, pagos, compra en tienda, logística, panel y despliegue. El ingreso por OTP y la sesión ya están. Redis y BullMQ se usarán cuando exista un job real. Hoy no están instalados y la API arranca sin ellos.
 
 ## Decisiones
 
@@ -24,7 +24,7 @@ Pantallas, cotización por enlace ya persistida, sesiones, pagos, compra en tien
 | Staging | Railway | API, worker futuro, Postgres y Redis. No hay proyecto vinculado ni despliegue hecho. |
 | Dinero | Centavos enteros (`BigInt` en Postgres, entero seguro en JSON) | Ni `float` ni `double`. Las tasas de cambio, si algún día existen, van en `Decimal(20, 10)` y no son un precio de venta. |
 | Catálogo | Puerto `ProductProvider` | La única implementación es `InternalDemoCatalogProvider`. No hay conectores externos. |
-| Identidad | Puerto `OtpProvider` | La única implementación es `SimulatedOtpProvider`, y se niega a construirse en producción. No hay sesión ni refresh token emitido. |
+| Identidad | Puerto `OtpProvider`, `jose` para el access token | `SimulatedOtpProvider` solo con `NODE_ENV=development` y `OTP_PROVIDER=simulated`. La sesión, la rotación y la revocación ya se emiten. |
 
 ## Monorepo
 
@@ -36,7 +36,7 @@ apps/api             NestJS, Prisma, salud, catálogo demo, OpenAPI fuera de pro
 packages/ui          Inventario de componentes por hacer y un aviso de fase. Solo web y admin.
 packages/types       Contratos: dinero, estados, ProductProvider, OtpProvider, registro de integraciones.
 packages/validation  Zod: centavos USD, correo, teléfono E.164, búsqueda del catálogo demo.
-packages/api-client  Cliente de GET /health.
+packages/api-client  Cliente de GET /health y del ingreso por OTP.
 packages/config      parseAppEnv y tsconfig base.
 packages/design-tokens  Paleta, tipo, espacio, radio, elevación.
 packages/utils       Formato de centavos con aritmética entera.
@@ -51,9 +51,9 @@ docs/
 
 ## Límites de contexto
 
-- Identidad: usuario, perfil, identidad, sesión, dispositivo, OTP. Hoy solo el puerto y el proveedor simulado.
+- Identidad: usuario, perfil, identidad, sesión, dispositivo, OTP, alta y guard de administración. El envío del código sigue simulado en desarrollo.
 - Catálogo: búsqueda y ficha a través de `ProductProvider`.
-- Cotización: enlace pegado, revisión humana, sin precio automático. El schema ya tiene `Quote` y `QuoteItem`. La API todavía no los escribe.
+- Cotización: enlace pegado, revisión humana, sin precio automático. La API guarda la URL como texto, deja la cotización en `PENDING_VALIDATION` y no la descarga. El cliente no puede pasarla a final.
 - Pedido: estados propios, separados de pago, compra y envío.
 - Pagos: estados propios. Ningún proveedor está conectado.
 - Logística: almacén, paquete, tracking y entrega. Sin API de carrier.
@@ -75,7 +75,7 @@ Los totales del pedido y de la cotización son nulos hasta que una persona fije 
 
 `ProductProvider` expone `searchProducts`, `getProduct`, `getAvailability` y `getPricing`. El demo devuelve artículos con `fictional: true`, disponibilidad `UNKNOWN` y precio `UNPRICED`. No descarga imágenes ni usa marcas de terceros.
 
-El flujo de enlace, todavía sin endpoint, será: la persona pega una URL, se guarda el texto, el pedido o la cotización queda en revisión y un operador cotiza a mano. El servidor no hace scraping ni llama a la tienda.
+El flujo de enlace ya tiene endpoint: la persona pega una URL, se guarda el texto y la cotización queda pendiente de validación. Un precio faltante no se convierte en cero. El servidor no hace scraping ni llama a la tienda. La instantánea final no la dispara el cliente.
 
 ## Pagos, en arquitectura
 
@@ -90,7 +90,7 @@ Estados de pago: PENDING, PROOF_SUBMITTED, UNDER_REVIEW, VERIFIED, REJECTED, FAI
 
 ## Configuración
 
-`parseAppEnv` exige `DATABASE_URL` en producción y rechaza `SIMULATED_OTP_ENABLED=true` en producción. En desarrollo la base puede faltar: `/health` no la toca y `/health/ready` responde no listo si Postgres no contesta. El proceso no abre sesión de Prisma al arrancar.
+`parseAppEnv` exige `DATABASE_URL` y `AUTH_TOKEN_SECRET` en producción, y rechaza `OTP_PROVIDER=simulated` fuera de development. En desarrollo la base puede faltar: la sesión queda en memoria, `/health` no toca Postgres y `/health/ready` responde no listo. El proceso no construye `PrismaClient` si falta `DATABASE_URL`.
 
 ## Fuera de este corte
 

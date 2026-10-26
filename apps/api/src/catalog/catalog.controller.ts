@@ -9,6 +9,24 @@ import { InternalDemoCatalogProvider } from "./internal-demo-catalog.provider";
 export class CatalogController {
   private readonly products: ProductProvider = new InternalDemoCatalogProvider();
 
+  @Get("filters")
+  @ApiOperation({ summary: "Filtros que el catálogo demo realmente trae. Hoy solo el texto del nombre." })
+  filters() {
+    return { fields: [{ id: "text" as const, label: "Nombre" }] };
+  }
+
+  @Get("categories")
+  @ApiOperation({ summary: "Categorías del catálogo interno. Hoy la lista está vacía. No inventa rubros." })
+  categories() {
+    return { items: [] as { id: string; name: string }[] };
+  }
+
+  @Get("stores")
+  @ApiOperation({ summary: "Tiendas internas. Hoy no hay ninguna. No lista tiendas externas." })
+  stores() {
+    return { items: [] as { id: string; name: string }[] };
+  }
+
   @Get("products")
   @ApiOperation({ summary: "Busca el catálogo interno ficticio. No consulta tiendas." })
   @ApiOkResponse({ description: "Artículos ficticios, sin precio ni existencia." })

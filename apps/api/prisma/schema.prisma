@@ -212,30 +212,53 @@ model UserIdentity {
 model Session {
   id               String    @id @default(uuid()) @db.Uuid
   userId           String    @db.Uuid
-  refreshTokenHash String
+  familyId         String    @db.Uuid
+  deviceId         String?   @db.Uuid
+  refreshTokenHash String    @unique
   rotatedFromId    String?   @db.Uuid
+  roleCode         String
+  /// OTP alone is not MFA. Admin routes must reject a false value.
+  mfaSatisfied     Boolean   @default(false)
   expiresAt        DateTime
   revokedAt        DateTime?
+  rotatedAt        DateTime?
   createdAt        DateTime  @default(now())
   user             User      @relation(fields: [userId], references: [id])
+  device           Device?   @relation(fields: [deviceId], references: [id])
   rotatedFrom      Session?  @relation("SessionRotation", fields: [rotatedFromId], references: [id])
   successors       Session[] @relation("SessionRotation")
 
   @@index([userId])
+  @@index([familyId])
   @@index([expiresAt])
 }
 
 model Device {
-  id         String         @id @default(uuid()) @db.Uuid
-  userId     String         @db.Uuid
-  platform   ClientPlatform
-  pushToken  String?
-  lastSeenAt DateTime?
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
-  user       User           @relation(fields: [userId], references: [id])
+  id             String         @id @default(uuid()) @db.Uuid
+  userId         String         @db.Uuid
+  clientDeviceId String
+  platform       ClientPlatform
+  pushToken      String?
+  lastSeenAt     DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  user           User           @relation(fields: [userId], references: [id])
+  sessions       Session[]
 
+  @@unique([userId, clientDeviceId])
   @@index([userId])
+}
+
+/// Single-use proof that an OTP was approved for a new account. Does not store the OTP.
+model RegistrationGrant {
+  jti         String    @id
+  channel     String
+  destination String
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([expiresAt])
 }
 
 model Address {

@@ -8,7 +8,7 @@ Esto no es asesoría legal ni una oferta comercial. Los montos, el inventario y 
 
 El MVP de cara al público, cuando se construya, debe permitir:
 
-1. Crear una cuenta con un OTP de un solo uso. Hoy el OTP es simulado y no abre sesión.
+1. Crear una cuenta con un OTP de un solo uso. El alta con nombre y apellido ya abre sesión. El envío del código sigue simulado y solo en desarrollo.
 2. Pegar un enlace de un producto y pedir una cotización manual.
 3. Ver que la cotización no tiene precio hasta que una persona del equipo lo escriba.
 4. Ver el estado del pedido separado del estado del pago y del estado de la compra en la tienda.
