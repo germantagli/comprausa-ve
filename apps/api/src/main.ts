@@ -25,7 +25,7 @@ async function bootstrap(): Promise<void> {
   if (env.nodeEnv !== "production") {
     const config = new DocumentBuilder()
       .setTitle(env.displayName)
-      .setDescription("Identidad por OTP, catálogo demo, cotización y pago en revisión. Sin compra en tienda y sin despliegue.")
+      .setDescription("Identidad por OTP, catálogo demo, cotización, pago en revisión y seguimiento manual. Sin fecha prometida y sin despliegue.")
       .setVersion("0.0.0")
       .addBearerAuth()
       .build();

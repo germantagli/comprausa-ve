@@ -9,6 +9,7 @@ import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 import { developmentOperator } from "./development-operator";
 import { FinanceGuard } from "./finance.guard";
+import { FulfillmentGuard } from "./fulfillment.guard";
 import { AUTH_CLOCK, AUTH_RATE_POLICY, AUTH_REPOSITORY, DEV_OPERATOR, OTP_PROVIDER, RATE_LIMITER, TOTP_KEY } from "./auth.tokens";
 import { TotpService } from "./totp.service";
 import type { Clock } from "./clock";
@@ -55,6 +56,7 @@ export class AuthModule {
       AccessGuard,
       AdminGuard,
       FinanceGuard,
+      FulfillmentGuard,
       TotpService,
       { provide: DEV_OPERATOR, useValue: developmentOperator(env.nodeEnv) },
       {
@@ -68,6 +70,7 @@ export class AuthModule {
       TokenService,
       AccessGuard,
       FinanceGuard,
+      FulfillmentGuard,
       AUTH_REPOSITORY,
       AUTH_CLOCK,
     ];

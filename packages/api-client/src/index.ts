@@ -27,9 +27,13 @@ export {
   createQuote,
   getCart,
   getPaymentMethods,
+  getOrder,
   getQuote,
+  listFulfillmentQueue,
+  listOrders,
   listProofQueue,
   publishQuoteAmount,
+  recordTrackingEvent,
   rejectPayment,
   removeCartItem,
   saveCartItem,
@@ -37,7 +41,7 @@ export {
   submitProof,
   verifyPayment,
 } from "./commerce";
-export type { CartView, PaymentMethods, PaymentView, QuoteView, VenezuelaAddressInput } from "./commerce";
+export type { CartView, CustomerOrder, OperatorOrder, PaymentMethods, PaymentView, QuoteView, VenezuelaAddressInput } from "./commerce";
 
 import { z } from "zod";
 

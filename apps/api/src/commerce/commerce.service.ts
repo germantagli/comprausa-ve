@@ -191,6 +191,7 @@ export class CommerceService {
       procurementStatus: "NOT_STARTED",
       grandTotalMinor: quote.snapshot.knownMinor,
       purchasedFromStore: false,
+      createdAt: new Date().toISOString(),
     });
     const saved = this.repository.saveQuote({ ...quote, status: "ACCEPTED", orderId: order.id });
     this.repository.appendAudit({

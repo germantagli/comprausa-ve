@@ -5,14 +5,30 @@ export type ReviewPaymentStatus = "PENDING" | "PROOF_SUBMITTED" | "UNDER_REVIEW"
 
 export type ReviewOrderStatus = "AWAITING_PAYMENT" | "PAYMENT_UNDER_REVIEW" | "PAID";
 
+export type StoredOrderStatus =
+  | ReviewOrderStatus
+  | "PROCUREMENT_PENDING"
+  | "PURCHASED_FROM_STORE"
+  | "RECEIVED_AT_US_WAREHOUSE"
+  | "INTERNATIONAL_TRANSIT"
+  | "CUSTOMS_PROCESSING"
+  | "IN_VENEZUELA"
+  | "OUT_FOR_DELIVERY"
+  | "DELIVERED"
+  | "CANCELLED"
+  | "EXCEPTION";
+
+export type StoredProcurementStatus = "NOT_STARTED" | "PENDING" | "ORDERED_AT_STORE" | "FAILED" | "CANCELLED";
+
 export interface StoredOrder {
   id: string;
   userId: string;
   quoteId: string;
-  status: ReviewOrderStatus;
-  procurementStatus: "NOT_STARTED";
+  status: StoredOrderStatus;
+  procurementStatus: StoredProcurementStatus;
   grandTotalMinor: number;
-  purchasedFromStore: false;
+  purchasedFromStore: boolean;
+  createdAt: string;
 }
 
 export interface StoredProof {
@@ -45,6 +61,25 @@ export interface AuditRecord {
   entityType: string;
   entityId: string;
   metadata: Record<string, string | number | boolean | null>;
+  createdAt: string;
+}
+
+export interface TrackingRecord {
+  id: string;
+  orderId: string;
+  status: StoredOrderStatus;
+  actorId: string;
+  note: string;
+  occurredAt: string;
+  source: "MANUAL_ADMIN";
+}
+
+export interface InternalNotice {
+  id: string;
+  userId: string;
+  orderId: string;
+  channel: "INTERNAL";
+  message: string;
   createdAt: string;
 }
 

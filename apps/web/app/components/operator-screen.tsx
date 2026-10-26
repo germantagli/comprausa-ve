@@ -180,6 +180,9 @@ export function OperatorScreen() {
   return (
     <main style={pageStyle}>
       <h1 style={titleStyle}>Revisión</h1>
+      <p style={bodyStyle}>
+        <Link href="/operador/pedidos" style={linkStyle}>Seguimiento de pedidos</Link>
+      </p>
       <p style={bodyStyle}>Escribe el importe final en centavos. No hay una tarifa automática. Verificar un pago no compra el artículo en la tienda.</p>
       <form
         onSubmit={(event) => {

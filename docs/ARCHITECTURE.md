@@ -67,7 +67,7 @@ Entidades: User, UserProfile, UserIdentity, Session, Device, Address, Role, Perm
 
 Estados de pedido: DRAFT, QUOTE_PENDING, AWAITING_PAYMENT, PAYMENT_UNDER_REVIEW, PAID, PROCUREMENT_PENDING, PURCHASED_FROM_STORE, RECEIVED_AT_US_WAREHOUSE, INTERNATIONAL_TRANSIT, CUSTOMS_PROCESSING, IN_VENEZUELA, OUT_FOR_DELIVERY, DELIVERED, CANCELLED, REFUND_PENDING, REFUNDED, EXCEPTION.
 
-`Order.procurementStatus` no cambia porque un pago pase a VERIFIED. El dinero recibido no es una compra en la tienda. `SupplierOrder` es el registro de esa compra, cuando exista.
+`Order.procurementStatus` no cambia porque un pago pase a VERIFIED. El dinero recibido no es una compra en la tienda. Después de `PAID`, un operador registra cada movimiento a mano, un paso por vez, sin fecha prometida. `PURCHASED_FROM_STORE` es esa acción. `SupplierOrder` sigue sin crearse en este corte.
 
 Los totales del pedido y de la cotización son nulos hasta que una persona fije un monto. El catálogo demo no escribe `ProductPriceSnapshot`.
 

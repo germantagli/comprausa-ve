@@ -3,7 +3,7 @@ import { Secret, TOTP } from "otpauth";
 import type { RequestAccess } from "./access.guard";
 import type { AuthRepository, TotpRecord } from "./auth.repository";
 import { AUTH_REPOSITORY, TOTP_KEY } from "./auth.tokens";
-import { canReviewPayments } from "./roles";
+import { canOperateFulfillment } from "./roles";
 import { TokenService } from "./token.service";
 import { openSecret, sealSecret } from "./totp-box";
 
@@ -21,7 +21,7 @@ export class TotpService {
   ) {}
 
   async enroll(access: RequestAccess): Promise<{ secret: string; otpauthUri: string }> {
-    if (!canReviewPayments(access.role)) {
+    if (!canOperateFulfillment(access.role)) {
       throw new HttpException({ error: "forbidden" }, HttpStatus.FORBIDDEN);
     }
     const current = await this.repository.readTotp(access.userId);
@@ -40,7 +40,7 @@ export class TotpService {
   }
 
   async verify(access: RequestAccess, code: string) {
-    if (!canReviewPayments(access.role)) {
+    if (!canOperateFulfillment(access.role)) {
       throw new HttpException({ error: "forbidden" }, HttpStatus.FORBIDDEN);
     }
     const record = await this.repository.readTotp(access.userId);

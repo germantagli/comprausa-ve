@@ -26,9 +26,9 @@ Sin `DATABASE_URL`, desarrollo y pruebas usan `MemoryAuthRepository`. Producció
 
 Roles sembrados en la migración `20261026190000_auth_session`: `SUPER_ADMIN`, `OPERATIONS_ADMIN`, `PROCUREMENT_AGENT`, `FINANCE_AGENT`, `LOGISTICS_AGENT`, `SUPPORT_AGENT`, `CUSTOMER`. La tabla `Permission` sigue vacía.
 
-`GET /v1/admin/access` y las rutas `/v1/operator/*` exigen access token vigente y `mfaSatisfied`. El ingreso por OTP deja ese flag en falso, también si el rol no es `CUSTOMER`. Sin token o con sesión revocada responde `unauthorized`. Con sesión de cliente, con un rol que no revisa pagos, o con rol interno sin MFA, la revisión responde `forbidden`.
+`GET /v1/admin/access` y las rutas `/v1/operator/*` exigen access token vigente y `mfaSatisfied`. El ingreso por OTP deja ese flag en falso, también si el rol no es `CUSTOMER`. Sin token o con sesión revocada responde `unauthorized`. La revisión de pagos responde `forbidden` a un cliente, a un rol que no revisa pagos y a un rol interno sin MFA. El seguimiento manual responde `forbidden` a un cliente, a `SUPPORT_AGENT` y a cualquier operador sin MFA.
 
-El segundo factor de `FINANCE_AGENT`, `OPERATIONS_ADMIN` y `SUPER_ADMIN` es TOTP con la librería `otpauth`, después del OTP. El secreto se guarda cifrado con AES-256-GCM de Node, derivado de `AUTH_TOKEN_SECRET`. No se escribe en logs. Confirmar el código actualiza `mfaSatisfied` en la sesión y emite otro access token. El token anterior deja de coincidir con la sesión. No hay una ruta de desarrollo que ponga MFA en verdadero. En las pruebas, ese claim se escribe en la sesión desde el propio test.
+El segundo factor de quien opera pagos o seguimiento es TOTP con la librería `otpauth`, después del OTP. El secreto se guarda cifrado con AES-256-GCM de Node, derivado de `AUTH_TOKEN_SECRET`. No se escribe en logs. Confirmar el código actualiza `mfaSatisfied` en la sesión y emite otro access token. El token anterior deja de coincidir con la sesión. No hay una ruta de desarrollo que ponga MFA en verdadero. En las pruebas, ese claim se escribe en la sesión desde el propio test.
 
 En desarrollo, el correo `finanzas@comprausa.test` recibe el rol `FINANCE_AGENT` al entrar. Eso no satisface MFA. En `test` y en producción ese mapa no existe.
 
@@ -42,7 +42,7 @@ PayPal no captura. Zelle y Pago Móvil no tienen cuenta receptora en el reposito
 
 El comprobante acepta JPEG, PNG o PDF, como máximo 2 MB, y el encabezado tiene que coincidir con el tipo. No se ejecuta. La clave de almacenamiento es hex aleatorio, sin el nombre original. Desarrollo lo escribe en el disco temporal del proceso. Producción usa el puerto `S3ProofStorage`, que hoy rechaza la escritura y no lee credenciales.
 
-Subir el archivo pone el pago en `PROOF_SUBMITTED` y el pedido en `PAYMENT_UNDER_REVIEW`. Verificar lo pasa a `VERIFIED` y el pedido a `PAID`, con `procurementStatus` en `NOT_STARTED`. Eso no crea una compra en la tienda.
+Subir el archivo pone el pago en `PROOF_SUBMITTED` y el pedido en `PAYMENT_UNDER_REVIEW`. Verificar lo pasa a `VERIFIED` y el pedido a `PAID`, con `procurementStatus` en `NOT_STARTED`. Eso no crea una compra en la tienda. El paso `PURCHASED_FROM_STORE` lo registra un operador, con nota y auditoría. El cuerpo del evento no trae una fecha de entrega. El aviso queda en memoria con canal interno.
 
 ## Dinero
 

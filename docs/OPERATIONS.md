@@ -24,7 +24,7 @@ Un pago verificado deja este campo en `NOT_STARTED`. Alguien, o un conector futu
 
 `Shipment.stage`: NOT_STARTED, RECEIVED_AT_US_WAREHOUSE, INTERNATIONAL_TRANSIT, CUSTOMS_PROCESSING, IN_VENEZUELA, OUT_FOR_DELIVERY, DELIVERED, EXCEPTION.
 
-No hay API de almacén ni de aduana. El admin, cuando exista, mueve estos estados a mano y escribe un `TrackingEvent` con origen `MANUAL_ADMIN`. No se calcula ni se muestra una fecha prometida. Un mensaje de carrier, el día que haya API, es otro origen (`CARRIER_API`) y tampoco se convierte en una promesa comercial si el texto no lo dice.
+No hay API de almacén ni de aduana. El operador mueve el pedido a mano, un paso por vez, y el evento queda con origen `MANUAL_ADMIN`, actor, nota y la hora del registro. No se calcula ni se muestra una fecha prometida. Un mensaje de carrier, el día que haya API, es otro origen (`CARRIER_API`) y tampoco se convierte en una promesa comercial si el texto no lo dice.
 
 `Warehouse.active` nace en falso. No se inventa una bodega en Miami.
 
