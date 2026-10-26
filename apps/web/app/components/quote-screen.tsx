@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { apiBase } from "../lib/api";
 import { readSession } from "../lib/session";
+import { PaymentPanel } from "./payment-panel";
 import { bodyStyle, buttonStyle, cardStyle, errorStyle, headingStyle, linkStyle, pageStyle, titleStyle } from "./styles";
 
 export function QuoteScreen({ quoteId }: { quoteId: string }) {
@@ -74,8 +75,9 @@ export function QuoteScreen({ quoteId }: { quoteId: string }) {
     <main style={pageStyle}>
       <h1 style={titleStyle}>Cotización</h1>
       <p role="status" style={headingStyle}>
-        {quote.status === "PENDING_VALIDATION" ? "Pendiente de validación" : "Final"}
+        {quote.status === "PENDING_VALIDATION" ? "Pendiente de validación" : quote.status === "FINAL" ? "Importe publicado" : "Aceptada"}
       </p>
+      <p style={bodyStyle}>Identificador: {quote.id}</p>
       <p style={bodyStyle}>Esta cotización no se puede marcar como pagada ni como final desde aquí.</p>
       <p style={bodyStyle}>
         {quote.address.state}, {quote.address.city}, {quote.address.municipality}. {quote.address.reference}
@@ -93,6 +95,7 @@ export function QuoteScreen({ quoteId }: { quoteId: string }) {
       </ul>
       <p style={headingStyle}>{subtotalLabel(quote.subtotal)}</p>
       {quote.snapshot ? <p style={bodyStyle}>Instantánea final: {formatUsdFromMinor(quote.snapshot.knownMinor)}</p> : null}
+      <PaymentPanel quote={quote} token={readSession()?.accessToken ?? ""} onChanged={() => setAttempt((current) => current + 1)} />
       <p style={bodyStyle}>
         <Link href="/carrito" style={linkStyle}>
           Volver al carrito

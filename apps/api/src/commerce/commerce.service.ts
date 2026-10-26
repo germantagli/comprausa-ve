@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Inject, Injectable } from "@nestjs/common";
 import type { ProductPricing } from "@comprausa/types";
 import { groupByStore, rememberPastedUrl, sumKnownMinor } from "@comprausa/utils";
 import { randomUUID } from "node:crypto";
+import { publishOperatorAmount } from "./quote-policy";
 import { InternalDemoCatalogProvider } from "../catalog/internal-demo-catalog.provider";
 import type { CartLine, SavedQuote, VenezuelaAddress } from "./memory-commerce.repository";
 import { MemoryCommerceRepository } from "./memory-commerce.repository";
@@ -108,6 +109,7 @@ export class CommerceService {
       address,
       lines,
       snapshot: null,
+      orderId: null,
     });
     return this.present(quote);
   }
@@ -121,6 +123,8 @@ export class CommerceService {
   }
 
   private present(quote: SavedQuote) {
+    const payment = this.repository.latestPaymentForQuote(quote.id);
+    const order = quote.orderId ? this.repository.readOrder(quote.orderId) : null;
     return {
       id: quote.id,
       status: quote.status,
@@ -128,7 +132,75 @@ export class CommerceService {
       lines: quote.lines,
       snapshot: quote.snapshot,
       subtotal: sumKnownMinor(quote.lines),
+      orderId: quote.orderId,
+      order: order
+        ? {
+            id: order.id,
+            status: order.status,
+            procurementStatus: order.procurementStatus,
+            purchasedFromStore: order.purchasedFromStore,
+            grandTotalMinor: order.grandTotalMinor,
+          }
+        : null,
+      payment: payment
+        ? {
+            id: payment.id,
+            method: payment.method,
+            status: payment.status,
+            amountMinor: payment.amountMinor,
+            rejectionReason: payment.rejectionReason,
+            reference: payment.reference,
+          }
+        : null,
     };
+  }
+
+  publishFinal(actorId: string, quoteId: string, amountMinor: number) {
+    const quote = this.repository.readQuote(quoteId);
+    if (!quote) {
+      throw new HttpException({ error: "not_found" }, HttpStatus.NOT_FOUND);
+    }
+    if (quote.snapshot || quote.status !== "PENDING_VALIDATION") {
+      throw new HttpException({ error: "immutable" }, HttpStatus.CONFLICT);
+    }
+    const published = publishOperatorAmount(quote, amountMinor);
+    const saved = this.repository.saveQuote(published);
+    this.repository.appendAudit({
+      actorId,
+      action: "quote.published",
+      entityType: "quote",
+      entityId: quoteId,
+      metadata: { amountMinor },
+    });
+    return this.present(saved);
+  }
+
+  acceptQuote(userId: string, quoteId: string) {
+    const quote = this.repository.readQuote(quoteId);
+    if (!quote || quote.userId !== userId) {
+      throw new HttpException({ error: "not_found" }, HttpStatus.NOT_FOUND);
+    }
+    if (quote.status !== "FINAL" || !quote.snapshot) {
+      throw new HttpException({ error: "forbidden" }, HttpStatus.FORBIDDEN);
+    }
+    const order = this.repository.saveOrder({
+      id: randomUUID(),
+      userId,
+      quoteId,
+      status: "AWAITING_PAYMENT",
+      procurementStatus: "NOT_STARTED",
+      grandTotalMinor: quote.snapshot.knownMinor,
+      purchasedFromStore: false,
+    });
+    const saved = this.repository.saveQuote({ ...quote, status: "ACCEPTED", orderId: order.id });
+    this.repository.appendAudit({
+      actorId: userId,
+      action: "quote.accepted",
+      entityType: "quote",
+      entityId: quoteId,
+      metadata: { amountMinor: quote.snapshot.knownMinor, orderId: order.id },
+    });
+    return this.present(saved);
   }
 
   rejectClientClose(): never {

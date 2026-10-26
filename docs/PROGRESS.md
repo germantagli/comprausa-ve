@@ -2,19 +2,22 @@
 
 ## En este corte
 
-- Ficha del artículo demo en web y móvil: fotos, nombre, marca, tienda, variantes y disponibilidad solo con el dato que existe. Sin precio se lee «Precio por cotización». Hay «Agregar al carrito» y «Comprar ahora».
-- La búsqueda de Inicio abre Explorar con el mismo texto. El único filtro es el nombre, porque el catálogo demo no trae marca, tienda ni precio.
-- Carrito con cantidad, eliminar, guardar para después y grupo por tienda. Los artículos demo quedan en «Sin tienda». El subtotal suma solo centavos conocidos. Un precio desconocido no entra como cero.
-- Dirección en Venezuela (estado, ciudad, municipio y punto de referencia) para pedir la cotización.
-- Pegar un enlace guarda la URL como texto y abre una línea manual. El servidor no descarga esa URL.
-- Si falta un precio, la cotización queda `PENDING_VALIDATION`. El cliente ve el estado y no puede marcarla como pagada ni final. La instantánea inmutable solo la escribe `finalizeBySystem` cuando todos los centavos existen.
-- Montos en enteros menores. Sin Postgres, el carrito y la cotización viven en memoria del proceso.
+- El cliente no paga una cotización `PENDING_VALIDATION`. Un operador `FINANCE_AGENT`, `OPERATIONS_ADMIN` o `SUPER_ADMIN` escribe el importe final en centavos y publica la instantánea. El cliente acepta esa cotización. No hay tarifa automática.
+- Stripe usa el SDK oficial y un Payment Intent solo si el entorno tiene una clave `sk_test_`. Sin clave, la opción dice que no está configurada. Las claves vivas se rechazan. CI no llama a Stripe: las pruebas usan un cliente falso, firma de webhook e idempotencia. No se guarda PAN.
+- PayPal es un puerto sin captura.
+- Zelle y Pago Móvil muestran instrucciones solo si están en el entorno. Pago Móvil registra banco, teléfono, referencia e importe. Una referencia repetida se rechaza.
+- Subir un comprobante deja el pago en `PROOF_SUBMITTED` y el pedido en `PAYMENT_UNDER_REVIEW`. No pasa solo a `VERIFIED` ni a `PAID`. El operador verifica o rechaza con motivo. `VERIFIED` pasa el pago a `VERIFIED` y el pedido a `PAID`. `PAID` no compra en la tienda.
+- El cliente no cambia esos estados ni ve el pago de otra persona. Cada cambio queda en auditoría. El archivo se limita por tipo y tamaño y no se ejecuta. En desarrollo se guarda en disco local; el puerto S3 no tiene credenciales.
+- Las rutas de operador exigen MFA. El TOTP, con `otpauth`, va después del OTP. Sin MFA la revisión responde 403. En pruebas, el claim de MFA sale de la sesión que arma el test.
+- Web y Expo: aceptar, elegir método, enviar comprobante y ver «en revisión». Pantalla mínima para publicar el importe y verificar o rechazar.
+
+Sin Postgres, la cotización y el pago siguen en la memoria del proceso.
 
 ## Siguiente incremento
 
-1. Pantalla interna para que el sistema escriba un precio y, solo entonces, cierre la cotización final. El cliente sigue sin ese botón.
-2. Transiciones manuales de logística en el admin, sin fechas prometidas. El panel sigue sin construirse.
-3. Pagos únicamente cuando la elegibilidad esté resuelta. El primer paso, si Stripe sigue vetado para la entidad, no es integrar Stripe: es decidir el medio permitido.
-4. Proveedor real de OTP y límite de tasa compartido entre instancias, cuando haya un entorno que lo justifique.
+1. Persistencia de cotización, pago y TOTP cuando haya Postgres en el entorno de ejecución.
+2. Transiciones manuales de logística, sin fechas prometidas. El resto del panel sigue sin construirse.
+3. Captura real de Stripe o PayPal solo si una entidad elegible confirma el medio. Hasta entonces la clave de prueba no se versiona.
+4. Proveedor real de OTP y límite de tasa compartido entre instancias.
 
 No desplegar en ese incremento salvo que se pida aparte.

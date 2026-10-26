@@ -160,7 +160,7 @@ describe("auth HTTP", () => {
       headers: { authorization: `Bearer ${first.accessToken}` },
     });
     expect(profile.status).toBe(200);
-    expect(await profile.json()).toEqual({ givenName: "Ana", familyName: "Pérez" });
+    expect(await profile.json()).toEqual({ givenName: "Ana", familyName: "Pérez", role: "CUSTOMER", mfaSatisfied: false });
     const refreshed = await post(booted.base, "/v1/auth/sessions/refresh", { refreshToken: first.refreshToken });
     const second = refreshed.json as { accessToken: string; refreshToken: string };
     expect(refreshed.status).toBe(200);

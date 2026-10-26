@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { ExploreScreen, HelpScreen, HomeScreen, OrdersScreen, ProfileScreen } from "./catalog-screens";
 import { MobileCartScreen, MobileProductScreen, MobileQuoteScreen } from "./commerce-screens";
+import { MobileOperatorScreen } from "./payment-screens";
 import { hasSeenOnboarding, markOnboardingSeen, resetOnboarding } from "./onboarding-memory";
 import { OnboardingScreen } from "./onboarding-screen";
 import { SignInScreen } from "./sign-in-screen";
@@ -28,6 +29,7 @@ export function ClientShell() {
   const [session, setSession] = useState<AuthenticatedSession | null>(null);
   const [productId, setProductId] = useState<string | null>(null);
   const [quoteId, setQuoteId] = useState<string | null>(null);
+  const [review, setReview] = useState(false);
 
   if (!seen) {
     return (
@@ -79,7 +81,10 @@ export function ClientShell() {
         {!help && !productId && quoteId ? (
           <MobileQuoteScreen quoteId={quoteId} session={session} onBack={() => setQuoteId(null)} />
         ) : null}
-        {!help && !productId && !quoteId && tab === "inicio" ? (
+        {!help && !productId && !quoteId && review && session ? (
+          <MobileOperatorScreen session={session} onSession={setSession} onBack={() => setReview(false)} />
+        ) : null}
+        {!help && !productId && !quoteId && !review && tab === "inicio" ? (
           <HomeScreen
             session={session}
             onOpenCart={() => setTab("carrito")}
@@ -87,17 +92,18 @@ export function ClientShell() {
             onOpenProduct={setProductId}
           />
         ) : null}
-        {!help && !productId && !quoteId && tab === "explorar" ? <ExploreScreen onOpenProduct={setProductId} /> : null}
-        {!help && !productId && !quoteId && tab === "carrito" ? (
+        {!help && !productId && !quoteId && !review && tab === "explorar" ? <ExploreScreen onOpenProduct={setProductId} /> : null}
+        {!help && !productId && !quoteId && !review && tab === "carrito" ? (
           <MobileCartScreen session={session} onOpenProduct={setProductId} onOpenQuote={setQuoteId} onSignIn={() => setSigningIn(true)} />
         ) : null}
-        {!help && !productId && !quoteId && tab === "pedidos" ? <OrdersScreen /> : null}
-        {!help && !productId && !quoteId && tab === "perfil" ? (
+        {!help && !productId && !quoteId && !review && tab === "pedidos" ? <OrdersScreen /> : null}
+        {!help && !productId && !quoteId && !review && tab === "perfil" ? (
           <ProfileScreen
             session={session}
             onSignIn={() => setSigningIn(true)}
             onSignedOut={() => setSession(null)}
             onHelp={() => setHelp(true)}
+            onReview={() => setReview(true)}
           />
         ) : null}
       </View>
@@ -113,6 +119,7 @@ export function ClientShell() {
                 setHelp(false);
                 setProductId(null);
                 setQuoteId(null);
+                setReview(false);
                 setTab(item.id);
               }}
               style={styles.tab}

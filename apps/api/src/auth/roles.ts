@@ -20,6 +20,12 @@ export function isAdminRole(role: RoleCode): boolean {
   return ADMIN_ROLES.has(role);
 }
 
+const PAYMENT_REVIEW_ROLES = new Set<RoleCode>(["SUPER_ADMIN", "OPERATIONS_ADMIN", "FINANCE_AGENT"]);
+
+export function canReviewPayments(role: RoleCode): boolean {
+  return PAYMENT_REVIEW_ROLES.has(role);
+}
+
 export function selectRole(codes: readonly string[]): RoleCode {
   const known = codes.filter(isRoleCode);
   return known.find((code) => code !== "CUSTOMER") ?? "CUSTOMER";

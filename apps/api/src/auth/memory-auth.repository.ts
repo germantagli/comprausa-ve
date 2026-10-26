@@ -8,6 +8,7 @@ import type {
   RegistrationGrantRecord,
   SessionRecord,
   SessionWrite,
+  TotpRecord,
 } from "./auth.repository";
 import { isRoleCode, type RoleCode } from "./roles";
 
@@ -29,6 +30,7 @@ export class MemoryAuthRepository implements AuthRepository {
     { id: string; userId: string; clientDeviceId: string; platform: ClientPlatform }
   >();
   private readonly grants = new Map<string, RegistrationGrantRecord>();
+  private readonly totp = new Map<string, TotpRecord>();
 
   async findUserById(id: string): Promise<AuthUser | null> {
     const user = this.users.get(id);
@@ -73,6 +75,27 @@ export class MemoryAuthRepository implements AuthRepository {
       throw new Error("Unknown user or role");
     }
     user.roleCode = roleCode;
+  }
+
+  async assignRole(userId: string, roleCode: RoleCode): Promise<void> {
+    this.setRole(userId, roleCode);
+  }
+
+  async setSessionMfa(sessionId: string, mfaSatisfied: boolean): Promise<void> {
+    const session = this.sessions.get(sessionId);
+    if (!session) {
+      throw new Error("Unknown session");
+    }
+    session.mfaSatisfied = mfaSatisfied;
+  }
+
+  async saveTotp(record: TotpRecord): Promise<void> {
+    this.totp.set(record.userId, { ...record });
+  }
+
+  async readTotp(userId: string): Promise<TotpRecord | null> {
+    const record = this.totp.get(userId);
+    return record ? { ...record } : null;
   }
 
   async upsertDevice(input: { userId: string; clientDeviceId: string; platform: ClientPlatform }): Promise<string> {

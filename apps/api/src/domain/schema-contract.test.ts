@@ -63,6 +63,7 @@ describe("prisma schema contract", () => {
       "Notification",
       "SupportTicket",
       "AuditLog",
+      "TotpCredential",
       "PricingRule",
       "CurrencyRate",
       "FeatureFlag",

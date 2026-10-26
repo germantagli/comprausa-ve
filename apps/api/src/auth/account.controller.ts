@@ -14,7 +14,7 @@ export class AccountController {
   @Get("profile")
   @ApiOperation({ summary: "Nombre de la sesión actual. No incluye cédula ni dirección." })
   async profile(@Req() request: { accessContext: RequestAccess }) {
-    const profile = await this.auth.profile(request.accessContext.userId);
+    const profile = await this.auth.profile(request.accessContext.userId, request.accessContext);
     if (!profile) {
       throw new HttpException({ error: "unauthorized" }, HttpStatus.UNAUTHORIZED);
     }

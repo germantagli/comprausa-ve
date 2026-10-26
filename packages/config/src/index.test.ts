@@ -53,5 +53,13 @@ describe("parseAppEnv", () => {
     expect(env.simulatedOtpAllowed).toBe(false);
     expect(env.nodeEnv).toBe("production");
     expect(env.authTokenSecret).toBe(productionSecret);
+    expect(env.stripeTestKey).toBeUndefined();
+  });
+
+  it("accepts a Stripe test key and refuses a live key", () => {
+    const env = parseAppEnv({ NODE_ENV: "development", STRIPE_SECRET_KEY: "sk_test_local_only" });
+    expect(env.stripeTestKey).toBe("sk_test_local_only");
+    expect(() => parseAppEnv({ NODE_ENV: "development", STRIPE_SECRET_KEY: "sk_live_real" })).toThrow(/live keys/);
+    expect(() => parseAppEnv({ NODE_ENV: "development", STRIPE_WEBHOOK_SECRET: "not-a-webhook-secret" })).toThrow(/webhook/);
   });
 });

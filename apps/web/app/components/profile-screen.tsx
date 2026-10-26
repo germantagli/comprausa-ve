@@ -102,6 +102,11 @@ export function ProfileScreen() {
         </div>
       ) : null}
       <p style={bodyStyle}>
+        <Link href="/operador" style={linkStyle}>
+          Revisión de pagos
+        </Link>
+      </p>
+      <p style={bodyStyle}>
         <Link href="/ayuda" style={linkStyle}>
           Ayuda
         </Link>

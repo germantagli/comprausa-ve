@@ -1,6 +1,6 @@
 # Seguridad
 
-Este documento fija controles de diseño y lo que este corte ya ejecuta. No certifica el sistema y no dice que sea invulnerable. Un atacante con tiempo, un error nuestro o una dependencia rota pueden abrir un hueco. No hay pago ni datos reales de clientes.
+Este documento fija controles de diseño y lo que este corte ya ejecuta. No certifica el sistema y no dice que sea invulnerable. Un atacante con tiempo, un error nuestro o una dependencia rota pueden abrir un hueco. No hay cobro en vivo ni datos reales de clientes.
 
 Marcos de referencia, sin declaración de cumplimiento:
 
@@ -26,9 +26,23 @@ Sin `DATABASE_URL`, desarrollo y pruebas usan `MemoryAuthRepository`. Producció
 
 Roles sembrados en la migración `20261026190000_auth_session`: `SUPER_ADMIN`, `OPERATIONS_ADMIN`, `PROCUREMENT_AGENT`, `FINANCE_AGENT`, `LOGISTICS_AGENT`, `SUPPORT_AGENT`, `CUSTOMER`. La tabla `Permission` sigue vacía.
 
-`GET /v1/admin/access` exige access token vigente y `mfaSatisfied`. El ingreso por OTP deja ese flag en falso, también si el rol no es `CUSTOMER`. Sin token o con sesión revocada responde `unauthorized`. Con sesión de cliente, o con rol interno sin MFA, responde `forbidden`. No hay panel ni recursos de pedido.
+`GET /v1/admin/access` y las rutas `/v1/operator/*` exigen access token vigente y `mfaSatisfied`. El ingreso por OTP deja ese flag en falso, también si el rol no es `CUSTOMER`. Sin token o con sesión revocada responde `unauthorized`. Con sesión de cliente, con un rol que no revisa pagos, o con rol interno sin MFA, la revisión responde `forbidden`.
 
-Cada lectura futura de pedido, cotización, comprobante o dirección tiene que filtrar por el usuario autenticado o por un permiso explícito. Un id adivinado no debe entregar el recurso de otra persona.
+El segundo factor de `FINANCE_AGENT`, `OPERATIONS_ADMIN` y `SUPER_ADMIN` es TOTP con la librería `otpauth`, después del OTP. El secreto se guarda cifrado con AES-256-GCM de Node, derivado de `AUTH_TOKEN_SECRET`. No se escribe en logs. Confirmar el código actualiza `mfaSatisfied` en la sesión y emite otro access token. El token anterior deja de coincidir con la sesión. No hay una ruta de desarrollo que ponga MFA en verdadero. En las pruebas, ese claim se escribe en la sesión desde el propio test.
+
+En desarrollo, el correo `finanzas@comprausa.test` recibe el rol `FINANCE_AGENT` al entrar. Eso no satisface MFA. En `test` y en producción ese mapa no existe.
+
+La cotización y el pago de este corte viven en memoria si no hay `DATABASE_URL`. Leer un pago filtra por el usuario autenticado. El id de otra persona responde `not_found`. Publicar el importe, verificar y rechazar quedan en las rutas de operador.
+
+## Pagos y archivos
+
+Stripe solo se construye con una clave `sk_test_`. Una clave `sk_live_` o `rk_live_` impide arrancar. Sin clave, el método responde que no está configurado y el proceso no llama a Stripe. El webhook exige la firma del SDK oficial y trata dos veces el mismo id de evento como duplicado. Las pruebas sustituyen el cliente y el verificador. No se guarda PAN ni el secreto del Payment Intent.
+
+PayPal no captura. Zelle y Pago Móvil no tienen cuenta receptora en el repositorio: las instrucciones salen del entorno y pueden estar vacías. El importe de Pago Móvil tiene que ser el de la instantánea. Una referencia ya usada responde `duplicate_reference`.
+
+El comprobante acepta JPEG, PNG o PDF, como máximo 2 MB, y el encabezado tiene que coincidir con el tipo. No se ejecuta. La clave de almacenamiento es hex aleatorio, sin el nombre original. Desarrollo lo escribe en el disco temporal del proceso. Producción usa el puerto `S3ProofStorage`, que hoy rechaza la escritura y no lee credenciales.
+
+Subir el archivo pone el pago en `PROOF_SUBMITTED` y el pedido en `PAYMENT_UNDER_REVIEW`. Verificar lo pasa a `VERIFIED` y el pedido a `PAID`, con `procurementStatus` en `NOT_STARTED`. Eso no crea una compra en la tienda.
 
 ## Dinero
 
@@ -40,7 +54,7 @@ Una IA, si más adelante ayuda a redactar, no confirma pagos, no cambia precios 
 
 ## Auditoría y operación
 
-`AuditLog` guarda actor, acción, entidad y metadata. Este corte no escribe ahí el ingreso. No se mete un OTP, un token ni un PAN. Los secretos van en el entorno del proveedor, nunca en git. `.env` está ignorado. `.env.example` no trae un `AUTH_TOKEN_SECRET` usable. Prisma no está en modo log de queries.
+`AuditLog` guarda actor, acción, entidad y metadata. El ingreso por OTP no se escribe ahí. Publicar el importe, aceptar la cotización, crear el pago, recibir el comprobante, el evento de Stripe y la verificación o el rechazo sí quedan registrados, sin OTP, sin token, sin PAN y sin los bytes del archivo. Los secretos van en el entorno del proveedor, nunca en git. `.env` está ignorado. `.env.example` no trae un `AUTH_TOKEN_SECRET` usable ni una clave de Stripe. Prisma no está en modo log de queries.
 
 En producción, `parseAppEnv` falla si falta `DATABASE_URL`, si `AUTH_TOKEN_SECRET` no alcanza 32 caracteres, si es el marcador de desarrollo, o si `OTP_PROVIDER=simulated`. OpenAPI se monta solo fuera de producción. El endpoint manual del OTP aparece en ese documento solo cuando el proveedor simulado está montado.
 
@@ -50,4 +64,4 @@ El ingreso valida el cuerpo con Zod y responde `invalid_request` sin repetir el 
 
 ## Qué no está hecho
 
-No hay cifrado de aplicación propio: la firma es `jose` y el refresh es un aleatorio de Node con hash SHA-256. No hay WAF, no hay prueba de penetración y no hay gestión de llaves. No hay proveedor real de correo o SMS. El límite de tasa no cruza procesos. Esas piezas se eligen cuando haya datos y pagos reales.
+El cifrado del secreto TOTP es AES-256-GCM de Node. La firma del access token es `jose` y el refresh es un aleatorio de Node con hash SHA-256. No hay WAF, no hay prueba de penetración y no hay gestión de llaves. No hay proveedor real de correo o SMS. El límite de tasa no cruza procesos. El pago de prueba no cobra en vivo.

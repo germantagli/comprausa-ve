@@ -2,7 +2,7 @@
 
 Plataforma en construcción para que una persona en Venezuela pida productos de tiendas de Estados Unidos y los reciba en Venezuela, sin administrar un casillero. El nombre es provisional y sale de `APP_DISPLAY_NAME`. La moneda de trabajo es USD.
 
-Este repositorio tiene la arquitectura de la fase 1, el ingreso por OTP y la app de cliente. No hay checkout, pagos ni panel.
+Este repositorio tiene la arquitectura de la fase 1, el ingreso por OTP, la app de cliente y el pago en revisión. No hay compra en tienda ni panel completo.
 
 ## Qué está de verdad
 
@@ -79,4 +79,4 @@ pnpm --filter @comprausa/api exec prisma migrate deploy
 
 ## Qué falta
 
-Checkout, pagos, compras en tienda, logística, panel y despliegue. La cotización por enlace ya se guarda pendiente, sin precio inventado. El orden propuesto está en `docs/PROGRESS.md`.
+Compra en tienda, logística, el resto del panel y despliegue. La cotización final la publica un operador y el comprobante queda en revisión. El orden propuesto está en `docs/PROGRESS.md`.
