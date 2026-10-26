@@ -10,6 +10,7 @@ import {
   type QuoteView,
 } from "@comprausa/api-client";
 import { formatUsdFromMinor } from "@comprausa/utils";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { apiBase } from "../lib/api";
 import { bodyStyle, buttonStyle, errorStyle, headingStyle, inputStyle, secondaryButtonStyle } from "./styles";
@@ -85,7 +86,15 @@ export function PaymentPanel({
   if (quote.payment && (quote.payment.status === "PROOF_SUBMITTED" || quote.payment.status === "UNDER_REVIEW")) {
     return <p role="status" style={headingStyle}>Tu pago está en revisión.</p>;
   }
-  if (quote.payment?.status === "VERIFIED" || quote.order?.status === "PAID") {
+  if (quote.payment?.status === "VERIFIED" || quote.order?.status === "PAID" || quote.order?.purchasedFromStore) {
+    if (quote.order?.purchasedFromStore) {
+      return (
+        <p style={bodyStyle}>
+          Pago verificado. La compra en la tienda quedó registrada.{" "}
+          {quote.orderId ? <Link href={`/pedidos/${quote.orderId}`}>Ver el pedido</Link> : null}
+        </p>
+      );
+    }
     return <p style={bodyStyle}>Pago verificado. Todavía no se compró en la tienda.</p>;
   }
   if (quote.payment?.status === "REJECTED") {

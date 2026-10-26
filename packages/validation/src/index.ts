@@ -152,6 +152,27 @@ export const totpCodeSchema = z
   })
   .strict();
 
+export const fulfillmentTargetSchema = z.enum([
+  "PROCUREMENT_PENDING",
+  "PURCHASED_FROM_STORE",
+  "RECEIVED_AT_US_WAREHOUSE",
+  "INTERNATIONAL_TRANSIT",
+  "CUSTOMS_PROCESSING",
+  "IN_VENEZUELA",
+  "OUT_FOR_DELIVERY",
+  "DELIVERED",
+  "CANCELLED",
+  "EXCEPTION",
+]);
+
+/** The operator records what already happened. The body has no delivery date. */
+export const trackingEventSchema = z
+  .object({
+    status: fulfillmentTargetSchema,
+    note: z.string().trim().min(1).max(280),
+  })
+  .strict();
+
 const paymentReferenceSchema = z
   .string()
   .trim()

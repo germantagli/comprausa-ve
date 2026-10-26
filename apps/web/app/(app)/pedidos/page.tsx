@@ -1,4 +1,4 @@
-import { OrdersScreen } from "../../components/empty-screens";
+import { OrdersScreen } from "../../components/orders-screen";
 
 export default function OrdersPage() {
   return <OrdersScreen />;

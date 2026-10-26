@@ -37,6 +37,32 @@ const cartSchema = z
   })
   .strict();
 
+const orderStatusSchema = z.enum([
+  "AWAITING_PAYMENT",
+  "PAYMENT_UNDER_REVIEW",
+  "PAID",
+  "PROCUREMENT_PENDING",
+  "PURCHASED_FROM_STORE",
+  "RECEIVED_AT_US_WAREHOUSE",
+  "INTERNATIONAL_TRANSIT",
+  "CUSTOMS_PROCESSING",
+  "IN_VENEZUELA",
+  "OUT_FOR_DELIVERY",
+  "DELIVERED",
+  "CANCELLED",
+  "EXCEPTION",
+]);
+
+const orderSummarySchema = z
+  .object({
+    id: z.string(),
+    status: orderStatusSchema,
+    procurementStatus: z.enum(["NOT_STARTED", "PENDING", "ORDERED_AT_STORE", "FAILED", "CANCELLED"]),
+    purchasedFromStore: z.boolean(),
+    grandTotalMinor: z.number().int().positive(),
+  })
+  .strict();
+
 const quoteLineSchema = z
   .object({
     description: z.string(),
@@ -72,16 +98,7 @@ const quoteSchema = z
       .nullable(),
     subtotal: subtotalSchema,
     orderId: z.string().nullable(),
-    order: z
-      .object({
-        id: z.string(),
-        status: z.enum(["AWAITING_PAYMENT", "PAYMENT_UNDER_REVIEW", "PAID"]),
-        procurementStatus: z.literal("NOT_STARTED"),
-        purchasedFromStore: z.literal(false),
-        grandTotalMinor: z.number().int().positive(),
-      })
-      .strict()
-      .nullable(),
+    order: orderSummarySchema.nullable(),
     payment: z
       .object({
         id: z.string(),
@@ -217,16 +234,7 @@ const paymentViewSchema = z
     payerPhone: z.string().nullable(),
     rejectionReason: z.string().nullable(),
     proof: z.object({ contentType: z.string(), byteLength: z.number().int().nonnegative() }).strict().nullable(),
-    order: z
-      .object({
-        id: z.string(),
-        status: z.enum(["AWAITING_PAYMENT", "PAYMENT_UNDER_REVIEW", "PAID"]),
-        procurementStatus: z.literal("NOT_STARTED"),
-        purchasedFromStore: z.literal(false),
-        grandTotalMinor: z.number().int().positive(),
-      })
-      .strict()
-      .nullable(),
+    order: orderSummarySchema.nullable(),
   })
   .strict();
 
@@ -296,6 +304,64 @@ export async function verifyPayment(baseUrl: string, accessToken: string, paymen
     .object({ payment: paymentViewSchema, order: paymentViewSchema.shape.order.unwrap() })
     .strict()
     .parse(await send(baseUrl, `/v1/operator/payments/${encodeURIComponent(paymentId)}/verify`, accessToken, "POST", {}, fetchImpl));
+}
+
+const timelineEventSchema = z
+  .object({
+    id: z.string(),
+    status: orderStatusSchema,
+    note: z.string(),
+    occurredAt: z.string(),
+  })
+  .strict();
+
+const noticeSchema = z
+  .object({
+    id: z.string(),
+    message: z.string(),
+    createdAt: z.string(),
+  })
+  .strict();
+
+const customerOrderSchema = orderSummarySchema
+  .extend({
+    timeline: z.array(timelineEventSchema),
+    notices: z.array(noticeSchema),
+  })
+  .strict();
+
+const operatorOrderSchema = customerOrderSchema
+  .extend({
+    allowed: z.array(orderStatusSchema),
+    timeline: z.array(timelineEventSchema.extend({ actorId: z.string() }).strict()),
+  })
+  .strict();
+
+export type CustomerOrder = z.infer<typeof customerOrderSchema>;
+export type OperatorOrder = z.infer<typeof operatorOrderSchema>;
+
+export async function listOrders(baseUrl: string, accessToken: string, fetchImpl: typeof fetch = fetch) {
+  return z.object({ items: z.array(customerOrderSchema) }).strict().parse(await send(baseUrl, "/v1/orders", accessToken, "GET", undefined, fetchImpl));
+}
+
+export async function getOrder(baseUrl: string, accessToken: string, orderId: string, fetchImpl: typeof fetch = fetch): Promise<CustomerOrder> {
+  return customerOrderSchema.parse(await send(baseUrl, `/v1/orders/${encodeURIComponent(orderId)}`, accessToken, "GET", undefined, fetchImpl));
+}
+
+export async function listFulfillmentQueue(baseUrl: string, accessToken: string, fetchImpl: typeof fetch = fetch) {
+  return z.object({ items: z.array(operatorOrderSchema) }).strict().parse(await send(baseUrl, "/v1/operator/orders", accessToken, "GET", undefined, fetchImpl));
+}
+
+export async function recordTrackingEvent(
+  baseUrl: string,
+  accessToken: string,
+  orderId: string,
+  body: { status: string; note: string },
+  fetchImpl: typeof fetch = fetch,
+): Promise<OperatorOrder> {
+  return operatorOrderSchema.parse(
+    await send(baseUrl, `/v1/operator/orders/${encodeURIComponent(orderId)}/events`, accessToken, "POST", body, fetchImpl),
+  );
 }
 
 export async function rejectPayment(

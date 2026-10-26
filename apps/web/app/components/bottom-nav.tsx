@@ -31,7 +31,7 @@ export function BottomNav() {
       }}
     >
       {items.map((item) => {
-        const current = item.href === "/" ? pathname === "/" : pathname === item.href;
+        const current = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(`${item.href}/`);
         return (
           <Link
             key={item.href}

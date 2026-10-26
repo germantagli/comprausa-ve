@@ -107,6 +107,11 @@ export function ProfileScreen() {
         </Link>
       </p>
       <p style={bodyStyle}>
+        <Link href="/operador/pedidos" style={linkStyle}>
+          Seguimiento de pedidos
+        </Link>
+      </p>
+      <p style={bodyStyle}>
         <Link href="/ayuda" style={linkStyle}>
           Ayuda
         </Link>

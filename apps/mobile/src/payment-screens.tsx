@@ -97,8 +97,14 @@ export function MobilePaymentPanel({
   if (quote.payment && (quote.payment.status === "PROOF_SUBMITTED" || quote.payment.status === "UNDER_REVIEW")) {
     return <Text style={styles.heading}>Tu pago está en revisión.</Text>;
   }
-  if (quote.payment?.status === "VERIFIED" || quote.order?.status === "PAID") {
-    return <Text style={styles.body}>Pago verificado. Todavía no se compró en la tienda.</Text>;
+  if (quote.payment?.status === "VERIFIED" || quote.order?.status === "PAID" || quote.order?.purchasedFromStore) {
+    return (
+      <Text style={styles.body}>
+        {quote.order?.purchasedFromStore
+          ? "Pago verificado. La compra en la tienda quedó registrada. El seguimiento está en Pedidos."
+          : "Pago verificado. Todavía no se compró en la tienda."}
+      </Text>
+    );
   }
 
   return (

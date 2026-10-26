@@ -18,6 +18,7 @@ import { colorTokens, fontTokens, radiusTokens, spaceTokens } from "@comprausa/d
 import { catalogPriceLabel } from "@comprausa/utils";
 import { useEffect, useState, type ReactNode } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { MobileOrdersScreen } from "./tracking-screens";
 
 const colors = colorTokens.light;
 const apiBase = "http://127.0.0.1:3001";
@@ -87,17 +88,8 @@ export function ExploreScreen({ onOpenProduct }: { onOpenProduct: (productId: st
   );
 }
 
-export function OrdersScreen() {
-  return (
-    <ScrollView contentContainerStyle={styles.page}>
-      <Text accessibilityRole="header" style={styles.title}>
-        Pedidos
-      </Text>
-      <Text accessibilityLiveRegion="polite" style={styles.body}>
-        No tienes pedidos activos.
-      </Text>
-    </ScrollView>
-  );
+export function OrdersScreen({ session }: { session: AuthenticatedSession | null }) {
+  return <MobileOrdersScreen session={session} />;
 }
 
 export function ProfileScreen({
@@ -106,12 +98,14 @@ export function ProfileScreen({
   onSignedOut,
   onHelp,
   onReview,
+  onTrack,
 }: {
   session: AuthenticatedSession | null;
   onSignIn: () => void;
   onSignedOut: () => void;
   onHelp: () => void;
   onReview: () => void;
+  onTrack: () => void;
 }) {
   const [phase, setPhase] = useState<Load<AccountProfile>>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
@@ -201,6 +195,9 @@ export function ProfileScreen({
       ) : null}
       <Pressable accessibilityRole="button" onPress={onReview} style={styles.linkHit}>
         <Text style={styles.link}>Revisión de pagos</Text>
+      </Pressable>
+      <Pressable accessibilityRole="button" onPress={onTrack} style={styles.linkHit}>
+        <Text style={styles.link}>Seguimiento de pedidos</Text>
       </Pressable>
       <Pressable accessibilityRole="button" onPress={onHelp} style={styles.linkHit}>
         <Text style={styles.link}>Ayuda</Text>

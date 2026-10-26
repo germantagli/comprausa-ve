@@ -2,8 +2,11 @@ import { Module } from "@nestjs/common";
 import { parseAppEnv } from "@comprausa/config";
 import { CommerceController } from "./commerce.controller";
 import { CommerceService } from "./commerce.service";
+import { FulfillmentController } from "./fulfillment.controller";
+import { FulfillmentService } from "./fulfillment.service";
 import { MemoryCommerceRepository } from "./memory-commerce.repository";
 import { OperatorController } from "./operator.controller";
+import { OrdersController } from "./orders.controller";
 import { PaymentController } from "./payment.controller";
 import { PAYMENT_INSTRUCTIONS, PaymentService } from "./payment.service";
 import { NoCapturePayPalPort, PAYPAL_PORT } from "./paypal-port";
@@ -12,10 +15,11 @@ import { createOfficialStripeClient, createOfficialWebhookVerifier, STRIPE_CLIEN
 import { StripeWebhookController } from "./stripe-webhook.controller";
 
 @Module({
-  controllers: [CommerceController, PaymentController, OperatorController, StripeWebhookController],
+  controllers: [CommerceController, PaymentController, OperatorController, FulfillmentController, OrdersController, StripeWebhookController],
   providers: [
     CommerceService,
     PaymentService,
+    FulfillmentService,
     MemoryCommerceRepository,
     { provide: PAYPAL_PORT, useClass: NoCapturePayPalPort },
     {

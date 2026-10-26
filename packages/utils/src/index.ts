@@ -96,6 +96,36 @@ export function rememberPastedUrl(url: string): PastedQuoteLine {
   };
 }
 
+const fulfillmentLabels: Record<string, string> = {
+  AWAITING_PAYMENT: "Esperando pago",
+  PAYMENT_UNDER_REVIEW: "Pago en revisión",
+  PAID: "Pagado",
+  PROCUREMENT_PENDING: "Compra pendiente",
+  PURCHASED_FROM_STORE: "Comprado en la tienda",
+  RECEIVED_AT_US_WAREHOUSE: "Recibido en bodega de Estados Unidos",
+  INTERNATIONAL_TRANSIT: "En tránsito internacional",
+  CUSTOMS_PROCESSING: "En aduana",
+  IN_VENEZUELA: "En Venezuela",
+  OUT_FOR_DELIVERY: "En reparto",
+  DELIVERED: "Entregado",
+  CANCELLED: "Cancelado",
+  EXCEPTION: "Incidencia",
+};
+
+export function fulfillmentLabel(status: string): string {
+  return fulfillmentLabels[status] ?? status;
+}
+
+/** The clock time when an operator recorded a movement. It is not a delivery promise. */
+export function recordedAtLabel(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return "Registrado";
+  }
+  const formatted = new Intl.DateTimeFormat("es-VE", { dateStyle: "medium", timeStyle: "short" }).format(date);
+  return `Registrado el ${formatted}`;
+}
+
 /** Formats integer cents with integer arithmetic. Not a parser for user input. */
 export function formatUsdFromMinor(amountMinor: number): string {
   if (!Number.isSafeInteger(amountMinor) || amountMinor < 0) {

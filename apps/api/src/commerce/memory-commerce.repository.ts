@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { Injectable } from "@nestjs/common";
-import type { AuditRecord, StoredOrder, StoredPayment } from "./payment-records";
+import type { AuditRecord, InternalNotice, StoredOrder, StoredPayment, TrackingRecord } from "./payment-records";
 import type { QuoteLifecycle, QuoteLine, QuoteSnapshot } from "./quote-policy";
 
 export interface CartLine {
@@ -37,6 +37,8 @@ export class MemoryCommerceRepository {
   private readonly orders = new Map<string, StoredOrder>();
   private readonly payments = new Map<string, StoredPayment>();
   private readonly audits: AuditRecord[] = [];
+  private readonly tracking: TrackingRecord[] = [];
+  private readonly notices: InternalNotice[] = [];
   private readonly webhookEvents = new Set<string>();
 
   listCart(userId: string): CartLine[] {
@@ -74,7 +76,8 @@ export class MemoryCommerceRepository {
   }
 
   saveOrder(order: StoredOrder): StoredOrder {
-    const stored: StoredOrder = { ...order, purchasedFromStore: false, procurementStatus: "NOT_STARTED" };
+    const existing = this.orders.get(order.id);
+    const stored: StoredOrder = { ...order, createdAt: order.createdAt || existing?.createdAt || new Date().toISOString() };
     this.orders.set(order.id, stored);
     return { ...stored };
   }
@@ -82,6 +85,10 @@ export class MemoryCommerceRepository {
   readOrder(id: string): StoredOrder | null {
     const order = this.orders.get(id);
     return order ? { ...order } : null;
+  }
+
+  listOrders(): StoredOrder[] {
+    return [...this.orders.values()].map((order) => ({ ...order }));
   }
 
   savePayment(payment: StoredPayment): StoredPayment {
@@ -128,6 +135,31 @@ export class MemoryCommerceRepository {
 
   listAudit(entityId: string): AuditRecord[] {
     return this.audits.filter((record) => record.entityId === entityId).map((record) => ({ ...record, metadata: { ...record.metadata } }));
+  }
+
+  appendTracking(input: Omit<TrackingRecord, "id" | "occurredAt" | "source">): TrackingRecord {
+    const record: TrackingRecord = {
+      ...input,
+      id: randomUUID(),
+      occurredAt: new Date().toISOString(),
+      source: "MANUAL_ADMIN",
+    };
+    this.tracking.push(record);
+    return { ...record };
+  }
+
+  listTracking(orderId: string): TrackingRecord[] {
+    return this.tracking.filter((record) => record.orderId === orderId).map((record) => ({ ...record }));
+  }
+
+  appendNotice(input: Omit<InternalNotice, "id" | "createdAt" | "channel">): InternalNotice {
+    const notice: InternalNotice = { ...input, id: randomUUID(), createdAt: new Date().toISOString(), channel: "INTERNAL" };
+    this.notices.push(notice);
+    return { ...notice };
+  }
+
+  listNotices(userId: string, orderId: string): InternalNotice[] {
+    return this.notices.filter((notice) => notice.userId === userId && notice.orderId === orderId).map((notice) => ({ ...notice }));
   }
 
   /** Returns false when this event id was already recorded. */
