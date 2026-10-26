@@ -4,8 +4,9 @@ import { listCatalogFilters } from "@comprausa/api-client";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { apiBase } from "../lib/api";
-import { ProductList, SearchForm, StoreList } from "./catalog-views";
-import { bodyStyle, buttonStyle, errorStyle, pageStyle, titleStyle } from "./styles";
+import { CategoryList, FilterSidebar, ProductList, SearchForm, StoreList } from "./catalog-views";
+import { PageFrame } from "./page-frame";
+import { bodyStyle, buttonStyle, errorStyle, mutedStyle, titleStyle } from "./styles";
 
 export function ExploreScreen() {
   const params = useSearchParams();
@@ -40,8 +41,9 @@ export function ExploreScreen() {
   }, [attempt]);
 
   return (
-    <main style={pageStyle}>
-      <h1 style={titleStyle}>Explorar</h1>
+    <PageFrame wide>
+      <h1 style={titleStyle}>Tiendas y catálogo</h1>
+      <p style={mutedStyle}>Busca en el catálogo demo o revisa las tiendas internas. Sin logos de marcas externas.</p>
       <SearchForm value={draft} onChange={setDraft} onSubmit={() => setQuery(draft.trim())} />
       {filters === "loading" ? (
         <p aria-busy="true" style={bodyStyle}>
@@ -59,12 +61,25 @@ export function ExploreScreen() {
         </div>
       ) : null}
       {filters === "ready" ? (
-        <p role="status" style={bodyStyle}>
-          El único filtro del catálogo demo es el nombre.
-        </p>
+        <div className="cve-listing-layout" style={{ marginTop: 24 }}>
+          <div className="cve-desktop-only">
+            <FilterSidebar query={query} />
+          </div>
+          <div>
+            <p className="cve-mobile-only" role="status" style={bodyStyle}>
+              El único filtro del catálogo demo es el nombre.
+            </p>
+            {query.trim().length > 0 ? (
+              <p style={bodyStyle}>
+                Resultados para «{query}»
+              </p>
+            ) : null}
+            <ProductList query={query} title="Resultados" label="Resultados del catálogo" />
+            <CategoryList />
+            <StoreList title="Tiendas internas" label="Tiendas internas" />
+          </div>
+        </div>
       ) : null}
-      <ProductList query={query} />
-      <StoreList title="Tiendas internas" label="Tiendas internas" />
-    </main>
+    </PageFrame>
   );
 }

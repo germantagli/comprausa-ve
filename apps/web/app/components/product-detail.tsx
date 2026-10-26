@@ -16,7 +16,22 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { apiBase } from "../lib/api";
 import { readSession } from "../lib/session";
-import { bodyStyle, buttonStyle, cardStyle, colors, errorStyle, headingStyle, pageStyle, rowStyle, secondaryButtonStyle, titleStyle } from "./styles";
+import { PageFrame } from "./page-frame";
+import {
+  badgeStyle,
+  bodyStyle,
+  buttonStyle,
+  cardStyle,
+  colors,
+  errorStyle,
+  headingStyle,
+  linkStyle,
+  mutedStyle,
+  rowStyle,
+  secondaryButtonStyle,
+  spaceTokens,
+  titleStyle,
+} from "./styles";
 
 type Detail = { product: CatalogDetail; pricing: CatalogPricing; availability: CatalogAvailability };
 
@@ -28,6 +43,7 @@ export function ProductDetail({ productId }: { productId: string }) {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -40,6 +56,7 @@ export function ProductDetail({ productId }: { productId: string }) {
       .then(([product, pricing, availability]) => {
         if (!cancelled) {
           setDetail({ product, pricing, availability });
+          setSelectedVariant(product.variants[0]?.id ?? null);
           setPhase("ready");
         }
       })
@@ -79,104 +96,170 @@ export function ProductDetail({ productId }: { productId: string }) {
 
   if (phase === "loading") {
     return (
-      <main style={pageStyle} aria-busy="true">
-        <p style={bodyStyle}>Cargando…</p>
-      </main>
+      <PageFrame>
+        <p style={bodyStyle} aria-busy="true">
+          Cargando…
+        </p>
+      </PageFrame>
     );
   }
   if (phase === "missing") {
     return (
-      <main style={pageStyle}>
+      <PageFrame>
         <h1 style={titleStyle}>Ficha</h1>
         <p role="status" style={bodyStyle}>
           No encontramos ese artículo.
         </p>
-      </main>
+      </PageFrame>
     );
   }
   if (phase === "error" || !detail) {
     return (
-      <main style={pageStyle}>
+      <PageFrame>
         <p role="alert" style={errorStyle}>
           No pudimos cargar la ficha.
         </p>
         <button type="button" style={buttonStyle} onClick={() => setAttempt((current) => current + 1)}>
           Reintentar
         </button>
-      </main>
+      </PageFrame>
     );
   }
 
   const { product, pricing, availability } = detail;
   return (
-    <main style={pageStyle}>
-      <article style={cardStyle}>
-        <p style={bodyStyle}>
-          <span style={badgeStyle}>Ficticio</span>
-        </p>
-        <PhotoSlot photos={product.photos} />
-        <h1 style={titleStyle}>{product.name}</h1>
-        <p style={bodyStyle}>Marca: {product.brand ?? "Sin marca en esta ficha."}</p>
-        <p style={bodyStyle}>Tienda: {product.store?.name ?? "Sin tienda."}</p>
-        <p style={headingStyle}>{catalogPriceLabel(pricing)}</p>
-        <VariantSlot variants={product.variants} />
-        <p style={bodyStyle}>{availabilityLabel(availability)}</p>
-        <p style={bodyStyle}>{product.description}</p>
-        <p style={bodyStyle}>{product.disclaimer}</p>
-        <div style={rowStyle}>
-          <button type="button" style={buttonStyle} disabled={busy} onClick={() => void add(false)}>
-            {busy ? "Espera…" : "Agregar al carrito"}
-          </button>
-          <button type="button" style={secondaryButtonStyle} disabled={busy} onClick={() => void add(true)}>
-            Comprar ahora
-          </button>
+    <PageFrame wide>
+      <p style={mutedStyle}>
+        <Link href="/explorar" style={linkStyle}>
+          Catálogo
+        </Link>
+        {" / "}
+        {product.name}
+      </p>
+      <div className="cve-pdp-layout">
+        <div style={{ ...cardStyle, gap: spaceTokens[3] }}>
+          <PhotoSlot photos={product.photos} />
         </div>
-        {message ? (
-          <p role="status" style={{ color: colors.success, marginTop: 12 }}>
-            {message} <Link href="/carrito">Ver carrito</Link>
+        <article style={{ ...cardStyle, gap: spaceTokens[3] }}>
+          <p style={{ margin: 0 }}>
+            <span style={badgeStyle}>Ficticio</span>
           </p>
-        ) : null}
-        {error ? (
-          <p role="alert" style={errorStyle}>
-            {error} {error.startsWith("Entra") ? <Link href="/entrar">Entrar</Link> : null}
-          </p>
-        ) : null}
-      </article>
-    </main>
+          <h1 style={titleStyle}>{product.name}</h1>
+          <p style={mutedStyle}>Tienda: {product.store?.name ?? "Sin tienda."}</p>
+          <p style={mutedStyle}>Marca: {product.brand ?? "Sin marca en esta ficha."}</p>
+          <p style={{ ...headingStyle, fontSize: 22, margin: 0 }}>{catalogPriceLabel(pricing)}</p>
+          <p style={bodyStyle}>{availabilityLabel(availability)}</p>
+          <VariantSlot
+            variants={product.variants}
+            selectedId={selectedVariant}
+            onSelect={setSelectedVariant}
+          />
+          <p style={bodyStyle}>{product.description}</p>
+          <p style={mutedStyle}>{product.disclaimer}</p>
+          <div style={rowStyle}>
+            <button type="button" style={{ ...buttonStyle, minWidth: 180 }} disabled={busy} onClick={() => void add(false)}>
+              {busy ? "Espera…" : "Agregar al carrito"}
+            </button>
+            <button type="button" style={secondaryButtonStyle} disabled={busy} onClick={() => void add(true)}>
+              Comprar ahora
+            </button>
+          </div>
+          {message ? (
+            <p role="status" style={{ color: colors.success, marginTop: 12 }}>
+              {message} <Link href="/carrito">Ver carrito</Link>
+            </p>
+          ) : null}
+          {error ? (
+            <p role="alert" style={errorStyle}>
+              {error} {error.startsWith("Entra") ? <Link href="/entrar">Entrar</Link> : null}
+            </p>
+          ) : null}
+        </article>
+      </div>
+      <section style={{ ...cardStyle, marginTop: spaceTokens[6] }}>
+        <h2 style={headingStyle}>Detalle</h2>
+        <p style={bodyStyle}>{product.description}</p>
+        <p style={mutedStyle}>Envío y reseñas reales no forman parte del catálogo demo.</p>
+      </section>
+    </PageFrame>
   );
 }
 
 function PhotoSlot({ photos }: { photos: readonly string[] }) {
   if (photos.length === 0) {
     return (
-      <p role="status" style={bodyStyle}>
+      <div
+        role="status"
+        style={{
+          alignItems: "center",
+          background: `linear-gradient(160deg, ${colors.background}, ${colors.border})`,
+          borderRadius: 12,
+          color: colors.muted,
+          display: "flex",
+          fontWeight: 600,
+          justifyContent: "center",
+          minHeight: 280,
+        }}
+      >
         No hay fotos.
-      </p>
+      </div>
     );
   }
   return (
-    <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+    <ul style={{ display: "grid", gap: 12, listStyle: "none", margin: 0, padding: 0 }}>
       {photos.map((photo) => (
-        <li key={photo}>{photo}</li>
+        <li key={photo} style={{ ...cardStyle, margin: 0 }}>
+          {photo}
+        </li>
       ))}
     </ul>
   );
 }
 
-function VariantSlot({ variants }: { variants: readonly { id: string; name: string }[] }) {
+function VariantSlot({
+  variants,
+  selectedId,
+  onSelect,
+}: {
+  variants: readonly { id: string; name: string }[];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+}) {
   if (variants.length === 0) {
     return (
-      <p role="status" style={bodyStyle}>
+      <p role="status" style={mutedStyle}>
         No hay variantes.
       </p>
     );
   }
   return (
-    <ul>
-      {variants.map((variant) => (
-        <li key={variant.id}>{variant.name}</li>
-      ))}
-    </ul>
+    <div>
+      <p style={headingStyle}>Opciones</p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        {variants.map((variant) => {
+          const selected = variant.id === selectedId;
+          return (
+            <button
+              key={variant.id}
+              type="button"
+              onClick={() => onSelect(variant.id)}
+              style={{
+                background: selected ? colors.primary : colors.surface,
+                border: `1px solid ${selected ? colors.primary : colors.border}`,
+                borderRadius: 999,
+                color: selected ? colors.primaryOn : colors.text,
+                cursor: "pointer",
+                font: "inherit",
+                minHeight: 40,
+                padding: "0 14px",
+              }}
+            >
+              {variant.name}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -186,12 +269,3 @@ function availabilityLabel(availability: CatalogAvailability): string {
   }
   return `Disponibilidad: ${availability.quantity}. ${availability.note}`;
 }
-
-const badgeStyle = {
-  border: `1px solid ${colors.deep}`,
-  borderRadius: 8,
-  display: "inline-block",
-  fontSize: 12,
-  lineHeight: "16px",
-  padding: "2px 8px",
-} as const;

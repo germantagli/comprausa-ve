@@ -13,13 +13,18 @@ Tokens en `packages/design-tokens`. El esquema activo es claro. El oscuro está 
 | Token | Claro | Uso |
 | --- | --- | --- |
 | Primary `#1054B8` | Texto blanco encima | Acciones principales |
-| Deep `#092C62` | Texto blanco encima | Énfasis corto, no bloques largos de texto pequeño si se busca más aire |
+| Deep `#092C62` | Texto blanco encima | Énfasis corto, héroes y marcas fuertes |
 | Cyan `#16B8D5` | Solo acento | Líneas, gráficos, iconos grandes. No es color de texto sobre blanco ni sobre `#F3F7FC` |
 | Background `#F3F7FC` | — | Fondo de página |
 | White `#FFFFFF` | — | Superficie |
 | Text `#14243B` | Sobre blanco y sobre el fondo | Texto |
+| Muted `#5B6B82` | — | Texto secundario, hints y navegación inactiva |
+| Border `#D7E0EC` | — | Bordes de tarjetas, inputs y divisores |
+| Warning `#C45C16` | — | Avisos no bloqueantes |
 | Success `#16865D` | Texto blanco, o el verde como texto sobre blanco | Confirmación |
 | Error `#D92D20` | Texto blanco, o el rojo como texto sobre blanco | Error |
+
+La maqueta de producto (web + móvil) guía la composición: cabecera de escritorio, héroe USA→Venezuela, chips de tiendas sin logos de marca, categorías en círculo, grilla de fichas, resumen de carrito con líneas de envío/comisión «por cotización», pedidos con pestañas Activos/Historial y menú de perfil. No se inventan precios ni se usan logos de Amazon, Walmart u otras tiendas.
 
 Contraste calculado el 26 de octubre de 2026 con la fórmula WCAG:
 

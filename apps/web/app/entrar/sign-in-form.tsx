@@ -185,7 +185,13 @@ export function SignInForm() {
       <style>{`
         .entrar-control:focus-visible { outline: 3px solid ${colors.primary}; outline-offset: 2px; }
       `}</style>
-      <h1 style={titleStyle}>Entrar</h1>
+      <p style={{ color: colors.deep, fontSize: fontTokens.sizes.title, fontWeight: 800, letterSpacing: "-0.02em", margin: `0 0 ${spaceTokens[4]}px` }}>
+        CompraUSA VE
+      </p>
+      <h1 style={titleStyle}>{step === "code" ? "Verifica tu código" : step === "destination" && channel === "phone" ? "Tu teléfono" : "Entrar"}</h1>
+      <p style={{ color: colors.muted, fontSize: fontTokens.sizes.caption, lineHeight: `${fontTokens.lineHeight.caption}px`, margin: `0 0 ${spaceTokens[4]}px` }}>
+        Ingreso con un código de un solo uso. Sin contraseña.
+      </p>
       {step === "done" && session ? (
         <div>
           <p role="status" style={successStyle}>
@@ -345,14 +351,15 @@ function failureMessage(error: unknown, step: Step): string {
 }
 
 const pageStyle = {
-  background: colors.background,
+  background: `linear-gradient(180deg, ${colors.background} 0%, ${colors.surface} 45%, ${colors.background} 100%)`,
   color: colors.text,
   fontFamily: fontTokens.family,
   fontSize: fontTokens.sizes.body,
   lineHeight: `${fontTokens.lineHeight.body}px`,
+  margin: "0 auto",
+  maxWidth: 480,
   minHeight: "100vh",
   padding: spaceTokens[6],
-  margin: 0,
 } as const;
 
 const titleStyle = {
@@ -378,12 +385,13 @@ const labelStyle = { display: "grid", gap: spaceTokens[2], marginBottom: spaceTo
 
 const inputStyle = {
   background: colors.surface,
-  border: `1px solid ${colors.deep}`,
+  border: `1px solid ${colors.border}`,
   borderRadius: radiusTokens.sm,
   color: colors.text,
   font: "inherit",
-  minHeight: 44,
+  minHeight: 48,
   padding: `0 ${spaceTokens[3]}px`,
+  width: "100%",
 } as const;
 
 const hintStyle = { color: colors.text, fontSize: fontTokens.sizes.caption, lineHeight: `${fontTokens.lineHeight.caption}px` } as const;

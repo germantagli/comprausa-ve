@@ -20,7 +20,8 @@ export function OnboardingScreen({ onDone, videoUrl }: { onDone: () => void; vid
         {text}
       </Text>
       <View style={styles.slot}>
-        <Text style={styles.caption}>Espacio para un video externo. No hay uno cargado.</Text>
+        <Text style={styles.slotTitle}>De tiendas de USA a tu dirección en Venezuela.</Text>
+        <Text style={styles.slotCaption}>Espacio para un video externo. No hay uno cargado.</Text>
         {videoUrl ? (
           <Text accessibilityRole="link" style={styles.link}>
             {videoUrl}
@@ -49,12 +50,14 @@ const styles = StyleSheet.create({
   },
   brand: {
     color: colors.deep,
-    fontSize: fontTokens.sizes.caption,
-    lineHeight: fontTokens.lineHeight.caption,
+    fontSize: fontTokens.sizes.title,
+    fontWeight: "800",
+    lineHeight: fontTokens.lineHeight.title,
   },
   title: {
     color: colors.text,
     fontSize: fontTokens.sizes.title,
+    fontWeight: "700",
     lineHeight: fontTokens.lineHeight.title,
     marginBottom: spaceTokens[4],
   },
@@ -69,15 +72,27 @@ const styles = StyleSheet.create({
     fontSize: fontTokens.sizes.caption,
     lineHeight: fontTokens.lineHeight.caption,
   },
+  slotTitle: {
+    color: colors.primaryOn,
+    fontSize: fontTokens.sizes.body,
+    fontWeight: "700",
+    lineHeight: fontTokens.lineHeight.body,
+    marginBottom: spaceTokens[2],
+  },
+  slotCaption: {
+    color: "rgba(255,255,255,0.85)",
+    fontSize: fontTokens.sizes.caption,
+    lineHeight: fontTokens.lineHeight.caption,
+  },
   link: {
-    color: colors.primary,
+    color: colors.primaryOn,
     marginTop: spaceTokens[2],
   },
   slot: {
-    backgroundColor: colors.surface,
-    borderRadius: radiusTokens.md,
+    backgroundColor: colors.deep,
+    borderRadius: radiusTokens.lg,
     marginBottom: spaceTokens[4],
-    minHeight: 120,
+    minHeight: 140,
     padding: spaceTokens[4],
   },
   primary: {
@@ -86,16 +101,17 @@ const styles = StyleSheet.create({
     borderRadius: radiusTokens.md,
     justifyContent: "center",
     marginBottom: spaceTokens[3],
-    minHeight: 44,
+    minHeight: 48,
   },
   primaryText: {
     color: colors.primaryOn,
     fontSize: fontTokens.sizes.body,
+    fontWeight: "600",
   },
   secondary: {
     alignItems: "center",
     backgroundColor: colors.surface,
-    borderColor: colors.deep,
+    borderColor: colors.border,
     borderRadius: radiusTokens.md,
     borderWidth: 1,
     justifyContent: "center",
