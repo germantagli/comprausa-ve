@@ -24,9 +24,9 @@ Tokens en `packages/design-tokens`. El esquema activo es claro. El oscuro está 
 | Success `#16865D` | Texto blanco, o el verde como texto sobre blanco | Confirmación |
 | Error `#D92D20` | Texto blanco, o el rojo como texto sobre blanco | Error |
 
-La maqueta de producto (web + móvil) guía la composición: cabecera de escritorio, héroe USA→Venezuela, chips de tiendas sin logos de marca, categorías en círculo, grilla de fichas, resumen de carrito con líneas de envío/comisión «por cotización», pedidos con pestañas Activos/Historial y menú de perfil. No se inventan precios ni se usan logos de Amazon, Walmart u otras tiendas.
+La maqueta de producto (web + móvil) guía la composición: cabecera de escritorio, héroe USA→Venezuela, chips de tiendas sin logos de marca, categorías en círculo, grilla de fichas, resumen de carrito con líneas de envío/comisión «por cotización», pedidos con pestañas Activos/Historial y menú de perfil. No se usan logos oficiales de Amazon, Walmart u otras tiendas. Los precios de maqueta, si se muestran, van etiquetados como no reales; si no hay dato: «Precio por cotización».
 
-En web, desde `768px` el sitio usa chrome de escritorio (cabecera horizontal a todo el ancho, sin barra inferior). En viewports más chicos queda la columna y la navegación inferior. El contenido usa una grilla ancha (`--cve-page-max`), no una columna de teléfono estirada.
+En web, desde `768px` el sitio usa chrome de escritorio (cabecera horizontal a todo el ancho, sin barra inferior). En viewports más chicos (≤767px) la columna debe recorrer el flujo de ~16 pantallas de la maqueta: splash, registro, OTP, bienvenida, inicio, tiendas, búsqueda, filtros, ficha, carrito, dirección, pago, resumen, seguimiento y perfil. El contenido de escritorio usa una grilla ancha (`--cve-page-max`), no una columna de teléfono estirada.
 
 Contraste calculado el 26 de octubre de 2026 con la fórmula WCAG:
 

@@ -16,7 +16,7 @@ import { catalogPriceLabel } from "@comprausa/utils";
 import Link from "next/link";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { apiBase } from "../lib/api";
-import { demoProductCards, referenceStoreCards } from "../lib/demo-catalog";
+import { demoProductCards, maquetaPriceFor, referenceStoreCards } from "../lib/demo-catalog";
 import { IconSearch } from "./icons";
 import {
   badgeStyle,
@@ -40,6 +40,7 @@ interface ProductCardData {
   item: CatalogSummary;
   pricing: CatalogPricing;
   availability: CatalogAvailability;
+  maquetaPriceLabel?: string;
   fromFallback?: boolean;
 }
 
@@ -303,7 +304,11 @@ export function FilterSidebar({ query }: { query: string }) {
   );
 }
 
-function ProductCard({ card }: { card: ProductCardData }) {
+function ProductCard({ card }: { card: ProductCardData & { maquetaPriceLabel?: string } }) {
+  const price =
+    "maquetaPriceLabel" in card && typeof card.maquetaPriceLabel === "string"
+      ? card.maquetaPriceLabel
+      : catalogPriceLabel(card.pricing);
   return (
     <article style={{ ...cardStyle, height: "100%" }}>
       <div
@@ -330,8 +335,12 @@ function ProductCard({ card }: { card: ProductCardData }) {
           {card.item.name}
         </Link>
       </h3>
-      <p style={{ ...bodyStyle, fontWeight: 700, margin: 0 }}>{catalogPriceLabel(card.pricing)}</p>
-      <p style={{ ...mutedStyle, margin: 0 }}>{card.availability.note}</p>
+      <p style={{ ...bodyStyle, fontWeight: 700, margin: 0 }}>{price}</p>
+      {price.includes("maqueta") ? (
+        <p style={{ ...mutedStyle, margin: 0 }}>Precio de maqueta, no es una oferta real.</p>
+      ) : (
+        <p style={{ ...mutedStyle, margin: 0 }}>{card.availability.note}</p>
+      )}
       <Link href={`/producto/${card.item.id}`} style={{ ...buttonStyle, alignItems: "center", display: "inline-flex", justifyContent: "center", textDecoration: "none" }}>
         Ver ficha
       </Link>
@@ -428,7 +437,7 @@ async function loadProducts(query: string): Promise<ProductCardData[]> {
           getCatalogPricing(apiBase, item.id),
           getCatalogAvailability(apiBase, item.id),
         ]);
-        return { item, pricing, availability };
+        return { item, pricing, availability, maquetaPriceLabel: maquetaPriceFor(item.id) };
       }),
     );
   } catch {

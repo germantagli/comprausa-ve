@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { readDemoOrder, type DemoOrder } from "../lib/checkout-draft";
+import { paymentMethodLabels } from "../lib/demo-chrome";
 import { PageFrame } from "./page-frame";
 import {
   bodyStyle,
@@ -27,12 +29,20 @@ const timeline = [
 
 export function OrdersScreen() {
   const [tab, setTab] = useState<"activos" | "historial">("activos");
+  const [order, setOrder] = useState<DemoOrder | null>(null);
+
+  useEffect(() => {
+    setOrder(readDemoOrder());
+  }, []);
+
+  const method =
+    order != null ? paymentMethodLabels.find((item) => item.id === order.paymentMethodId)?.label ?? order.paymentMethodId : null;
 
   return (
     <PageFrame wide>
       <div style={{ alignItems: "baseline", display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "space-between" }}>
-        <h1 style={titleStyle}>Mis pedidos</h1>
-        <p style={{ ...mutedStyle, margin: 0 }}>Seguimiento visual. Todavía no hay pedidos reales en esta pantalla.</p>
+        <h1 style={titleStyle}>Seguimiento</h1>
+        <p style={{ ...mutedStyle, margin: 0 }}>Pedidos de demostración en este navegador. No hay logística real.</p>
       </div>
 
       <div style={{ display: "flex", gap: spaceTokens[2], marginBottom: spaceTokens[4] }}>
@@ -51,34 +61,65 @@ export function OrdersScreen() {
 
       <div className="cve-cart-layout">
         <article style={cardStyle}>
-          <div style={{ alignItems: "center", display: "flex", gap: 12, justifyContent: "space-between" }}>
-            <h2 style={{ ...headingStyle, margin: 0 }}>{tab === "activos" ? "No tienes pedidos activos." : "Todavía no hay historial."}</h2>
-            <span
-              style={{
-                background: colors.background,
-                border: `1px solid ${colors.border}`,
-                borderRadius: 999,
-                color: colors.primary,
-                fontSize: 12,
-                fontWeight: 700,
-                padding: "4px 10px",
-                whiteSpace: "nowrap",
-              }}
-            >
-              Sin pedido
-            </span>
-          </div>
-          <p role="status" style={bodyStyle}>
-            Cuando exista un pedido, aquí verás el estado y el seguimiento.
-          </p>
-          <p style={mutedStyle}>Ejemplo de ficha: #CUA— — — —</p>
-          <Link href="/pago" style={linkStyle}>
-            Ver maqueta de pago
-          </Link>
+          {order && tab === "activos" ? (
+            <>
+              <div style={{ alignItems: "center", display: "flex", gap: 12, justifyContent: "space-between" }}>
+                <h2 style={{ ...headingStyle, margin: 0 }}>{order.id}</h2>
+                <span
+                  style={{
+                    background: colors.background,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: 999,
+                    color: colors.primary,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    padding: "4px 10px",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Demo
+                </span>
+              </div>
+              <p style={bodyStyle}>{order.statusLabel}</p>
+              <p style={mutedStyle}>
+                {order.address.city}, {order.address.state} · {method}
+              </p>
+              <p style={mutedStyle}>Creado: {new Date(order.createdAt).toLocaleString("es-VE")}</p>
+              <p style={mutedStyle}>Sin cobro real. Confirmación local de la maqueta.</p>
+            </>
+          ) : (
+            <>
+              <div style={{ alignItems: "center", display: "flex", gap: 12, justifyContent: "space-between" }}>
+                <h2 style={{ ...headingStyle, margin: 0 }}>
+                  {tab === "activos" ? "No tienes pedidos activos." : "Todavía no hay historial."}
+                </h2>
+                <span
+                  style={{
+                    background: colors.background,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: 999,
+                    color: colors.primary,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    padding: "4px 10px",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Sin pedido
+                </span>
+              </div>
+              <p role="status" style={bodyStyle}>
+                Cuando confirmes el resumen (sin cobrar), aquí verás el seguimiento de demostración.
+              </p>
+              <Link href="/carrito" style={linkStyle}>
+                Ir al carrito
+              </Link>
+            </>
+          )}
         </article>
 
         <section aria-label="Seguimiento" style={cardStyle}>
-          <h2 style={{ ...headingStyle, margin: 0 }}>Seguimiento</h2>
+          <h2 style={{ ...headingStyle, margin: 0 }}>Línea de tiempo</h2>
           <p style={mutedStyle}>Estructura de la maqueta. No hay un envío real asociado.</p>
           <ol style={{ listStyle: "none", margin: 0, padding: 0 }}>
             {timeline.map((step, index) => (
@@ -94,7 +135,7 @@ export function OrdersScreen() {
                 <span
                   aria-hidden="true"
                   style={{
-                    background: index === 3 ? colors.primary : colors.border,
+                    background: order && index <= 3 ? colors.primary : colors.border,
                     borderRadius: "50%",
                     display: "inline-block",
                     height: 12,

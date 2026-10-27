@@ -2,6 +2,7 @@
 
 import { onboardingSteps } from "@comprausa/types";
 import { fontTokens, spaceTokens } from "@comprausa/design-tokens";
+import Link from "next/link";
 import { useState } from "react";
 import { IconBox } from "./icons";
 import {
@@ -22,13 +23,13 @@ export function Onboarding({ onDone, videoUrl }: { onDone: () => void; videoUrl?
 
   return (
     <main style={{ ...pageStyle, display: "grid", placeItems: "center" }}>
-      <div className="cve-page" style={{ maxWidth: 520, width: "100%" }}>
-        <p style={wordmarkStyle}>CompraUSA VE</p>
+      <div className="cve-page cve-fade-up" style={{ maxWidth: 480, width: "100%" }}>
+        <p style={wordmarkStyle}>CompraUSA</p>
         <p style={{ margin: `${spaceTokens[4]}px 0 ${spaceTokens[2]}px`, color: colors.muted }}>
-          Paso {step + 1} de {onboardingSteps.length}
+          Bienvenida · paso {step + 1} de {onboardingSteps.length}
         </p>
         <h1 style={titleStyle}>{text}</h1>
-        <div className="cve-fade-up" style={{ ...bannerStyle, marginTop: spaceTokens[4] }}>
+        <div className="cve-fade-up-delay" style={{ ...bannerStyle, marginTop: spaceTokens[4] }}>
           <div style={{ alignItems: "center", display: "flex", gap: spaceTokens[3] }}>
             <IconBox />
             <p style={{ margin: 0 }}>De tiendas de USA a tu dirección en Venezuela.</p>
@@ -37,12 +38,22 @@ export function Onboarding({ onDone, videoUrl }: { onDone: () => void; videoUrl?
         <VideoSlot url={videoUrl} />
         <div style={rowStyle}>
           <button type="button" style={buttonStyle} onClick={() => (last ? onDone() : setStep((current) => current + 1))}>
-            Continuar
+            {last ? "Empezar" : "Continuar"}
           </button>
           <button type="button" style={secondaryButtonStyle} onClick={onDone}>
             Omitir
           </button>
         </div>
+        <p style={{ color: colors.muted, fontSize: fontTokens.sizes.caption, marginTop: spaceTokens[4] }}>
+          ¿Ya tienes cuenta?{" "}
+          <Link
+            href="/entrar"
+            onClick={onDone}
+            style={{ color: colors.primary, fontWeight: 600 }}
+          >
+            Entrar
+          </Link>
+        </p>
       </div>
     </main>
   );

@@ -2,13 +2,12 @@
 
 ## En este corte
 
-- Ficha del artículo demo en web y móvil: fotos, nombre, marca, tienda, variantes y disponibilidad solo con el dato que existe. Sin precio se lee «Precio por cotización». Hay «Agregar al carrito» y «Comprar ahora».
-- La búsqueda de Inicio abre Explorar con el mismo texto. El único filtro es el nombre, porque el catálogo demo no trae marca, tienda ni precio.
-- Carrito con cantidad, eliminar, guardar para después y grupo por tienda. Los artículos demo quedan en «Sin tienda». El subtotal suma solo centavos conocidos. Un precio desconocido no entra como cero.
-- Dirección en Venezuela (estado, ciudad, municipio y punto de referencia) para pedir la cotización.
-- Pegar un enlace guarda la URL como texto y abre una línea manual. El servidor no descarga esa URL.
-- Si falta un precio, la cotización queda `PENDING_VALIDATION`. El cliente ve el estado y no puede marcarla como pagada ni final. La instantánea inmutable solo la escribe `finalizeBySystem` cuando todos los centavos existen.
-- Montos en enteros menores. Sin Postgres, el carrito y la cotización viven en memoria del proceso.
+- Flujo móvil de maqueta (viewport estrecho): splash → bienvenida → inicio → tiendas → búsqueda/filtros → ficha → carrito → dirección → pago → resumen → seguimiento → perfil, con login/logout contra la API.
+- OTP simulado solo en local (`NODE_ENV=development`, `OTP_PROVIDER=simulated`). En producción el login llama a la API y el código solo llega con proveedor real; sin bypass.
+- Ficha del artículo demo: etiqueta Ficticio; precio de maqueta marcado como no real, o «Precio por cotización». Hay «Agregar al carrito» y «Comprar ahora».
+- Tiendas de referencia en texto (sin logos). Carrito API + pasos de checkout de maqueta sin cobro (`/direccion`, `/pago`, `/resumen`).
+- Dirección en Venezuela también alimenta la cotización real del carrito. Pegar un enlace guarda la URL como texto.
+- Si falta un precio, la cotización queda `PENDING_VALIDATION`. Montos en enteros menores. Sin Postgres, carrito/cotización viven en memoria del proceso.
 
 ## Siguiente incremento
 

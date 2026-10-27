@@ -44,7 +44,12 @@ export function ExploreScreen() {
 
   return (
     <PageFrame wide>
-      <h1 style={titleStyle}>Tiendas y catálogo</h1>
+      <div style={{ alignItems: "baseline", display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "space-between" }}>
+        <h1 style={titleStyle}>Búsqueda</h1>
+        <Link href={`/filtros${query ? `?text=${encodeURIComponent(query)}` : ""}`} style={{ ...buttonStyle, textDecoration: "none" }}>
+          Filtros
+        </Link>
+      </div>
       <p style={mutedStyle}>Busca en el catálogo demo. Las tiendas de referencia van en texto, sin logos oficiales.</p>
       <SearchForm value={draft} onChange={setDraft} onSubmit={() => setQuery(draft.trim())} />
 

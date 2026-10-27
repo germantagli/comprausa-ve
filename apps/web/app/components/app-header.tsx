@@ -8,7 +8,7 @@ import { colors, fontTokens, inputStyle, spaceTokens } from "./styles";
 
 const desktopLinks = [
   { href: "/", label: "Inicio" },
-  { href: "/explorar", label: "Tiendas" },
+  { href: "/tiendas", label: "Tiendas" },
   { href: "/explorar#categorias", label: "Categorías" },
   { href: "/#ofertas", label: "Ofertas" },
   { href: "/#como-funciona", label: "Cómo funciona" },
@@ -48,9 +48,11 @@ export function AppHeader() {
             const current =
               item.label === "Inicio"
                 ? pathname === "/"
-                : item.label === "Tiendas" || item.label === "Categorías"
-                  ? pathname.startsWith("/explorar")
-                  : false;
+                : item.label === "Tiendas"
+                  ? pathname.startsWith("/tiendas") || pathname.startsWith("/explorar")
+                  : item.label === "Categorías"
+                    ? pathname.startsWith("/explorar")
+                    : false;
             return (
               <Link
                 key={item.label}

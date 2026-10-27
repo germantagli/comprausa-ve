@@ -1,8 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import {
+  readCheckoutDraft,
+  saveCheckoutDraft,
+  type PaymentMethodId,
+} from "../lib/checkout-draft";
 import { checkoutSteps, paymentMethodLabels } from "../lib/demo-chrome";
+import { readSession } from "../lib/session";
+import { CheckoutStepper } from "./checkout-stepper";
 import { PageFrame } from "./page-frame";
 import {
   bodyStyle,
@@ -10,6 +18,7 @@ import {
   cardStyle,
   colors,
   headingStyle,
+  linkStyle,
   mutedStyle,
   spaceTokens,
   summaryBoxStyle,
@@ -17,43 +26,71 @@ import {
 } from "./styles";
 
 export function CheckoutScreen() {
-  const [method, setMethod] = useState<(typeof paymentMethodLabels)[number]["id"]>("pago-movil");
-  const [step] = useState(2);
+  const router = useRouter();
+  const [method, setMethod] = useState<PaymentMethodId>("pago-movil");
+  const [ready, setReady] = useState(false);
+  const [signedOut, setSignedOut] = useState(false);
+  const [hasAddress, setHasAddress] = useState(false);
+
+  useEffect(() => {
+    if (!readSession()) {
+      setSignedOut(true);
+      setReady(true);
+      return;
+    }
+    const draft = readCheckoutDraft();
+    setHasAddress(Boolean(draft.address.state && draft.address.city));
+    if (draft.paymentMethodId) {
+      setMethod(draft.paymentMethodId);
+    }
+    setReady(true);
+  }, []);
+
+  function continueToSummary(): void {
+    const draft = readCheckoutDraft();
+    saveCheckoutDraft({ ...draft, paymentMethodId: method });
+    router.push("/resumen");
+  }
+
+  if (!ready) {
+    return (
+      <PageFrame>
+        <h1 style={titleStyle}>Pago</h1>
+        <p style={bodyStyle}>Cargando…</p>
+      </PageFrame>
+    );
+  }
+
+  if (signedOut) {
+    return (
+      <PageFrame>
+        <h1 style={titleStyle}>Pago</h1>
+        <div style={cardStyle}>
+          <p style={bodyStyle}>Entra para elegir un método de pago.</p>
+          <Link href="/entrar" style={linkStyle}>
+            Entrar
+          </Link>
+        </div>
+      </PageFrame>
+    );
+  }
 
   return (
     <PageFrame wide>
       <h1 style={titleStyle}>Pago</h1>
       <p style={mutedStyle}>
-        Maqueta de checkout. El importe real sale de una cotización publicada por el equipo. Aquí no se cobra nada.
+        Maqueta de checkout. Aquí no se cobra nada. El importe real sale de una cotización publicada por el equipo.
       </p>
+      <CheckoutStepper steps={checkoutSteps} active={2} />
 
-      <ol className="cve-stepper" aria-label="Pasos del pago">
-        {checkoutSteps.map((label, index) => {
-          const active = index === step;
-          const done = index < step;
-          return (
-            <li
-              key={label}
-              style={{
-                alignItems: "center",
-                background: active ? colors.primary : colors.surface,
-                border: `1px solid ${active ? colors.primary : colors.border}`,
-                borderRadius: 999,
-                color: active ? colors.primaryOn : done ? colors.success : colors.muted,
-                display: "inline-flex",
-                fontSize: 13,
-                fontWeight: 700,
-                gap: 8,
-                minHeight: 40,
-                padding: `0 ${spaceTokens[3]}px`,
-              }}
-            >
-              <span>{index + 1}</span>
-              {label}
-            </li>
-          );
-        })}
-      </ol>
+      {!hasAddress ? (
+        <p role="status" style={bodyStyle}>
+          Todavía no hay dirección.{" "}
+          <Link href="/direccion" style={linkStyle}>
+            Agregar dirección
+          </Link>
+        </p>
+      ) : null}
 
       <div className="cve-checkout-layout">
         <section style={cardStyle} aria-label="Métodos de pago">
@@ -99,12 +136,12 @@ export function CheckoutScreen() {
           <SummaryLine label="Envío a Venezuela" value="Por cotización" />
           <p style={{ ...headingStyle, margin: 0 }}>Total estimado</p>
           <p style={{ ...bodyStyle, fontWeight: 700, margin: 0 }}>Por cotización</p>
-          <p style={mutedStyle}>Sin montos inventados. Primero pide la cotización desde el carrito.</p>
-          <Link href="/carrito" style={{ ...buttonStyle, alignItems: "center", display: "inline-flex", justifyContent: "center", textDecoration: "none" }}>
-            Ir al carrito
-          </Link>
-          <Link href="/pedidos" style={{ color: colors.primary, minHeight: 44, display: "inline-flex", alignItems: "center" }}>
-            Ver seguimiento de pedidos
+          <p style={mutedStyle}>Sin montos inventados. No se captura pago en este paso.</p>
+          <button type="button" style={buttonStyle} onClick={continueToSummary}>
+            Ir al resumen →
+          </button>
+          <Link href="/direccion" style={{ color: colors.primary, minHeight: 44, display: "inline-flex", alignItems: "center" }}>
+            Volver a la dirección
           </Link>
         </aside>
       </div>
