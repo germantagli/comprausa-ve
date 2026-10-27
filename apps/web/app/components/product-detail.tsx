@@ -15,6 +15,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { apiBase } from "../lib/api";
+import { demoProductDetail } from "../lib/demo-catalog";
 import { readSession } from "../lib/session";
 import { PageFrame } from "./page-frame";
 import {
@@ -62,6 +63,13 @@ export function ProductDetail({ productId }: { productId: string }) {
       })
       .catch((caught: unknown) => {
         if (cancelled) {
+          return;
+        }
+        const fallback = demoProductDetail(productId);
+        if (fallback) {
+          setDetail(fallback);
+          setSelectedVariant(fallback.product.variants[0]?.id ?? null);
+          setPhase("ready");
           return;
         }
         setPhase(caught instanceof ApiClientError && caught.status === 404 ? "missing" : "error");

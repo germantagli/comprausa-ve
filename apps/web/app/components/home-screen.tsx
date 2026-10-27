@@ -5,16 +5,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { apiBase } from "../lib/api";
-import { partnerStoreNames, popularCategoryLabels } from "../lib/demo-chrome";
+import { popularCategoryLabels } from "../lib/demo-chrome";
 import { readSession } from "../lib/session";
-import { ProductList, SearchForm } from "./catalog-views";
+import { ProductList, ReferenceStoreCards, SearchForm } from "./catalog-views";
 import { IconBox } from "./icons";
 import { PageFrame } from "./page-frame";
 import {
   bannerStyle,
   bodyStyle,
   buttonStyle,
-  chipStyle,
   colors,
   displayStyle,
   headingStyle,
@@ -129,17 +128,9 @@ export function HomeScreen() {
         </div>
       </section>
 
-      <section aria-label="Tiendas de referencia" style={{ marginTop: spaceTokens[6] }}>
-        <h2 style={headingStyle}>Tiendas de referencia</h2>
-        <p style={mutedStyle}>Nombres en texto. No hay logos oficiales ni conector activo a esas tiendas.</p>
-        <div className="cve-store-strip">
-          {partnerStoreNames.map((name) => (
-            <span key={name} style={chipStyle}>
-              {name}
-            </span>
-          ))}
-        </div>
-      </section>
+      <ProductList query="" />
+
+      <ReferenceStoreCards />
 
       <section aria-label="Categorías populares" id="categorias" style={{ marginTop: spaceTokens[6] }}>
         <h2 style={headingStyle}>Categorías populares</h2>
@@ -182,8 +173,6 @@ export function HomeScreen() {
           ))}
         </ul>
       </section>
-
-      <ProductList query="" />
 
       <section id="como-funciona" aria-label="Cómo funciona" style={{ marginTop: spaceTokens[8] }}>
         <h2 style={headingStyle}>Cómo funciona</h2>
