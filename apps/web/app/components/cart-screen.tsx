@@ -123,12 +123,19 @@ export function CartScreen() {
     return (
       <PageFrame>
         <h1 style={titleStyle}>Carrito</h1>
-        <p style={bodyStyle}>
-          Entra para ver tu carrito.{" "}
-          <Link href="/entrar" style={linkStyle}>
-            Entrar
-          </Link>
-        </p>
+        <div style={cardStyle}>
+          <p style={bodyStyle}>Tu carrito está vacío hasta que entres y agregues un artículo desde una ficha.</p>
+          <p style={mutedStyle}>Abre un producto demo (por ejemplo Caja de demostración Norte) y usa «Agregar al carrito».</p>
+          <p style={bodyStyle}>
+            <Link href="/entrar" style={linkStyle}>
+              Entrar
+            </Link>
+            {" · "}
+            <Link href="/#ofertas" style={linkStyle}>
+              Ver productos demo
+            </Link>
+          </p>
+        </div>
       </PageFrame>
     );
   }
@@ -153,9 +160,15 @@ export function CartScreen() {
       <div className="cve-cart-layout">
         <div>
           {activeCount === 0 && cart.saved.length === 0 ? (
-            <p role="status" style={bodyStyle}>
-              Tu carrito está vacío.
-            </p>
+            <div role="status" style={{ ...cardStyle, marginBottom: spaceTokens[4] }}>
+              <p style={bodyStyle}>Tu carrito está vacío.</p>
+              <p style={mutedStyle}>
+                Todavía no agregaste artículos. Abre una ficha del catálogo demo y pulsa «Agregar al carrito». Los productos demo no tienen precio publicado.
+              </p>
+              <Link href="/#ofertas" style={linkStyle}>
+                Ver productos demo
+              </Link>
+            </div>
           ) : null}
           {cart.groups.map((group) => (
             <section key={group.storeName} aria-label={group.storeName} style={{ marginBottom: spaceTokens[4] }}>

@@ -16,6 +16,7 @@ import { catalogPriceLabel } from "@comprausa/utils";
 import Link from "next/link";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { apiBase } from "../lib/api";
+import { demoProductCards, referenceStoreCards } from "../lib/demo-catalog";
 import { IconSearch } from "./icons";
 import {
   badgeStyle,
@@ -27,6 +28,7 @@ import {
   errorStyle,
   headingStyle,
   inputStyle,
+  linkStyle,
   mutedStyle,
   sectionStyle,
   spaceTokens,
@@ -38,6 +40,7 @@ interface ProductCardData {
   item: CatalogSummary;
   pricing: CatalogPricing;
   availability: CatalogAvailability;
+  fromFallback?: boolean;
 }
 
 export function SearchForm({
@@ -102,9 +105,16 @@ export function ProductList({
   label?: string;
 }) {
   const load = useLoad(() => loadProducts(query), [query]);
+  const usedFallback = load.phase.status === "ready" && load.phase.data.some((card) => card.fromFallback);
   return (
     <section aria-label={label} id="ofertas" style={sectionStyle}>
       <h2 style={headingStyle}>{title}</h2>
+      <p style={mutedStyle}>Artículos del catálogo demo. Llevan etiqueta Ficticio y no publican precio.</p>
+      {usedFallback ? (
+        <p role="status" style={mutedStyle}>
+          Mostramos el catálogo demo local porque el API no respondió. Los datos coinciden con internal-demo.
+        </p>
+      ) : null}
       <AsyncRegion
         load={load}
         empty="Todavía no hay artículos en el catálogo demo."
@@ -127,6 +137,44 @@ export function ProductList({
           )
         }
       />
+    </section>
+  );
+}
+
+export function ReferenceStoreCards() {
+  return (
+    <section aria-label="Tiendas de referencia" style={sectionStyle}>
+      <h2 style={headingStyle}>Tiendas de referencia</h2>
+      <p style={mutedStyle}>Tarjetas con el nombre en texto. No usamos logos oficiales ni conectores a esas tiendas.</p>
+      <ul className="cve-store-card-grid">
+        {referenceStoreCards.map((store) => (
+          <li key={store.id}>
+            <article style={{ ...cardStyle, height: "100%", minHeight: 140 }}>
+              <div
+                aria-hidden="true"
+                style={{
+                  alignItems: "center",
+                  background: colors.background,
+                  borderRadius: 8,
+                  color: colors.primary,
+                  display: "flex",
+                  fontSize: 22,
+                  fontWeight: 800,
+                  height: 56,
+                  justifyContent: "center",
+                }}
+              >
+                {store.name.slice(0, 1)}
+              </div>
+              <h3 style={{ ...headingStyle, margin: 0 }}>{store.name}</h3>
+              <p style={{ ...mutedStyle, margin: 0 }}>{store.note}</p>
+              <Link href="/explorar" style={linkStyle}>
+                Buscar en el catálogo demo
+              </Link>
+            </article>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
@@ -284,7 +332,9 @@ function ProductCard({ card }: { card: ProductCardData }) {
       </h3>
       <p style={{ ...bodyStyle, fontWeight: 700, margin: 0 }}>{catalogPriceLabel(card.pricing)}</p>
       <p style={{ ...mutedStyle, margin: 0 }}>{card.availability.note}</p>
-      <p style={{ ...mutedStyle, margin: 0 }}>{card.item.disclaimer}</p>
+      <Link href={`/producto/${card.item.id}`} style={{ ...buttonStyle, alignItems: "center", display: "inline-flex", justifyContent: "center", textDecoration: "none" }}>
+        Ver ficha
+      </Link>
     </article>
   );
 }
@@ -367,16 +417,23 @@ function useLoad<T>(load: () => Promise<T>, deps: readonly unknown[]): { phase: 
 }
 
 async function loadProducts(query: string): Promise<ProductCardData[]> {
-  const result = await searchCatalog(apiBase, query);
-  return Promise.all(
-    result.items.map(async (item) => {
-      const [pricing, availability] = await Promise.all([
-        getCatalogPricing(apiBase, item.id),
-        getCatalogAvailability(apiBase, item.id),
-      ]);
-      return { item, pricing, availability };
-    }),
-  );
+  try {
+    const result = await searchCatalog(apiBase, query);
+    if (result.items.length === 0) {
+      return demoProductCards(query);
+    }
+    return Promise.all(
+      result.items.map(async (item) => {
+        const [pricing, availability] = await Promise.all([
+          getCatalogPricing(apiBase, item.id),
+          getCatalogAvailability(apiBase, item.id),
+        ]);
+        return { item, pricing, availability };
+      }),
+    );
+  } catch {
+    return demoProductCards(query);
+  }
 }
 
 // Keep NamedCatalogList import used for typing clarity in StoreList/CategoryList paths.
