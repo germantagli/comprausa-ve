@@ -47,6 +47,8 @@ Dockerfile multi-stage: instala con pnpm, genera el cliente Prisma y arranca la 
 | Staging | Por crear vía IaC | `OTP_PROVIDER=none` hasta proveedor real | Apagados hasta elegibilidad | Ninguna |
 | Producción | Por crear | Real | Solo los que estén permitidos | Solo un conector probado |
 
+En staging/producción el OTP simulado **no puede activarse**: `parseAppEnv` rechaza `OTP_PROVIDER=simulated` si `NODE_ENV` no es `development`, y la ruta `POST /v1/auth/dev/otp-code` no se monta. La web de cliente sigue el flujo `/entrar` contra la API; el código solo llega al correo/teléfono cuando exista un proveedor real. No inventar un bypass en la UI pública.
+
 CI de verificación (`.github/workflows/verify.yml`) instala, hace typecheck y corre pruebas. No despliega la app.
 
 ## Salud y rollback

@@ -15,7 +15,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { apiBase } from "../lib/api";
-import { demoProductDetail } from "../lib/demo-catalog";
+import { demoProductDetail, maquetaPriceFor } from "../lib/demo-catalog";
 import { readSession } from "../lib/session";
 import { PageFrame } from "./page-frame";
 import {
@@ -34,7 +34,12 @@ import {
   titleStyle,
 } from "./styles";
 
-type Detail = { product: CatalogDetail; pricing: CatalogPricing; availability: CatalogAvailability };
+type Detail = {
+  product: CatalogDetail;
+  pricing: CatalogPricing;
+  availability: CatalogAvailability;
+  maquetaPriceLabel?: string;
+};
 
 export function ProductDetail({ productId }: { productId: string }) {
   const router = useRouter();
@@ -67,7 +72,12 @@ export function ProductDetail({ productId }: { productId: string }) {
         }
         const fallback = demoProductDetail(productId);
         if (fallback) {
-          setDetail(fallback);
+          setDetail({
+            product: fallback.product,
+            pricing: fallback.pricing,
+            availability: fallback.availability,
+            maquetaPriceLabel: fallback.maquetaPriceLabel,
+          });
           setSelectedVariant(fallback.product.variants[0]?.id ?? null);
           setPhase("ready");
           return;
@@ -135,6 +145,8 @@ export function ProductDetail({ productId }: { productId: string }) {
   }
 
   const { product, pricing, availability } = detail;
+  const maqueta = detail.maquetaPriceLabel ?? maquetaPriceFor(product.id);
+  const priceShown = maqueta ?? catalogPriceLabel(pricing);
   return (
     <PageFrame wide>
       <p style={mutedStyle}>
@@ -142,8 +154,8 @@ export function ProductDetail({ productId }: { productId: string }) {
           Inicio
         </Link>
         {" / "}
-        <Link href="/explorar" style={linkStyle}>
-          Catálogo
+        <Link href="/tiendas" style={linkStyle}>
+          Tiendas
         </Link>
         {" / "}
         {product.name}
@@ -159,7 +171,10 @@ export function ProductDetail({ productId }: { productId: string }) {
           <h1 style={titleStyle}>{product.name}</h1>
           <p style={mutedStyle}>Tienda: {product.store?.name ?? "Sin tienda."}</p>
           <p style={mutedStyle}>Marca: {product.brand ?? "Sin marca en esta ficha."}</p>
-          <p style={{ ...headingStyle, fontSize: 22, margin: 0 }}>{catalogPriceLabel(pricing)}</p>
+          <p style={{ ...headingStyle, fontSize: 22, margin: 0 }}>{priceShown}</p>
+          {maqueta ? (
+            <p style={mutedStyle}>Precio de maqueta visible solo como demostración. No es una oferta real.</p>
+          ) : null}
           <p style={bodyStyle}>{availabilityLabel(availability)}</p>
           <VariantSlot
             variants={product.variants}

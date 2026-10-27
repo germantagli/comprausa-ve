@@ -5,6 +5,7 @@ import { ONBOARDING_KEY } from "../lib/api";
 import { AppHeader } from "./app-header";
 import { BottomNav } from "./bottom-nav";
 import { Onboarding } from "./onboarding";
+import { Splash } from "./splash";
 import { colors, pageStyle } from "./styles";
 
 const ReplayContext = createContext<() => void>(() => undefined);
@@ -13,24 +14,34 @@ export function useReplayOnboarding(): () => void {
   return useContext(ReplayContext);
 }
 
+type Gate = "splash" | "loading" | "onboarding" | "app";
+
 export function ClientShell({ children }: { children: ReactNode }) {
-  const [seen, setSeen] = useState<boolean | null>(null);
+  const [gate, setGate] = useState<Gate>("splash");
 
   useEffect(() => {
-    setSeen(window.localStorage.getItem(ONBOARDING_KEY) === "1");
+    const splashMs = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 200 : 1200;
+    const timer = window.setTimeout(() => {
+      setGate(window.localStorage.getItem(ONBOARDING_KEY) === "1" ? "app" : "onboarding");
+    }, splashMs);
+    return () => window.clearTimeout(timer);
   }, []);
 
   function finish(): void {
     window.localStorage.setItem(ONBOARDING_KEY, "1");
-    setSeen(true);
+    setGate("app");
   }
 
   function replay(): void {
     window.localStorage.removeItem(ONBOARDING_KEY);
-    setSeen(false);
+    setGate("onboarding");
   }
 
-  if (seen === null) {
+  if (gate === "splash") {
+    return <Splash />;
+  }
+
+  if (gate === "loading") {
     return (
       <main style={pageStyle} aria-busy="true">
         <div className="cve-page">
@@ -40,7 +51,7 @@ export function ClientShell({ children }: { children: ReactNode }) {
     );
   }
 
-  if (!seen) {
+  if (gate === "onboarding") {
     return <Onboarding onDone={finish} />;
   }
 

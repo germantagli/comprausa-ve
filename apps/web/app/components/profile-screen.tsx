@@ -26,9 +26,10 @@ type Phase =
   | { status: "ready"; profile: AccountProfile };
 
 const menu = [
-  { href: "/pedidos", label: "Mis pedidos" },
-  { href: "/carrito", label: "Direcciones", note: "La dirección se pide al cotizar." },
-  { href: "/pago", label: "Métodos de pago", note: "Maqueta de checkout; el cobro sale de la cotización." },
+  { href: "/pedidos", label: "Mis pedidos / Seguimiento" },
+  { href: "/direccion", label: "Direcciones", note: "Borrador de maqueta en este navegador." },
+  { href: "/pago", label: "Métodos de pago", note: "Maqueta de checkout; aquí no se cobra." },
+  { href: "/tiendas", label: "Tiendas", note: "Referencias en texto, sin logos oficiales." },
   { href: "/ayuda", label: "Favoritos", note: "Todavía no está disponible." },
   { href: "/ayuda", label: "Notificaciones", note: "Todavía no está disponible." },
   { href: "/ayuda", label: "Ayuda" },

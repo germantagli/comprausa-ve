@@ -128,6 +128,20 @@ export function HomeScreen() {
         </div>
       </section>
 
+      <p className="cve-mobile-only" style={{ ...mutedStyle, marginTop: spaceTokens[4] }}>
+        <Link href="/tiendas" style={linkStyle}>
+          Ver tiendas
+        </Link>
+        {" · "}
+        <Link href="/filtros" style={linkStyle}>
+          Filtros
+        </Link>
+        {" · "}
+        <Link href="/explorar" style={linkStyle}>
+          Búsqueda
+        </Link>
+      </p>
+
       <ProductList query="" />
 
       <ReferenceStoreCards />

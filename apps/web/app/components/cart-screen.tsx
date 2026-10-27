@@ -221,9 +221,19 @@ export function CartScreen() {
             </button>
             <p style={mutedStyle}>El pago llega después de que el equipo publique el importe de la cotización.</p>
             <p style={mutedStyle}>
-              <Link href="/pago" style={linkStyle}>
-                Ver maqueta de checkout
+              Flujo de maqueta móvil:{" "}
+              <Link href="/direccion" style={linkStyle}>
+                dirección
               </Link>
+              {" → "}
+              <Link href="/pago" style={linkStyle}>
+                pago
+              </Link>
+              {" → "}
+              <Link href="/resumen" style={linkStyle}>
+                resumen
+              </Link>
+              . Sin cobro real.
             </p>
           </form>
         </div>
@@ -238,8 +248,8 @@ export function CartScreen() {
           <p style={{ ...headingStyle, margin: 0 }}>Total estimado</p>
           <p style={{ ...bodyStyle, fontWeight: 700, margin: 0 }}>{subtotalLabel(cart.subtotal)}</p>
           <p style={mutedStyle}>Sin montos inventados. El total final sale de la cotización revisada.</p>
-          <Link href="/pago" style={{ ...buttonStyle, alignItems: "center", display: "inline-flex", justifyContent: "center", textDecoration: "none" }}>
-            Continuar al pago →
+          <Link href="/direccion" style={{ ...buttonStyle, alignItems: "center", display: "inline-flex", justifyContent: "center", textDecoration: "none" }}>
+            Continuar · Dirección →
           </Link>
         </aside>
       </div>

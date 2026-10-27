@@ -12,8 +12,17 @@ export interface DemoProductCard {
   item: CatalogSummary;
   pricing: CatalogPricing;
   availability: CatalogAvailability;
+  /** Precio solo de maqueta, marcado como no real en la UI. */
+  maquetaPriceLabel?: string;
   fromFallback?: boolean;
 }
+
+/** Montos visibles de la maqueta: no son oferta ni cotización real. */
+const MAQUETA_PRICES: Record<string, string> = {
+  "demo-norte": "USD 24.90 · maqueta (no real)",
+  "demo-centro": "USD 12.50 · maqueta (no real)",
+  "demo-sur": "USD 39.00 · maqueta (no real)",
+};
 
 const DEMO_DETAILS: readonly CatalogDetail[] = [
   {
@@ -86,6 +95,7 @@ export function demoProductCards(query = ""): DemoProductCard[] {
     item,
     pricing: unpriced(item.id),
     availability: unknownStock(item.id),
+    maquetaPriceLabel: MAQUETA_PRICES[item.id],
     fromFallback: true,
   }));
 }
@@ -94,6 +104,7 @@ export function demoProductDetail(productId: string): {
   product: CatalogDetail;
   pricing: CatalogPricing;
   availability: CatalogAvailability;
+  maquetaPriceLabel?: string;
 } | null {
   const product = DEMO_DETAILS.find((item) => item.id === productId) ?? null;
   if (!product) {
@@ -103,7 +114,12 @@ export function demoProductDetail(productId: string): {
     product,
     pricing: unpriced(product.id),
     availability: unknownStock(product.id),
+    maquetaPriceLabel: MAQUETA_PRICES[product.id],
   };
+}
+
+export function maquetaPriceFor(productId: string): string | undefined {
+  return MAQUETA_PRICES[productId];
 }
 
 export const referenceStoreCards = [
