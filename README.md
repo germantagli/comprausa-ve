@@ -64,7 +64,7 @@ curl -s -X POST http://127.0.0.1:3001/v1/auth/dev/otp-code \
   -d '{"channel":"email","destination":"ana@example.com"}'
 ```
 
-El sitio, en `http://127.0.0.1:3000`, abre splash → bienvenida → inicio. En viewport estrecho el flujo de maqueta cubre splash, registro/OTP (`/entrar`), bienvenida, inicio, tiendas, búsqueda, filtros, ficha, carrito, dirección, pago, resumen, seguimiento y perfil.
+El sitio, en `http://127.0.0.1:3000`, en viewport estrecho abre el splash CompraUSA con botón **Comenzar** (nunca el buscador primero). Comenzar lleva a registro/OTP (`/entrar`); tras entrar ves bienvenida (si aplica) e inicio con el buscador. El flujo de maqueta sigue con tiendas, búsqueda, filtros, ficha, carrito, dirección, pago, resumen, seguimiento y perfil. En escritorio el chrome ancho sigue disponible sin pasar por el splash de teléfono.
 
 En desarrollo, `/entrar` puede rellenar el OTP llamando a `POST /v1/auth/dev/otp-code` solo si `NODE_ENV=development` y la API arrancó con `OTP_PROVIDER=simulated`. En la web pública (Railway / producción) ese endpoint no existe: el login sigue llamando a la API, pero el código solo llega si hay un proveedor OTP real. No hay bypass de producción (`OTP_PROVIDER=simulated` se rechaza fuera de development).
 
