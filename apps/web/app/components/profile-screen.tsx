@@ -78,6 +78,8 @@ export function ProfileScreen() {
       await revokeSession(apiBase, session.accessToken);
       clearSession();
       setPhase({ status: "signed-out" });
+      // En teléfono volvemos al splash (Comenzar → registro/OTP), no al buscador.
+      window.location.assign("/");
     } catch (caught) {
       setLogoutError(caught instanceof ApiClientError ? "No pudimos cerrar la sesión." : "No pudimos cerrar la sesión.");
     } finally {

@@ -1,7 +1,9 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import { ONBOARDING_KEY } from "../lib/api";
+import { readSession } from "../lib/session";
 import { AppHeader } from "./app-header";
 import { BottomNav } from "./bottom-nav";
 import { Onboarding } from "./onboarding";
@@ -14,20 +16,42 @@ export function useReplayOnboarding(): () => void {
   return useContext(ReplayContext);
 }
 
-type Gate = "splash" | "loading" | "onboarding" | "app";
+type Gate = "checking" | "splash" | "onboarding" | "app";
+
+function isPhoneViewport(): boolean {
+  return window.matchMedia("(max-width: 767px)").matches;
+}
 
 export function ClientShell({ children }: { children: ReactNode }) {
-  const [gate, setGate] = useState<Gate>("splash");
+  const router = useRouter();
+  const [gate, setGate] = useState<Gate>("checking");
 
   useEffect(() => {
-    const splashMs = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 200 : 1200;
-    const timer = window.setTimeout(() => {
-      setGate(window.localStorage.getItem(ONBOARDING_KEY) === "1" ? "app" : "onboarding");
-    }, splashMs);
-    return () => window.clearTimeout(timer);
+    function resolve(): void {
+      const phone = isPhoneViewport();
+      const session = readSession();
+      const seenOnboarding = window.localStorage.getItem(ONBOARDING_KEY) === "1";
+
+      // En teléfono sin sesión: splash con Comenzar → registro/OTP. Nunca el buscador primero.
+      if (phone && !session) {
+        setGate("splash");
+        return;
+      }
+      if (!seenOnboarding) {
+        setGate("onboarding");
+        return;
+      }
+      setGate("app");
+    }
+
+    resolve();
+    const media = window.matchMedia("(max-width: 767px)");
+    const onChange = () => resolve();
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
   }, []);
 
-  function finish(): void {
+  function finishOnboarding(): void {
     window.localStorage.setItem(ONBOARDING_KEY, "1");
     setGate("app");
   }
@@ -37,11 +61,12 @@ export function ClientShell({ children }: { children: ReactNode }) {
     setGate("onboarding");
   }
 
-  if (gate === "splash") {
-    return <Splash />;
+  function onComenzar(): void {
+    // Flujo maqueta: splash → registro/OTP. Sin OTP simulado en producción.
+    router.push("/entrar");
   }
 
-  if (gate === "loading") {
+  if (gate === "checking") {
     return (
       <main style={pageStyle} aria-busy="true">
         <div className="cve-page">
@@ -51,8 +76,12 @@ export function ClientShell({ children }: { children: ReactNode }) {
     );
   }
 
+  if (gate === "splash") {
+    return <Splash onComenzar={onComenzar} />;
+  }
+
   if (gate === "onboarding") {
-    return <Onboarding onDone={finish} />;
+    return <Onboarding onDone={finishOnboarding} />;
   }
 
   return (
