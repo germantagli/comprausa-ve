@@ -3,10 +3,28 @@ import * as SecureStore from "expo-secure-store";
 
 const SESSION_KEY = "comprausa.session";
 const ONBOARDING_KEY = "comprausa.onboarding.seen";
+const DEVICE_KEY = "comprausa.device.id";
 
 /** In-memory fallback when SecureStore is unavailable (e.g. some test hosts). */
 let memorySession: AuthenticatedSession | null = null;
 let memoryOnboarding = false;
+let memoryDeviceId: string | null = null;
+
+function createDeviceId(): string {
+  if (typeof globalThis.crypto?.randomUUID === "function") {
+    return globalThis.crypto.randomUUID();
+  }
+  const bytes = new Uint8Array(16);
+  for (let index = 0; index < bytes.length; index += 1) {
+    bytes[index] = Math.floor(Math.random() * 256);
+  }
+  const variant = bytes[8] ?? 0;
+  const version = bytes[6] ?? 0;
+  bytes[6] = (version & 0x0f) | 0x40;
+  bytes[8] = (variant & 0x3f) | 0x80;
+  const hex = [...bytes].map((value) => value.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
 
 export async function readStoredSession(): Promise<AuthenticatedSession | null> {
   try {
@@ -80,4 +98,28 @@ export async function resetOnboardingCompleted(): Promise<void> {
   } catch {
     // ignore
   }
+}
+
+/** Stable device id for OTP challenges (mirrors web localStorage DEVICE_KEY). */
+export async function readOrCreateDeviceId(): Promise<string> {
+  if (memoryDeviceId) {
+    return memoryDeviceId;
+  }
+  try {
+    const existing = await SecureStore.getItemAsync(DEVICE_KEY);
+    if (existing && existing.length > 0) {
+      memoryDeviceId = existing;
+      return existing;
+    }
+  } catch {
+    // fall through
+  }
+  const created = createDeviceId();
+  memoryDeviceId = created;
+  try {
+    await SecureStore.setItemAsync(DEVICE_KEY, created);
+  } catch {
+    // keep memory copy
+  }
+  return created;
 }

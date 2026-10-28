@@ -1,6 +1,17 @@
 import { colorTokens, fontTokens, spaceTokens } from "@comprausa/design-tokens";
 import { APP_BRAND_NAME } from "@comprausa/types";
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Image,
+  Platform,
+  Pressable,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 
 const colors = colorTokens.light;
 
@@ -19,6 +30,21 @@ const benefits = [
   { icon: iconTruck, label: "Envíos a toda Venezuela" },
 ] as const;
 
+const topInset = Platform.select({
+  ios: 52,
+  android: (StatusBar.currentHeight ?? 0) + spaceTokens[3],
+  default: spaceTokens[6],
+})!;
+
+const bottomInset = Platform.select({
+  ios: 28,
+  android: spaceTokens[6],
+  default: spaceTokens[6],
+})!;
+
+/**
+ * Splash / pantalla 1 — shared Expo UI for Android and iOS (parity with web mobile).
+ */
 export function SplashScreen({
   loading,
   serverReachable,
@@ -30,9 +56,13 @@ export function SplashScreen({
   onComenzar: () => void;
   onIniciarSesion: () => void;
 }) {
+  const { height: windowHeight } = useWindowDimensions();
+  const heroHeight = Math.max(220, Math.min(Math.round(windowHeight * 0.42), 340));
+
   if (loading) {
     return (
       <View style={[styles.frame, styles.loading]} accessibilityState={{ busy: true }}>
+        <StatusBar barStyle="dark-content" />
         <Image source={appMark} accessibilityLabel={APP_BRAND_NAME} style={styles.loadingMark} resizeMode="contain" />
         <ActivityIndicator color={colors.primary} style={{ marginTop: spaceTokens[4] }} />
         <Text style={styles.caption}>Cargando…</Text>
@@ -42,7 +72,13 @@ export function SplashScreen({
 
   return (
     <View style={styles.frame} accessibilityLabel={APP_BRAND_NAME}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <StatusBar barStyle="dark-content" />
+      {/* Soft sky wash — matches web linear-gradient without extra deps */}
+      <View pointerEvents="none" style={styles.skyWash} />
+      <ScrollView
+        contentContainerStyle={[styles.scroll, { paddingTop: topInset }]}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.padded}>
           <View style={styles.brandRow}>
             <Image source={cart} style={styles.cart} resizeMode="contain" />
@@ -56,7 +92,14 @@ export function SplashScreen({
           </Text>
         </View>
 
-        <Image source={heroCollage} style={styles.hero} resizeMode="cover" accessibilityElementsHidden />
+        <View style={[styles.heroWrap, { height: heroHeight }]}>
+          <Image
+            source={heroCollage}
+            style={styles.hero}
+            resizeMode="cover"
+            accessibilityElementsHidden
+          />
+        </View>
 
         <View style={[styles.benefits, styles.padded]}>
           {benefits.map((item) => (
@@ -74,8 +117,12 @@ export function SplashScreen({
         ) : null}
       </ScrollView>
 
-      <View style={styles.actions}>
-        <Pressable accessibilityRole="button" onPress={onComenzar} style={styles.primary}>
+      <View style={[styles.actions, { paddingBottom: bottomInset }]}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={onComenzar}
+          style={({ pressed }) => [styles.primary, pressed ? styles.pressed : null]}
+        >
           <Text style={styles.primaryText}>Comenzar</Text>
         </Pressable>
         <Text style={styles.accountPrompt}>
@@ -94,6 +141,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     flex: 1,
   },
+  skyWash: {
+    backgroundColor: "#EAF3FF",
+    height: "38%",
+    left: 0,
+    position: "absolute",
+    right: 0,
+    top: 0,
+  },
   loading: {
     alignItems: "center",
     backgroundColor: "#EAF3FF",
@@ -106,7 +161,6 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingBottom: spaceTokens[4],
-    paddingTop: spaceTokens[6],
   },
   padded: {
     paddingHorizontal: spaceTokens[4],
@@ -124,7 +178,7 @@ const styles = StyleSheet.create({
   wordmark: {
     fontSize: 34,
     fontWeight: "800",
-    letterSpacing: -0.5,
+    letterSpacing: -1,
   },
   wordmarkBlue: {
     color: colors.primary,
@@ -136,14 +190,18 @@ const styles = StyleSheet.create({
     color: colors.deep,
     fontSize: 28,
     fontWeight: "800",
-    letterSpacing: -0.5,
+    letterSpacing: -0.8,
     lineHeight: 34,
     marginTop: spaceTokens[3],
     textAlign: "center",
   },
-  hero: {
-    height: 280,
+  heroWrap: {
     marginTop: spaceTokens[3],
+    overflow: "hidden",
+    width: "100%",
+  },
+  hero: {
+    height: "100%",
     width: "100%",
   },
   benefits: {
@@ -179,8 +237,8 @@ const styles = StyleSheet.create({
     marginTop: spaceTokens[3],
   },
   actions: {
+    backgroundColor: "#FFFFFF",
     gap: spaceTokens[3],
-    paddingBottom: spaceTokens[6],
     paddingHorizontal: spaceTokens[4],
     paddingTop: spaceTokens[3],
   },
@@ -205,5 +263,8 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: "700",
     textDecorationLine: "underline",
+  },
+  pressed: {
+    opacity: 0.88,
   },
 });
