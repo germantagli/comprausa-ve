@@ -5,11 +5,12 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { useRouter } from "next/navigation";
 import { apiBase, ONBOARDING_KEY } from "../lib/api";
 import { clearSession, readSession, saveSession } from "../lib/session";
+import Image from "next/image";
 import { AppHeader } from "./app-header";
 import { BottomNav } from "./bottom-nav";
 import { Onboarding } from "./onboarding";
 import { Splash } from "./splash";
-import { colors, pageStyle } from "./styles";
+import { colors } from "./styles";
 
 const ReplayContext = createContext<() => void>(() => undefined);
 
@@ -95,10 +96,10 @@ export function ClientShell({ children }: { children: ReactNode }) {
 
   if (gate === "checking") {
     return (
-      <main style={{ ...pageStyle, background: colors.surface }} aria-busy="true">
-        <div className="cve-page" style={{ alignContent: "center", minHeight: "100dvh", textAlign: "center" }}>
-          <p style={{ color: colors.primary, fontWeight: 800, margin: 0 }}>TraeLo</p>
-          <p style={{ color: colors.muted, margin: "12px 0 0" }}>Cargando…</p>
+      <main style={{ background: "#000000", color: "#fff", minHeight: "100dvh" }} aria-busy="true">
+        <div className="cve-page" style={{ alignContent: "center", justifyItems: "center", minHeight: "100dvh", textAlign: "center" }}>
+          <Image src="/brand/logo-mark.webp" alt="TraeLo" width={160} height={160} priority style={{ height: "auto", width: 160 }} />
+          <p style={{ color: "rgba(255,255,255,0.7)", margin: "12px 0 0" }}>Cargando…</p>
         </div>
       </main>
     );

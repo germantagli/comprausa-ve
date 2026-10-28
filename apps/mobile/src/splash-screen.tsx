@@ -1,8 +1,9 @@
 import { colorTokens, fontTokens, radiusTokens, spaceTokens } from "@comprausa/design-tokens";
 import { APP_BRAND_NAME } from "@comprausa/types";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 const colors = colorTokens.light;
+const logo = require("../assets/brand/logo.png");
 
 export function SplashScreen({
   loading,
@@ -18,8 +19,8 @@ export function SplashScreen({
   if (loading) {
     return (
       <View style={styles.frame} accessibilityState={{ busy: true }}>
-        <Text style={styles.mark}>{APP_BRAND_NAME}</Text>
-        <ActivityIndicator color={colors.primary} style={{ marginTop: spaceTokens[4] }} />
+        <Image source={logo} accessibilityLabel={APP_BRAND_NAME} style={styles.logo} resizeMode="contain" />
+        <ActivityIndicator color={colors.accent} style={{ marginTop: spaceTokens[4] }} />
         <Text style={styles.caption}>Cargando…</Text>
       </View>
     );
@@ -28,7 +29,7 @@ export function SplashScreen({
   return (
     <View style={styles.frame} accessibilityLabel={APP_BRAND_NAME}>
       <View style={styles.hero}>
-        <Text style={styles.mark}>{APP_BRAND_NAME}</Text>
+        <Image source={logo} accessibilityLabel={APP_BRAND_NAME} style={styles.logo} resizeMode="contain" />
         <Text style={styles.tagline}>Compra en USA, recíbelo en Venezuela</Text>
         {serverReachable === false ? (
           <Text accessibilityLiveRegion="polite" style={styles.warn}>
@@ -50,7 +51,7 @@ export function SplashScreen({
 
 const styles = StyleSheet.create({
   frame: {
-    backgroundColor: colors.surface,
+    backgroundColor: "#000000",
     flex: 1,
     justifyContent: "space-between",
     paddingHorizontal: spaceTokens[6],
@@ -61,29 +62,27 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
   },
-  mark: {
-    color: colors.primary,
-    fontSize: 40,
-    fontWeight: "800",
-    letterSpacing: -0.5,
-    textAlign: "center",
+  logo: {
+    height: 260,
+    maxWidth: "100%",
+    width: 260,
   },
   tagline: {
-    color: colors.muted,
+    color: "rgba(255,255,255,0.78)",
     fontSize: fontTokens.sizes.body,
     lineHeight: fontTokens.lineHeight.body,
-    marginTop: spaceTokens[6],
+    marginTop: spaceTokens[4],
     maxWidth: 300,
     textAlign: "center",
   },
   caption: {
-    color: colors.muted,
+    color: "rgba(255,255,255,0.7)",
     fontSize: fontTokens.sizes.caption,
     marginTop: spaceTokens[3],
     textAlign: "center",
   },
   warn: {
-    color: colors.warning,
+    color: colors.accent,
     fontSize: fontTokens.sizes.caption,
     lineHeight: fontTokens.lineHeight.caption,
     marginTop: spaceTokens[4],
@@ -107,15 +106,15 @@ const styles = StyleSheet.create({
   },
   secondary: {
     alignItems: "center",
-    backgroundColor: colors.surface,
-    borderColor: colors.primary,
+    backgroundColor: "transparent",
+    borderColor: colors.accent,
     borderRadius: radiusTokens.md,
     borderWidth: 1,
     justifyContent: "center",
     minHeight: 52,
   },
   secondaryText: {
-    color: colors.primary,
+    color: colors.accent,
     fontSize: fontTokens.sizes.body,
     fontWeight: "700",
   },
