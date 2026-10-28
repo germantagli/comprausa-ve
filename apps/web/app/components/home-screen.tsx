@@ -34,7 +34,7 @@ export function HomeScreen() {
     <PageFrame>
       <div className="cve-mobile-only" style={{ marginBottom: spaceTokens[4] }}>
         <Link href="/" style={wordmarkStyle}>
-          CompraUSA
+          TraeLo
         </Link>
         <h1 style={{ ...titleStyle, marginTop: spaceTokens[3] }}>{greeting}</h1>
         <SearchForm
@@ -54,7 +54,7 @@ export function HomeScreen() {
       <section aria-label="Compra en USA, recíbelo en Venezuela" className="cve-fade-up" style={{ ...bannerStyle, marginTop: 0 }}>
         <div className="cve-hero">
           <div>
-            <p style={{ ...mutedStyle, color: "rgba(255,255,255,0.82)", marginBottom: spaceTokens[2] }}>CompraUSA</p>
+            <p style={{ ...mutedStyle, color: "rgba(255,255,255,0.82)", marginBottom: spaceTokens[2] }}>TraeLo</p>
             <h2
               className="cve-fade-up-delay"
               style={{

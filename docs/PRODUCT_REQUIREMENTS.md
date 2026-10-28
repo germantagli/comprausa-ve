@@ -1,6 +1,6 @@
 # Requisitos de producto
 
-Nombre provisional: CompraUSA VE. Moneda: USD. Clientes en Venezuela. Compra en tiendas de Estados Unidos y entrega en Venezuela, sin que la persona administre un casillero.
+Nombre: TraeLo. Moneda: USD. Clientes en Venezuela. Compra en tiendas de Estados Unidos y entrega en Venezuela, sin que la persona administre un casillero.
 
 Esto no es asesoría legal ni una oferta comercial. Los montos, el inventario y las fechas no existen todavía.
 

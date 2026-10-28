@@ -24,7 +24,7 @@ export function Onboarding({ onDone, videoUrl }: { onDone: () => void; videoUrl?
   return (
     <main style={{ ...pageStyle, display: "grid", placeItems: "center" }}>
       <div className="cve-page cve-fade-up" style={{ maxWidth: 480, width: "100%" }}>
-        <p style={wordmarkStyle}>CompraUSA</p>
+        <p style={wordmarkStyle}>TraeLo</p>
         <p style={{ margin: `${spaceTokens[4]}px 0 ${spaceTokens[2]}px`, color: colors.muted }}>
           Bienvenida · paso {step + 1} de {onboardingSteps.length}
         </p>

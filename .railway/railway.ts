@@ -1,5 +1,5 @@
 /**
- * CompraUSA VE — staging en Railway (Infrastructure as Code).
+ * TraeLo — staging en Railway (Infrastructure as Code).
  *
  * No se aplica solo. Hace falta CLI autenticado:
  *   railway login   # o RAILWAY_API_TOKEN / RAILWAY_TOKEN
@@ -44,7 +44,7 @@ export default defineRailway(() => {
     healthcheckTimeout: 60,
     env: {
       NODE_ENV: "production",
-      APP_DISPLAY_NAME: "CompraUSA VE",
+      APP_DISPLAY_NAME: "TraeLo",
       OTP_PROVIDER: "none",
       DATABASE_URL: db.env.DATABASE_URL,
       // Path de Dockerfile: Railway lo lee como variable de servicio.

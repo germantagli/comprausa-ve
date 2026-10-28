@@ -1,5 +1,5 @@
 /**
- * Original CompraUSA VE tokens.
+ * Original TraeLo tokens.
  * Light values are the active scheme. Dark values are prepared and not applied.
  * Cyan is an accent, not body text on light backgrounds (fails WCAG 2.2 AA).
  */

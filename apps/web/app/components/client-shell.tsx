@@ -97,7 +97,7 @@ export function ClientShell({ children }: { children: ReactNode }) {
     return (
       <main style={{ ...pageStyle, background: colors.surface }} aria-busy="true">
         <div className="cve-page" style={{ alignContent: "center", minHeight: "100dvh", textAlign: "center" }}>
-          <p style={{ color: colors.primary, fontWeight: 800, margin: 0 }}>CompraUSA</p>
+          <p style={{ color: colors.primary, fontWeight: 800, margin: 0 }}>TraeLo</p>
           <p style={{ color: colors.muted, margin: "12px 0 0" }}>Cargando…</p>
         </div>
       </main>

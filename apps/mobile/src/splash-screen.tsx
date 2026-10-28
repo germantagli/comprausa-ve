@@ -1,4 +1,5 @@
 import { colorTokens, fontTokens, radiusTokens, spaceTokens } from "@comprausa/design-tokens";
+import { APP_BRAND_NAME } from "@comprausa/types";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 
 const colors = colorTokens.light;
@@ -17,7 +18,7 @@ export function SplashScreen({
   if (loading) {
     return (
       <View style={styles.frame} accessibilityState={{ busy: true }}>
-        <Text style={styles.mark}>CompraUSA</Text>
+        <Text style={styles.mark}>{APP_BRAND_NAME}</Text>
         <ActivityIndicator color={colors.primary} style={{ marginTop: spaceTokens[4] }} />
         <Text style={styles.caption}>Cargando…</Text>
       </View>
@@ -25,9 +26,9 @@ export function SplashScreen({
   }
 
   return (
-    <View style={styles.frame} accessibilityLabel="CompraUSA">
+    <View style={styles.frame} accessibilityLabel={APP_BRAND_NAME}>
       <View style={styles.hero}>
-        <Text style={styles.mark}>CompraUSA</Text>
+        <Text style={styles.mark}>{APP_BRAND_NAME}</Text>
         <Text style={styles.tagline}>Compra en USA, recíbelo en Venezuela</Text>
         {serverReachable === false ? (
           <Text accessibilityLiveRegion="polite" style={styles.warn}>

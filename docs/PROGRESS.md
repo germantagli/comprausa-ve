@@ -4,7 +4,7 @@
 
 ### Pantalla 1 — Splash / Inicio (web móvil + Expo)
 
-- Splash con logo CompraUSA, fondo blanco, azul primario, mensaje «Compra en USA, recíbelo en Venezuela», botones **Comenzar** e **Iniciar sesión**.
+- Splash con marca TraeLo, fondo blanco, azul primario, mensaje «Compra en USA, recíbelo en Venezuela», botones **Comenzar** e **Iniciar sesión**.
 - Bootstrap: recupera sesión (web `sessionStorage`, móvil SecureStore), valida/refresca contra la API, no borra credenciales si hay fallo de red.
 - `GET /health` en sonda suave (timeout); no bloquea la UI. Banner si el servidor no responde.
 - Rutas: web `/` (gate en `ClientShell`) → `/entrar?modo=registro|entrar`. Expo: gate en `ClientShell` → `SignInScreen`.

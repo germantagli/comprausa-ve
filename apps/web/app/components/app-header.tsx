@@ -40,7 +40,7 @@ export function AppHeader() {
             whiteSpace: "nowrap",
           }}
         >
-          CompraUSA
+          TraeLo
         </Link>
 
         <nav className="cve-site-header-nav" aria-label="Secciones">

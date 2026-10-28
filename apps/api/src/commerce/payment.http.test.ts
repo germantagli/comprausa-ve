@@ -317,7 +317,7 @@ describe("payment review HTTP", () => {
     const enrolled = await post(base, "/v1/auth/totp/enrollments", {}, token);
     expect(enrolled.status).toBe(200);
     const secret = (enrolled.json as { secret: string }).secret;
-    const totp = new TOTP({ issuer: "CompraUSA VE", label: "operador", algorithm: "SHA1", digits: 6, period: 30, secret: Secret.fromBase32(secret) });
+    const totp = new TOTP({ issuer: "TraeLo", label: "operador", algorithm: "SHA1", digits: 6, period: 30, secret: Secret.fromBase32(secret) });
     const verified = await post(base, "/v1/auth/totp/verifications", { code: totp.generate() }, token);
     expect(verified.status).toBe(200);
     expect(verified.json).toMatchObject({ status: "authenticated" });

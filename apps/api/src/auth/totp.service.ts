@@ -75,7 +75,7 @@ export class TotpService {
 
   private totp(secret: Secret): TOTP {
     return new TOTP({
-      issuer: "CompraUSA VE",
+      issuer: "TraeLo",
       label: "operador",
       algorithm: "SHA1",
       digits: 6,

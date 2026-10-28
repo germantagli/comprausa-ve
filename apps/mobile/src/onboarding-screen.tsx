@@ -12,7 +12,7 @@ export function OnboardingScreen({ onDone, videoUrl }: { onDone: () => void; vid
 
   return (
     <View style={styles.page}>
-      <Text style={styles.brand}>CompraUSA VE</Text>
+      <Text style={styles.brand}>TraeLo</Text>
       <Text style={styles.body}>
         Paso {step + 1} de {onboardingSteps.length}
       </Text>

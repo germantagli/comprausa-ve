@@ -1,4 +1,4 @@
-// CompraUSA VE — initial schema.
+// TraeLo — initial schema.
 // Money is integer minor units (USD cents) in BigInt. Rates use Decimal.
 // Do not store card numbers. A payment proof is not a verified payment.
 // A verified payment is not a purchase from the store.

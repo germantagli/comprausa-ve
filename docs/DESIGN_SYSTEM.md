@@ -1,6 +1,6 @@
 # Sistema de diseño
 
-Identidad propia de CompraUSA VE. No se copia el amarillo de un marketplace, el naranja de una tienda de ofertas ni el negro y rosa de una tienda de moda. La interfaz debe sentirse como una mesa de trabajo tranquila: mucho aire, estados legibles y ninguna cuenta regresiva falsa.
+Identidad propia de TraeLo. No se copia el amarillo de un marketplace, el naranja de una tienda de ofertas ni el negro y rosa de una tienda de moda. La interfaz debe sentirse como una mesa de trabajo tranquila: mucho aire, estados legibles y ninguna cuenta regresiva falsa.
 
 El nombre visible es configurable. No hay logotipo definitivo. Cuando se dibuje, será una marca geométrica nueva (dos puntos y un arco bastan como idea). No se usan logos de tiendas.
 
