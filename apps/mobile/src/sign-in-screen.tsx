@@ -19,9 +19,11 @@ import { emailSchema, otpCodeSchema, personNameSchema } from "@comprausa/validat
 import { useEffect, useRef, useState, type ElementRef } from "react";
 import {
   Image,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -31,6 +33,7 @@ import {
 type OtpInputRef = ElementRef<typeof TextInput>;
 import { apiBase } from "./api";
 import { CountryDialPicker } from "./country-dial-picker";
+import { readOrCreateDeviceId } from "./session-store";
 import {
   mobileOauthConfigured,
   requestAppleIdTokenNative,
@@ -40,28 +43,22 @@ import {
 const colors = colorTokens.light;
 const OTP_LENGTH = 6;
 const RESEND_FALLBACK_SECONDS = 45;
+/** Public legal pages on the TraeLo web (same copy as web /entrar). */
+const LEGAL_BASE = "https://comprausaweb-production.up.railway.app";
 
 const cart = require("../assets/brand/splash/cart.png");
+const googleMark = require("../assets/brand/auth/google-mark.png");
+const appleMark = require("../assets/brand/auth/apple-mark.png");
 
 type Channel = "email" | "phone";
 type Step = "destination" | "code" | "name" | "done";
 type Mode = "registro" | "entrar";
 
-function createDeviceId(): string {
-  if (typeof globalThis.crypto?.randomUUID === "function") {
-    return globalThis.crypto.randomUUID();
-  }
-  const bytes = new Uint8Array(16);
-  for (let index = 0; index < bytes.length; index += 1) {
-    bytes[index] = Math.floor(Math.random() * 256);
-  }
-  const variant = bytes[8] ?? 0;
-  const version = bytes[6] ?? 0;
-  bytes[6] = (version & 0x0f) | 0x40;
-  bytes[8] = (variant & 0x3f) | 0x80;
-  const hex = [...bytes].map((value) => value.toString(16).padStart(2, "0")).join("");
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-}
+const topInset = Platform.select({
+  ios: 52,
+  android: (StatusBar.currentHeight ?? 0) + spaceTokens[3],
+  default: spaceTokens[4],
+})!;
 
 function formatCountdown(totalSeconds: number): string {
   const safe = Math.max(0, totalSeconds);
@@ -81,7 +78,7 @@ export function SignInScreen({
   onAuthenticated?: (session: AuthenticatedSession) => void;
   onCancel?: () => void;
 } = {}) {
-  const [deviceId] = useState(createDeviceId);
+  const [deviceId, setDeviceId] = useState("");
   const [step, setStep] = useState<Step>("destination");
   const [channel, setChannel] = useState<Channel>(PHONE_OTP_ENABLED ? "phone" : "email");
   const [email, setEmail] = useState("");
@@ -105,6 +102,18 @@ export function SignInScreen({
   const headline = mode === "entrar" ? "Inicia sesión" : "Crea tu cuenta";
 
   useEffect(() => {
+    let cancelled = false;
+    void readOrCreateDeviceId().then((id) => {
+      if (!cancelled) {
+        setDeviceId(id);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     if (resendIn <= 0) {
       return;
     }
@@ -113,6 +122,10 @@ export function SignInScreen({
   }, [resendIn]);
 
   async function requestChallenge(nextDestination: string, nextChannel: Channel): Promise<boolean> {
+    if (!deviceId) {
+      setError("Preparando el dispositivo… Intenta de nuevo.");
+      return false;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -382,7 +395,11 @@ export function SignInScreen({
 
   return (
     <View style={styles.page}>
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <StatusBar barStyle="dark-content" />
+      <ScrollView
+        contentContainerStyle={[styles.scroll, { paddingTop: topInset }]}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.header}>
           <Pressable accessibilityRole="button" accessibilityLabel="Volver" onPress={goBack} style={styles.back}>
             <Text style={styles.backText}>‹</Text>
@@ -407,12 +424,19 @@ export function SignInScreen({
             </Text>
             <Pressable
               accessibilityRole="button"
+              onPress={() => onAuthenticated?.(session)}
+              style={styles.primary}
+            >
+              <Text style={styles.primaryText}>Ir al inicio</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
               accessibilityState={{ disabled: loading, busy: loading }}
               disabled={loading}
               onPress={() => void logout()}
-              style={styles.primary}
+              style={styles.secondary}
             >
-              <Text style={styles.primaryText}>{loading ? "Espera…" : "Cerrar sesión"}</Text>
+              <Text style={styles.secondaryText}>{loading ? "Espera…" : "Cerrar sesión"}</Text>
             </Pressable>
           </View>
         ) : (
@@ -509,25 +533,47 @@ export function SignInScreen({
                 <View style={styles.socialRow}>
                   <Pressable
                     accessibilityRole="button"
+                    accessibilityLabel="Continuar con Google"
                     accessibilityState={{ disabled: loading }}
                     disabled={loading}
                     onPress={() => void continueWithSocial("google")}
                     style={styles.social}
                   >
+                    <Image source={googleMark} style={styles.socialIcon} resizeMode="contain" />
                     <Text style={styles.socialText}>Google</Text>
                   </Pressable>
                   <Pressable
                     accessibilityRole="button"
+                    accessibilityLabel="Continuar con Apple"
                     accessibilityState={{ disabled: loading }}
                     disabled={loading}
                     onPress={() => void continueWithSocial("apple")}
                     style={styles.social}
                   >
+                    <Image source={appleMark} style={styles.socialIcon} resizeMode="contain" />
                     <Text style={styles.socialText}>Apple</Text>
                   </Pressable>
                 </View>
                 {socialNote ? <Text style={styles.hint}>{socialNote}</Text> : null}
-                <Text style={styles.legal}>Al continuar aceptas nuestros Términos y Condiciones y Política de Privacidad.</Text>
+                <Text style={styles.legal}>
+                  Al continuar aceptas nuestros{" "}
+                  <Text
+                    accessibilityRole="link"
+                    onPress={() => void Linking.openURL(`${LEGAL_BASE}/terminos`)}
+                    style={styles.legalLink}
+                  >
+                    Términos y Condiciones
+                  </Text>{" "}
+                  y{" "}
+                  <Text
+                    accessibilityRole="link"
+                    onPress={() => void Linking.openURL(`${LEGAL_BASE}/privacidad`)}
+                    style={styles.legalLink}
+                  >
+                    Política de Privacidad
+                  </Text>
+                  .
+                </Text>
               </>
             ) : null}
 
@@ -572,7 +618,11 @@ export function SignInScreen({
                     <Text style={styles.resendLink}>Reenviar código</Text>
                   </Pressable>
                 )}
-                <Text style={styles.hint}>En desarrollo el código se consulta en POST /v1/auth/dev/otp-code de la API.</Text>
+                {__DEV__ ? (
+                  <Text style={styles.hint}>
+                    En desarrollo el código se consulta en POST /v1/auth/dev/otp-code si la API usa OTP_PROVIDER=simulated.
+                  </Text>
+                ) : null}
                 {error ? (
                   <Text accessibilityLiveRegion="assertive" style={styles.error}>
                     {error}
@@ -633,7 +683,7 @@ function failureMessage(error: unknown, step: Step): string {
     return "No pudimos conectar con el servidor.";
   }
   if (error instanceof ApiClientError && error.status === 503) {
-    return "El ingreso no está disponible en este momento.";
+    return "El ingreso no está disponible en este momento. En producción el OTP requiere un proveedor real (OTP_PROVIDER distinto de simulated).";
   }
   if (error instanceof ApiClientError && error.status === 400) {
     return step === "name" ? "Escribe tu nombre y tu apellido." : "Revisa el correo o el teléfono.";
@@ -652,7 +702,6 @@ const styles = StyleSheet.create({
   scroll: {
     paddingBottom: spaceTokens[8],
     paddingHorizontal: spaceTokens[4],
-    paddingTop: spaceTokens[4],
   },
   header: {
     alignItems: "center",
@@ -794,6 +843,21 @@ const styles = StyleSheet.create({
     fontSize: fontTokens.sizes.body,
     fontWeight: "700",
   },
+  secondary: {
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderColor: colors.primary,
+    borderRadius: 999,
+    borderWidth: 1.5,
+    justifyContent: "center",
+    marginTop: spaceTokens[3],
+    minHeight: 48,
+  },
+  secondaryText: {
+    color: colors.primary,
+    fontSize: fontTokens.sizes.body,
+    fontWeight: "700",
+  },
   divider: {
     alignItems: "center",
     flexDirection: "row",
@@ -821,8 +885,14 @@ const styles = StyleSheet.create({
     borderRadius: radiusTokens.md,
     borderWidth: 1,
     flex: 1,
+    gap: spaceTokens[2],
     justifyContent: "center",
     minHeight: 72,
+    paddingVertical: spaceTokens[3],
+  },
+  socialIcon: {
+    height: 28,
+    width: 28,
   },
   socialText: {
     color: colors.deep,
@@ -834,6 +904,11 @@ const styles = StyleSheet.create({
     lineHeight: fontTokens.lineHeight.caption,
     marginTop: spaceTokens[4],
     textAlign: "center",
+  },
+  legalLink: {
+    color: colors.primary,
+    fontWeight: "700",
+    textDecorationLine: "underline",
   },
   resend: {
     color: colors.primary,
