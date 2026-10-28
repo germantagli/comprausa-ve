@@ -17,11 +17,12 @@ import {
 import { colorTokens, fontTokens, radiusTokens, spaceTokens } from "@comprausa/design-tokens";
 import { catalogPriceLabel } from "@comprausa/utils";
 import { useEffect, useState, type ReactNode } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { apiBase } from "./api";
 import { MobileOrdersScreen } from "./tracking-screens";
 
 const colors = colorTokens.light;
+const headerLogo = require("../assets/brand/logo-header.png");
 
 type Load<T> = { status: "loading" } | { status: "error" } | { status: "ready"; data: T };
 
@@ -50,7 +51,9 @@ export function HomeScreen({
 
   return (
     <ScrollView contentContainerStyle={styles.page}>
-      <Text style={styles.brand}>TraeLo</Text>
+      <View style={styles.headerLogoWrap}>
+        <Image source={headerLogo} accessibilityLabel="TraeLo" style={styles.headerLogo} resizeMode="contain" />
+      </View>
       <Text accessibilityRole="header" style={styles.title}>
         {greeting}
       </Text>
@@ -523,11 +526,17 @@ const styles = StyleSheet.create({
     padding: spaceTokens[4],
     paddingBottom: spaceTokens[8],
   },
-  brand: {
-    color: colors.deep,
-    fontSize: fontTokens.sizes.title,
-    fontWeight: "800",
-    lineHeight: fontTokens.lineHeight.title,
+  headerLogoWrap: {
+    alignSelf: "flex-start",
+    backgroundColor: "#000000",
+    borderRadius: radiusTokens.md,
+    marginBottom: spaceTokens[2],
+    paddingHorizontal: spaceTokens[3],
+    paddingVertical: spaceTokens[2],
+  },
+  headerLogo: {
+    height: 36,
+    width: 136,
   },
   title: {
     color: colors.text,

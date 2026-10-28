@@ -1,6 +1,7 @@
 :root {
-  --cve-primary: #1054b8;
-  --cve-deep: #092c62;
+  --cve-primary: #1b5fc7;
+  --cve-deep: #0d3a7a;
+  --cve-accent: #f7931e;
   --cve-cyan: #16b8d5;
   --cve-bg: #f3f7fc;
   --cve-surface: #ffffff;
@@ -109,7 +110,8 @@ a {
 }
 
 .cve-site-header {
-  background: var(--cve-primary);
+  background: #000000;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   color: #fff;
   width: 100%;
 }

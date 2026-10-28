@@ -9,7 +9,9 @@ import {
   type AuthenticatedSession,
 } from "@comprausa/api-client";
 import { colorTokens, fontTokens, radiusTokens, spaceTokens } from "@comprausa/design-tokens";
+import { APP_BRAND_NAME } from "@comprausa/types";
 import { otpCodeSchema, personNameSchema, phoneE164Schema, emailSchema } from "@comprausa/validation";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useState, type FormEvent } from "react";
@@ -226,8 +228,17 @@ export function SignInForm() {
       <style>{`
         .entrar-control:focus-visible { outline: 3px solid ${colors.primary}; outline-offset: 2px; }
       `}</style>
-      <p style={{ color: colors.deep, fontSize: fontTokens.sizes.title, fontWeight: 800, letterSpacing: "-0.02em", margin: `0 0 ${spaceTokens[4]}px` }}>
-        TraeLo
+      <p
+        style={{
+          background: "#000",
+          borderRadius: radiusTokens.md,
+          display: "inline-flex",
+          lineHeight: 0,
+          margin: `0 0 ${spaceTokens[4]}px`,
+          padding: `${spaceTokens[2]}px ${spaceTokens[3]}px`,
+        }}
+      >
+        <Image src="/brand/logo-header.webp" alt={APP_BRAND_NAME} width={180} height={60} priority style={{ height: 36, width: "auto" }} />
       </p>
       <h1 style={titleStyle}>{stepTitle(step, channel)}</h1>
       <p style={{ color: colors.muted, fontSize: fontTokens.sizes.caption, lineHeight: `${fontTokens.lineHeight.caption}px`, margin: `0 0 ${spaceTokens[4]}px` }}>

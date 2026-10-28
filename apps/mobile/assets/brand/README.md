@@ -1,6 +1,7 @@
 # Logos TraeLo (Expo)
 
 - `logo.png` — splash en la app
-- `icon.png` — ícono (`app.json` → `expo.icon` y `splash.image` usa `logo.png`)
+- `logo-header.png` — logo horizontal para cabecera / home
+- `icon.png` — ícono (`app.json` → `expo.icon`; splash usa `logo.png`)
 
-Origen: asset oficial TraeLo.
+Origen: assets oficiales TraeLo.

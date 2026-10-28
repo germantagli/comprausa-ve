@@ -1,6 +1,7 @@
 # Logos TraeLo
 
-- `logo.webp` — marca completa para splash (fondo negro)
+- `logo.webp` — marca vertical para splash (fondo negro)
 - `logo-mark.webp` — marca reducida para loading
+- `logo-header.webp` / `logo-header-sm.webp` — logo horizontal para cabecera
 
-Origen: asset oficial TraeLo.
+Origen: assets oficiales TraeLo.

@@ -1,7 +1,8 @@
 "use client";
 
-import { onboardingSteps } from "@comprausa/types";
-import { fontTokens, spaceTokens } from "@comprausa/design-tokens";
+import { APP_BRAND_NAME, onboardingSteps } from "@comprausa/types";
+import { fontTokens, radiusTokens, spaceTokens } from "@comprausa/design-tokens";
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { IconBox } from "./icons";
@@ -13,7 +14,6 @@ import {
   rowStyle,
   secondaryButtonStyle,
   titleStyle,
-  wordmarkStyle,
 } from "./styles";
 
 export function Onboarding({ onDone, videoUrl }: { onDone: () => void; videoUrl?: string }) {
@@ -24,7 +24,18 @@ export function Onboarding({ onDone, videoUrl }: { onDone: () => void; videoUrl?
   return (
     <main style={{ ...pageStyle, display: "grid", placeItems: "center" }}>
       <div className="cve-page cve-fade-up" style={{ maxWidth: 480, width: "100%" }}>
-        <p style={wordmarkStyle}>TraeLo</p>
+        <p
+          style={{
+            background: "#000",
+            borderRadius: radiusTokens.md,
+            display: "inline-flex",
+            lineHeight: 0,
+            margin: 0,
+            padding: `${spaceTokens[2]}px ${spaceTokens[3]}px`,
+          }}
+        >
+          <Image src="/brand/logo-header.webp" alt={APP_BRAND_NAME} width={180} height={60} priority style={{ height: 36, width: "auto" }} />
+        </p>
         <p style={{ margin: `${spaceTokens[4]}px 0 ${spaceTokens[2]}px`, color: colors.muted }}>
           Bienvenida · paso {step + 1} de {onboardingSteps.length}
         </p>
