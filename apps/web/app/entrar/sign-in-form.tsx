@@ -10,7 +10,8 @@ import {
 } from "@comprausa/api-client";
 import { colorTokens, fontTokens, radiusTokens, spaceTokens } from "@comprausa/design-tokens";
 import { APP_BRAND_NAME } from "@comprausa/types";
-import { emailSchema, otpCodeSchema, personNameSchema, phoneE164Schema } from "@comprausa/validation";
+import { composeE164, formatE164Display, getDefaultCountry, type CountryDialCode } from "@comprausa/utils";
+import { emailSchema, otpCodeSchema, personNameSchema } from "@comprausa/validation";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -27,10 +28,10 @@ import {
 } from "react";
 import { apiBase } from "../lib/api";
 import { clearSession, DEVICE_KEY, readSession, saveSession } from "../lib/session";
+import { CountryDialPicker } from "./country-dial-picker";
 
 const colors = colorTokens.light;
 const isDevClient = process.env.NODE_ENV === "development";
-const VE_DIAL = "+58";
 const OTP_LENGTH = 6;
 const RESEND_FALLBACK_SECONDS = 45;
 
@@ -49,31 +50,6 @@ function readDeviceId(): string {
   const created = createDeviceId();
   localStorage.setItem(DEVICE_KEY, created);
   return created;
-}
-
-function normalizeVeLocal(raw: string): string {
-  const digits = raw.replace(/\D/g, "");
-  if (digits.startsWith("0") && digits.length === 11) {
-    return digits.slice(1);
-  }
-  return digits;
-}
-
-function toE164Phone(localRaw: string): string | null {
-  const local = normalizeVeLocal(localRaw);
-  if (!/^\d{10}$/.test(local)) {
-    return null;
-  }
-  const candidate = `${VE_DIAL}${local}`;
-  return phoneE164Schema.safeParse(candidate).success ? candidate : null;
-}
-
-function formatPhoneDisplay(e164: string): string {
-  if (e164.startsWith(VE_DIAL) && e164.length === 13) {
-    const local = e164.slice(3);
-    return `${VE_DIAL} ${local.slice(0, 3)} ${local.slice(3, 6)} ${local.slice(6)}`;
-  }
-  return e164;
 }
 
 function formatCountdown(totalSeconds: number): string {
@@ -116,6 +92,7 @@ export function SignInForm() {
   const [step, setStep] = useState<Step>("destination");
   const [channel, setChannel] = useState<Channel>("phone");
   const [email, setEmail] = useState("");
+  const [country, setCountry] = useState<CountryDialCode>(() => getDefaultCountry());
   const [phoneLocal, setPhoneLocal] = useState("");
   const [destination, setDestination] = useState("");
   const [digits, setDigits] = useState<string[]>(() => Array.from({ length: OTP_LENGTH }, () => ""));
@@ -205,9 +182,9 @@ export function SignInForm() {
       await requestChallenge(parsed.data, "email");
       return;
     }
-    const e164 = toE164Phone(phoneLocal);
+    const e164 = composeE164(country.dial, phoneLocal);
     if (!e164) {
-      setError("Usa un móvil venezolano de 10 dígitos, por ejemplo 412 345 6789.");
+      setError("Revisa el número. Incluye el código de país correcto y el número nacional.");
       return;
     }
     await requestChallenge(e164, "phone");
@@ -483,17 +460,7 @@ export function SignInForm() {
 
               {channel === "phone" ? (
                 <div style={phoneRowStyle}>
-                  <div style={dialStyle} aria-label="Código de país Venezuela +58">
-                    <Image
-                      src="/brand/auth/ve-dial.webp"
-                      alt="Venezuela"
-                      width={28}
-                      height={18}
-                      unoptimized
-                      style={{ borderRadius: 3, height: 16, objectFit: "cover", width: 24 }}
-                    />
-                    <span style={{ fontWeight: 700, color: colors.deep }}>{VE_DIAL}</span>
-                  </div>
+                  <CountryDialPicker value={country} onChange={setCountry} />
                   <label style={{ ...labelStyle, flex: 1, marginBottom: 0 }}>
                     <span className="visually-hidden">Número de teléfono</span>
                     <input
@@ -504,7 +471,7 @@ export function SignInForm() {
                       type="tel"
                       inputMode="numeric"
                       autoComplete="tel-national"
-                      placeholder="412 345 6789"
+                      placeholder={country.iso2 === "VE" ? "412 345 6789" : "Número"}
                       aria-invalid={error ? true : undefined}
                       aria-describedby={error ? errorId : undefined}
                       required
@@ -592,7 +559,7 @@ export function SignInForm() {
               <p style={subtitleStyle}>
                 Te enviamos un código de 6 dígitos a{" "}
                 <strong style={{ color: colors.deep, fontWeight: 700 }}>
-                  {channel === "phone" ? formatPhoneDisplay(destination) : destination}
+                  {channel === "phone" ? formatE164Display(destination, country.dial) : destination}
                 </strong>
               </p>
               <div
@@ -815,17 +782,6 @@ const phoneRowStyle = {
   display: "flex",
   gap: spaceTokens[2],
   marginBottom: spaceTokens[4],
-} as const;
-
-const dialStyle = {
-  alignItems: "center",
-  background: colors.surface,
-  border: `1px solid ${colors.border}`,
-  borderRadius: radiusTokens.md,
-  display: "inline-flex",
-  gap: spaceTokens[2],
-  minHeight: 52,
-  padding: `0 ${spaceTokens[3]}px`,
 } as const;
 
 const labelStyle = { display: "grid", gap: spaceTokens[2], marginBottom: spaceTokens[4] } as const;
