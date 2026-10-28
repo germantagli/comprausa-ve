@@ -43,6 +43,7 @@ export function ClientShell() {
   const [tab, setTab] = useState<Tab>("inicio");
   const [help, setHelp] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
+  const [signInMode, setSignInMode] = useState<"registro" | "entrar">("registro");
   const [session, setSession] = useState<AuthenticatedSession | null>(null);
   const [productId, setProductId] = useState<string | null>(null);
   const [quoteId, setQuoteId] = useState<string | null>(null);
@@ -99,6 +100,7 @@ export function ClientShell() {
   if (signingIn) {
     return (
       <SignInScreen
+        mode={signInMode}
         onCancel={() => {
           setSigningIn(false);
           if (!session) {
@@ -124,8 +126,14 @@ export function ClientShell() {
     return (
       <SplashScreen
         serverReachable={serverReachable}
-        onComenzar={() => setSigningIn(true)}
-        onIniciarSesion={() => setSigningIn(true)}
+        onComenzar={() => {
+          setSignInMode("registro");
+          setSigningIn(true);
+        }}
+        onIniciarSesion={() => {
+          setSignInMode("entrar");
+          setSigningIn(true);
+        }}
       />
     );
   }
