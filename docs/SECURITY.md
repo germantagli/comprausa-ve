@@ -16,6 +16,8 @@ El OTP dura 120 segundos, acepta 5 intentos y se consume al acertar. Un destino 
 
 `ResendOtpProvider` (`OTP_PROVIDER=resend`) genera el código en proceso, lo envía por la API de Resend y lo verifica en memoria local (mismo ledger que el simulado). Solo canal email; teléfono responde `otp_channel_unsupported`. `TwilioVerifyOtpProvider` (`OTP_PROVIDER=twilio`) delega emisión y verificación en Twilio Verify (SMS y email). El código no se escribe en logs. Sin credenciales, `OTP_PROVIDER=none` y el challenge responde `otp_not_configured`.
 
+Google y Apple: `POST /v1/auth/oauth/exchanges` verifica el ID token con JWKS del emisor (`jose`). Audiencias aceptadas: `GOOGLE_CLIENT_IDS` / `APPLE_CLIENT_IDS` (lista separada por comas). Sin client IDs, responde `oauth_not_configured`. El token no se escribe en logs. Identidades `GOOGLE` / `APPLE` se guardan en `UserIdentity` y se vinculan al email si ya existía.
+
 El límite de tasa está detrás del puerto `RateLimiter`. El adaptador de este corte es `MemoryRateLimiter`: ventana deslizante en el proceso, para desarrollo y pruebas. También queda activo si el proceso de producción arrancara, y sigue siendo memoria local. No es Redis y no se comparte entre instancias. Las claves son IP del socket, identidad (canal + destino normalizado) y `deviceId`. `trust proxy` está apagado: `X-Forwarded-For` no cambia la IP. El cupo de verificación es mayor que 5 para que un código bloqueado siga respondiendo `rejected`.
 
 Correo y teléfono se normalizan antes de limitar y de emitir. Una cuenta nueva pide nombre y apellido, queda en rol `CUSTOMER`, locale `es-VE`, y abre sesión. Una cuenta existente abre sesión y conserva el nombre. No se piden dirección ni cédula.

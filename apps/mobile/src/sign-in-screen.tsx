@@ -1,5 +1,6 @@
 import {
   ApiClientError,
+  exchangeOAuth,
   registerAccount,
   requestOtpChallenge,
   revokeSession,
@@ -22,6 +23,11 @@ import {
 
 type OtpInputRef = ElementRef<typeof TextInput>;
 import { apiBase } from "./api";
+import {
+  mobileOauthConfigured,
+  requestAppleIdTokenNative,
+  useGoogleAuthRequest,
+} from "./social-sign-in";
 
 const colors = colorTokens.light;
 const VE_DIAL = "+58";
@@ -111,6 +117,7 @@ export function SignInScreen({
   const [socialNote, setSocialNote] = useState<string | null>(null);
   const verifyingRef = useRef(false);
   const otpRefs = useRef<Array<OtpInputRef | null>>([]);
+  const [googleRequest, , googlePrompt] = useGoogleAuthRequest();
 
   const code = digits.join("");
   const headline = mode === "entrar" ? "Inicia sesión" : "Crea tu cuenta";
@@ -249,6 +256,85 @@ export function SignInScreen({
       return;
     }
     await requestChallenge(destination, channel);
+  }
+
+  async function finishOAuth(input: {
+    provider: "google" | "apple";
+    idToken: string;
+    givenName?: string;
+    familyName?: string;
+  }): Promise<void> {
+    const result = await exchangeOAuth(apiBase, {
+      provider: input.provider,
+      idToken: input.idToken,
+      deviceId,
+      platform,
+      givenName: input.givenName,
+      familyName: input.familyName,
+    });
+    if (result.status === "throttled") {
+      setError("Espera un momento e intenta otra vez.");
+      return;
+    }
+    if (result.status === "rejected") {
+      setError("No pudimos validar ese acceso. Intenta de nuevo o usa email/teléfono.");
+      return;
+    }
+    if (result.status === "profile_required") {
+      setRegistrationToken(result.registrationToken);
+      setStep("name");
+      return;
+    }
+    setSession(result);
+    setStep("done");
+    onAuthenticated?.(result);
+  }
+
+  async function continueWithSocial(provider: "google" | "apple"): Promise<void> {
+    const configured = mobileOauthConfigured();
+    if (provider === "google" && !configured.google) {
+      setSocialNote(
+        "Google aún no tiene Client ID. Añade EXPO_PUBLIC_GOOGLE_CLIENT_ID y GOOGLE_CLIENT_IDS en la API.",
+      );
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    setSocialNote(null);
+    try {
+      if (provider === "google") {
+        if (!googleRequest) {
+          setSocialNote("Google AuthSession no está listo. Revisa EXPO_PUBLIC_GOOGLE_CLIENT_ID.");
+          return;
+        }
+        const outcome = await googlePrompt();
+        const idToken =
+          outcome?.type === "success"
+            ? (outcome.params.id_token as string | undefined) ?? outcome.authentication?.idToken ?? undefined
+            : undefined;
+        if (!idToken) {
+          setSocialNote("Inicio con Google cancelado. Puedes usar email o teléfono.");
+          return;
+        }
+        await finishOAuth({ provider: "google", idToken });
+        return;
+      }
+      const apple = await requestAppleIdTokenNative();
+      await finishOAuth({
+        provider: "apple",
+        idToken: apple.idToken,
+        givenName: apple.givenName,
+        familyName: apple.familyName,
+      });
+    } catch (caught) {
+      if (caught instanceof Error && caught.message.includes("apple_unavailable")) {
+        setSocialNote("Sign in with Apple solo está disponible en iOS. En Android usa Google, email o teléfono.");
+        return;
+      }
+      setError(failureMessage(caught, "destination"));
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function logout(): Promise<void> {
@@ -433,14 +519,18 @@ export function SignInScreen({
                 <View style={styles.socialRow}>
                   <Pressable
                     accessibilityRole="button"
-                    onPress={() => setSocialNote("Google llegará cuando conectemos OAuth. Por ahora usa teléfono o email con OTP.")}
+                    accessibilityState={{ disabled: loading }}
+                    disabled={loading}
+                    onPress={() => void continueWithSocial("google")}
                     style={styles.social}
                   >
                     <Text style={styles.socialText}>Google</Text>
                   </Pressable>
                   <Pressable
                     accessibilityRole="button"
-                    onPress={() => setSocialNote("Apple llegará cuando conectemos OAuth. Por ahora usa teléfono o email con OTP.")}
+                    accessibilityState={{ disabled: loading }}
+                    disabled={loading}
+                    onPress={() => void continueWithSocial("apple")}
                     style={styles.social}
                   >
                     <Text style={styles.socialText}>Apple</Text>

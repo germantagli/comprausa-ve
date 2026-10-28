@@ -13,7 +13,7 @@
 ### Ya existente (otros cortes)
 
 - Flujo móvil de maqueta posterior al splash, login OTP contra API, carrito/cotización, pago en revisión y seguimiento operador.
-- OTP simulado solo en local. Proveedores reales implementados: Resend (email) y Twilio Verify (SMS+email). En Railway sigue `otp: not_configured` hasta cargar secretos.
+- OTP: Resend (email) y Twilio Verify (SMS+email). OAuth: Google y Apple vía ID token (`/v1/auth/oauth/exchanges`). En Railway OTP/OAuth quedan apagados hasta cargar client IDs y secretos.
 - Commerce (carrito/pedidos/pagos) aún en memoria de proceso aunque Prisma tenga modelos.
 
 ## Siguiente incremento

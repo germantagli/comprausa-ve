@@ -8,13 +8,20 @@ import type {
   RegistrationGrantRecord,
   SessionRecord,
   SessionWrite,
+  SocialIdentityProvider,
   TotpRecord,
 } from "./auth.repository";
 import { isRoleCode, type RoleCode } from "./roles";
 
+interface MemoryIdentity {
+  provider: SocialIdentityProvider | "email_otp" | "phone_otp";
+  subject: string;
+}
+
 interface MemoryUser extends AuthUser {
   email: string | null;
   phoneE164: string | null;
+  identities: MemoryIdentity[];
 }
 
 /**
@@ -47,6 +54,85 @@ export class MemoryAuthRepository implements AuthRepository {
     return null;
   }
 
+  async findUserBySocialIdentity(provider: SocialIdentityProvider, subject: string): Promise<AuthUser | null> {
+    for (const user of this.users.values()) {
+      if (user.identities.some((identity) => identity.provider === provider && identity.subject === subject)) {
+        return this.toUser(user);
+      }
+    }
+    return null;
+  }
+
+  async upsertSocialCustomer(input: {
+    provider: SocialIdentityProvider;
+    subject: string;
+    email: string | null;
+    givenName: string | null;
+    familyName: string | null;
+  }): Promise<AuthUser | null> {
+    const byIdentity = await this.findUserBySocialIdentity(input.provider, input.subject);
+    if (byIdentity) {
+      const user = this.users.get(byIdentity.id);
+      if (user && !user.givenName && input.givenName) {
+        user.givenName = input.givenName;
+      }
+      if (user && !user.familyName && input.familyName) {
+        user.familyName = input.familyName;
+      }
+      return byIdentity;
+    }
+    if (input.email) {
+      const byEmail = await this.findUserByDestination("email", input.email);
+      if (byEmail) {
+        const user = this.users.get(byEmail.id);
+        if (user) {
+          user.identities.push({ provider: input.provider, subject: input.subject });
+          if (!user.givenName && input.givenName) {
+            user.givenName = input.givenName;
+          }
+          if (!user.familyName && input.familyName) {
+            user.familyName = input.familyName;
+          }
+        }
+        return byEmail;
+      }
+    }
+    if (!input.email) {
+      return null;
+    }
+    if (!input.givenName || !input.familyName) {
+      return null;
+    }
+    const user: MemoryUser = {
+      id: randomUUID(),
+      email: input.email,
+      phoneE164: null,
+      givenName: input.givenName,
+      familyName: input.familyName,
+      roleCode: "CUSTOMER",
+      identities: [
+        { provider: "email_otp", subject: input.email },
+        { provider: input.provider, subject: input.subject },
+      ],
+    };
+    this.users.set(user.id, user);
+    return this.toUser(user);
+  }
+
+  async linkSocialIdentity(input: {
+    userId: string;
+    provider: SocialIdentityProvider;
+    subject: string;
+  }): Promise<void> {
+    const user = this.users.get(input.userId);
+    if (!user) {
+      return;
+    }
+    if (!user.identities.some((identity) => identity.provider === input.provider && identity.subject === input.subject)) {
+      user.identities.push({ provider: input.provider, subject: input.subject });
+    }
+  }
+
   async createCustomer(input: {
     channel: AuthChannel;
     destination: string;
@@ -64,6 +150,12 @@ export class MemoryAuthRepository implements AuthRepository {
       givenName: input.givenName,
       familyName: input.familyName,
       roleCode: "CUSTOMER",
+      identities: [
+        {
+          provider: input.channel === "email" ? "email_otp" : "phone_otp",
+          subject: input.destination,
+        },
+      ],
     };
     this.users.set(user.id, user);
     return this.toUser(user);

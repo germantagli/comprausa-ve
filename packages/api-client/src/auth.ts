@@ -104,6 +104,22 @@ export async function registerAccount(
   return authenticatedSchema.parse(payload);
 }
 
+export async function exchangeOAuth(
+  baseUrl: string,
+  input: {
+    provider: "google" | "apple";
+    idToken: string;
+    deviceId: string;
+    platform: "IOS" | "ANDROID" | "WEB";
+    givenName?: string;
+    familyName?: string;
+  },
+  fetchImpl: typeof fetch = fetch,
+): Promise<OtpVerificationResponse> {
+  const payload = await postJson(baseUrl, "/v1/auth/oauth/exchanges", input, undefined, fetchImpl);
+  return verificationResponseSchema.parse(payload);
+}
+
 export async function refreshSession(
   baseUrl: string,
   refreshToken: string,

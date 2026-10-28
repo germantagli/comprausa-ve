@@ -1,4 +1,5 @@
 import type { AuthChannel } from "./destination";
+import type { OAuthProvider } from "./oauth-identity";
 import type { RoleCode } from "./roles";
 
 export type ClientPlatform = "IOS" | "ANDROID" | "WEB";
@@ -9,6 +10,8 @@ export interface AuthUser {
   familyName: string | null;
   roleCode: RoleCode;
 }
+
+export type SocialIdentityProvider = OAuthProvider;
 
 export interface SessionWrite {
   id: string;
@@ -55,6 +58,23 @@ export interface TotpRecord {
 export interface AuthRepository {
   findUserByDestination(channel: AuthChannel, destination: string): Promise<AuthUser | null>;
   findUserById(id: string): Promise<AuthUser | null>;
+  findUserBySocialIdentity(provider: SocialIdentityProvider, subject: string): Promise<AuthUser | null>;
+  /**
+   * Finds by provider subject, else by email (and links identity), else creates the customer.
+   * Returns null when there is no email and no existing identity to attach.
+   */
+  upsertSocialCustomer(input: {
+    provider: SocialIdentityProvider;
+    subject: string;
+    email: string | null;
+    givenName: string | null;
+    familyName: string | null;
+  }): Promise<AuthUser | null>;
+  linkSocialIdentity(input: {
+    userId: string;
+    provider: SocialIdentityProvider;
+    subject: string;
+  }): Promise<void>;
   createCustomer(input: {
     channel: AuthChannel;
     destination: string;

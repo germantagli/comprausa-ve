@@ -15,6 +15,7 @@ Este repositorio tiene la arquitectura de la fase 1, el ingreso por OTP, la app 
 - App de cliente en `apps/web` y `apps/mobile`: introducción, inicio, explorar, carrito, pedidos y perfil. El ingreso sigue en `/entrar`.
 - Validación de entorno: en producción hacen falta `DATABASE_URL` y `AUTH_TOKEN_SECRET`. `OTP_PROVIDER=simulated` solo arranca con `NODE_ENV=development`. Producción admite `resend` (email) o `twilio` (SMS + email vía Verify) con sus secretos.
 - Proveedores OTP reales cableados: `ResendOtpProvider` y `TwilioVerifyOtpProvider`. Sin credenciales, `OTP_PROVIDER=none` y el challenge responde 503.
+- Google y Apple: `POST /v1/auth/oauth/exchanges` con ID token. Requiere `GOOGLE_CLIENT_IDS` / `APPLE_CLIENT_IDS` en la API y `NEXT_PUBLIC_*` / `EXPO_PUBLIC_*` en los clientes.
 
 ## Qué está simulado
 

@@ -1,5 +1,6 @@
 export {
   ApiClientError,
+  exchangeOAuth,
   refreshSession,
   registerAccount,
   requestOtpChallenge,

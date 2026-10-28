@@ -7,6 +7,12 @@ const healthSchema = z
     displayName: z.string(),
     catalog: z.literal("internal-demo"),
     otp: z.enum(["simulated", "resend", "twilio", "not_configured"]),
+    oauth: z
+      .object({
+        google: z.boolean(),
+        apple: z.boolean(),
+      })
+      .strict(),
     payments: z.literal("not_configured"),
     stores: z.literal("no_external_connector"),
   })

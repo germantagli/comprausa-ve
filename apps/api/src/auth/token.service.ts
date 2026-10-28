@@ -14,6 +14,8 @@ export interface RegistrationClaims {
   jti: string;
   channel: AuthChannel;
   destination: string;
+  oauthProvider?: "google" | "apple";
+  oauthSubject?: string;
 }
 
 export function hashOpaqueToken(token: string): string {
@@ -58,6 +60,9 @@ export class TokenService {
       purpose: "registration",
       channel: claims.channel,
       destination: claims.destination,
+      ...(claims.oauthProvider && claims.oauthSubject
+        ? { oauthProvider: claims.oauthProvider, oauthSubject: claims.oauthSubject }
+        : {}),
     })
       .setProtectedHeader({ alg: "HS256" })
       .setSubject(claims.jti)
@@ -70,14 +75,23 @@ export class TokenService {
   async verifyRegistration(token: string): Promise<RegistrationClaims | null> {
     try {
       const { payload } = await jwtVerify(token, this.key, { algorithms: ["HS256"] });
-      const { purpose, channel, destination, jti, sub } = payload;
+      const { purpose, channel, destination, jti, sub, oauthProvider, oauthSubject } = payload;
       if (purpose !== "registration" || (channel !== "email" && channel !== "phone")) {
         return null;
       }
       if (typeof destination !== "string" || typeof jti !== "string" || sub !== jti) {
         return null;
       }
-      return { jti, channel, destination };
+      const claims: RegistrationClaims = { jti, channel, destination };
+      if (
+        (oauthProvider === "google" || oauthProvider === "apple") &&
+        typeof oauthSubject === "string" &&
+        oauthSubject.length > 0
+      ) {
+        claims.oauthProvider = oauthProvider;
+        claims.oauthSubject = oauthSubject;
+      }
+      return claims;
     } catch {
       return null;
     }
