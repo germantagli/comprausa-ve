@@ -5,7 +5,7 @@ import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View
 const colors = colorTokens.light;
 
 const cart = require("../assets/brand/splash/cart.png");
-const heroCollage = require("../assets/brand/splash/hero-collage.png");
+const heroCollage = require("../assets/brand/splash/hero-full.png");
 const appMark = require("../assets/brand/splash/app-mark.png");
 const iconShield = require("../assets/brand/splash/icon-shield.png");
 const iconStore = require("../assets/brand/splash/icon-store.png");
@@ -43,20 +43,22 @@ export function SplashScreen({
   return (
     <View style={styles.frame} accessibilityLabel={APP_BRAND_NAME}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.brandRow}>
-          <Image source={cart} style={styles.cart} resizeMode="contain" />
-          <Text style={styles.wordmark}>
-            <Text style={styles.wordmarkBlue}>Trae</Text>
-            <Text style={styles.wordmarkOrange}>Lo</Text>
+        <View style={styles.padded}>
+          <View style={styles.brandRow}>
+            <Image source={cart} style={styles.cart} resizeMode="contain" />
+            <Text style={styles.wordmark}>
+              <Text style={styles.wordmarkBlue}>Trae</Text>
+              <Text style={styles.wordmarkOrange}>Lo</Text>
+            </Text>
+          </View>
+          <Text style={styles.headline}>
+            Compra en USA{"\n"}Recíbelo en Venezuela
           </Text>
         </View>
-        <Text style={styles.headline}>
-          Compra en USA{"\n"}Recíbelo en Venezuela
-        </Text>
 
-        <Image source={heroCollage} style={styles.hero} resizeMode="contain" accessibilityElementsHidden />
+        <Image source={heroCollage} style={styles.hero} resizeMode="cover" accessibilityElementsHidden />
 
-        <View style={styles.benefits}>
+        <View style={[styles.benefits, styles.padded]}>
           {benefits.map((item) => (
             <View key={item.label} style={styles.benefitRow}>
               <Image source={item.icon} style={styles.benefitIcon} resizeMode="contain" />
@@ -66,7 +68,7 @@ export function SplashScreen({
         </View>
 
         {serverReachable === false ? (
-          <Text accessibilityLiveRegion="polite" style={styles.warn}>
+          <Text accessibilityLiveRegion="polite" style={[styles.warn, styles.padded]}>
             Sin conexión con el servidor. Puedes continuar; algunas acciones fallarán hasta recuperar la red.
           </Text>
         ) : null}
@@ -104,8 +106,10 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingBottom: spaceTokens[4],
-    paddingHorizontal: spaceTokens[4],
     paddingTop: spaceTokens[6],
+  },
+  padded: {
+    paddingHorizontal: spaceTokens[4],
   },
   brandRow: {
     alignItems: "center",
@@ -138,10 +142,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   hero: {
-    alignSelf: "center",
-    height: 240,
+    height: 280,
     marginTop: spaceTokens[3],
-    maxWidth: 420,
     width: "100%",
   },
   benefits: {

@@ -66,23 +66,34 @@ export function Splash({
           </h1>
         </header>
 
+        {/* Full-bleed: cancela el padding horizontal del main */}
         <div
           aria-hidden="true"
           className="cve-splash-hero"
           style={{
-            margin: "0 auto",
-            maxWidth: 420,
+            marginLeft: -spaceTokens[4],
+            marginRight: -spaceTokens[4],
+            overflow: "hidden",
             position: "relative",
-            width: "100%",
+            width: `calc(100% + ${spaceTokens[4] * 2}px)`,
           }}
         >
           <Image
-            src="/brand/splash/hero-collage.webp"
+            src="/brand/splash/hero-full.webp"
             alt=""
-            width={920}
-            height={668}
+            width={1380}
+            height={990}
             priority
-            style={{ display: "block", height: "auto", width: "100%" }}
+            sizes="100vw"
+            style={{
+              display: "block",
+              height: "auto",
+              maxHeight: "42dvh",
+              minHeight: 220,
+              objectFit: "cover",
+              objectPosition: "center bottom",
+              width: "100%",
+            }}
           />
         </div>
 
