@@ -8,9 +8,18 @@ describe("decideEntryGate", () => {
     ).toBe("splash");
   });
 
-  it("skips splash when a session is valid and sends new users to onboarding", () => {
+  it("does not show onboarding before login even if the flag is unset", () => {
+    expect(
+      decideEntryGate({ requiresSplash: false, hasValidSession: false, onboardingCompleted: false }),
+    ).toBe("app");
+  });
+
+  it("sends newly authenticated users to onboarding", () => {
     expect(
       decideEntryGate({ requiresSplash: true, hasValidSession: true, onboardingCompleted: false }),
+    ).toBe("onboarding");
+    expect(
+      decideEntryGate({ requiresSplash: false, hasValidSession: true, onboardingCompleted: false }),
     ).toBe("onboarding");
   });
 

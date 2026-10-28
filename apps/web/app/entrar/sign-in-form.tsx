@@ -34,7 +34,13 @@ import {
   type KeyboardEvent,
 } from "react";
 import { apiBase } from "../lib/api";
+import { ONBOARDING_KEY } from "../lib/api";
 import { clearSession, DEVICE_KEY, readSession, saveSession } from "../lib/session";
+
+/** Nueva cuenta → siempre mostrar bienvenida (aunque el navegador la hubiera omitido antes). */
+function resetOnboardingForNewAccount(): void {
+  window.localStorage.removeItem(ONBOARDING_KEY);
+}
 import { CountryDialPicker } from "./country-dial-picker";
 import { oauthConfigured } from "./oauth-clients";
 import { requestAppleIdToken, requestGoogleIdToken } from "./social-sign-in";
@@ -286,6 +292,7 @@ export function SignInForm() {
           deviceId,
           platform: "WEB",
         });
+        resetOnboardingForNewAccount();
         saveSession(result);
         setSession(result);
         setStep("done");
