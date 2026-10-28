@@ -484,7 +484,14 @@ export function SignInForm() {
               {channel === "phone" ? (
                 <div style={phoneRowStyle}>
                   <div style={dialStyle} aria-label="Código de país Venezuela +58">
-                    <Image src="/brand/splash/ve-flag.webp" alt="" width={28} height={18} style={{ height: 14, width: "auto", borderRadius: 2 }} />
+                    <Image
+                      src="/brand/auth/ve-dial.webp"
+                      alt="Venezuela"
+                      width={28}
+                      height={18}
+                      unoptimized
+                      style={{ borderRadius: 3, height: 16, objectFit: "cover", width: 24 }}
+                    />
                     <span style={{ fontWeight: 700, color: colors.deep }}>{VE_DIAL}</span>
                   </div>
                   <label style={{ ...labelStyle, flex: 1, marginBottom: 0 }}>

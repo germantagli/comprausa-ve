@@ -29,7 +29,7 @@ const OTP_LENGTH = 6;
 const RESEND_FALLBACK_SECONDS = 45;
 
 const cart = require("../assets/brand/splash/cart.png");
-const veFlag = require("../assets/brand/splash/ve-flag.png");
+const veDial = require("../assets/brand/auth/ve-dial.png");
 
 type Channel = "email" | "phone";
 type Step = "destination" | "code" | "name" | "done";
@@ -378,7 +378,7 @@ export function SignInScreen({
                 {channel === "phone" ? (
                   <View style={styles.phoneRow}>
                     <View style={styles.dial} accessibilityLabel="Código de país Venezuela +58">
-                      <Image source={veFlag} style={styles.flag} resizeMode="contain" />
+                      <Image source={veDial} style={styles.flag} resizeMode="cover" accessibilityLabel="Venezuela" />
                       <Text style={styles.dialText}>{VE_DIAL}</Text>
                     </View>
                     <TextInput
@@ -675,8 +675,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spaceTokens[3],
   },
   flag: {
-    height: 14,
-    width: 22,
+    borderRadius: 3,
+    height: 16,
+    width: 24,
   },
   dialText: {
     color: colors.deep,
