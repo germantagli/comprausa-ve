@@ -8,7 +8,8 @@ import {
   type AuthenticatedSession,
 } from "@comprausa/api-client";
 import { colorTokens, fontTokens, radiusTokens, spaceTokens } from "@comprausa/design-tokens";
-import { emailSchema, otpCodeSchema, personNameSchema, phoneE164Schema } from "@comprausa/validation";
+import { composeE164, formatE164Display, getDefaultCountry, type CountryDialCode } from "@comprausa/utils";
+import { emailSchema, otpCodeSchema, personNameSchema } from "@comprausa/validation";
 import { useEffect, useRef, useState, type ElementRef } from "react";
 import {
   Image,
@@ -23,6 +24,7 @@ import {
 
 type OtpInputRef = ElementRef<typeof TextInput>;
 import { apiBase } from "./api";
+import { CountryDialPicker } from "./country-dial-picker";
 import {
   mobileOauthConfigured,
   requestAppleIdTokenNative,
@@ -30,12 +32,10 @@ import {
 } from "./social-sign-in";
 
 const colors = colorTokens.light;
-const VE_DIAL = "+58";
 const OTP_LENGTH = 6;
 const RESEND_FALLBACK_SECONDS = 45;
 
 const cart = require("../assets/brand/splash/cart.png");
-const veFlag = require("../assets/brand/splash/ve-flag.png");
 
 type Channel = "email" | "phone";
 type Step = "destination" | "code" | "name" | "done";
@@ -55,31 +55,6 @@ function createDeviceId(): string {
   bytes[8] = (variant & 0x3f) | 0x80;
   const hex = [...bytes].map((value) => value.toString(16).padStart(2, "0")).join("");
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-}
-
-function normalizeVeLocal(raw: string): string {
-  const digits = raw.replace(/\D/g, "");
-  if (digits.startsWith("0") && digits.length === 11) {
-    return digits.slice(1);
-  }
-  return digits;
-}
-
-function toE164Phone(localRaw: string): string | null {
-  const local = normalizeVeLocal(localRaw);
-  if (!/^\d{10}$/.test(local)) {
-    return null;
-  }
-  const candidate = `${VE_DIAL}${local}`;
-  return phoneE164Schema.safeParse(candidate).success ? candidate : null;
-}
-
-function formatPhoneDisplay(e164: string): string {
-  if (e164.startsWith(VE_DIAL) && e164.length === 13) {
-    const local = e164.slice(3);
-    return `${VE_DIAL} ${local.slice(0, 3)} ${local.slice(3, 6)} ${local.slice(6)}`;
-  }
-  return e164;
 }
 
 function formatCountdown(totalSeconds: number): string {
@@ -104,6 +79,7 @@ export function SignInScreen({
   const [step, setStep] = useState<Step>("destination");
   const [channel, setChannel] = useState<Channel>("phone");
   const [email, setEmail] = useState("");
+  const [country, setCountry] = useState<CountryDialCode>(() => getDefaultCountry());
   const [phoneLocal, setPhoneLocal] = useState("");
   const [destination, setDestination] = useState("");
   const [digits, setDigits] = useState<string[]>(() => Array.from({ length: OTP_LENGTH }, () => ""));
@@ -166,9 +142,9 @@ export function SignInScreen({
       await requestChallenge(parsed.data, "email");
       return;
     }
-    const e164 = toE164Phone(phoneLocal);
+    const e164 = composeE164(country.dial, phoneLocal);
     if (!e164) {
-      setError("Usa un móvil venezolano de 10 dígitos, por ejemplo 412 345 6789.");
+      setError("Revisa el número. Incluye el código de país correcto y el número nacional.");
       return;
     }
     await requestChallenge(e164, "phone");
@@ -463,17 +439,14 @@ export function SignInScreen({
 
                 {channel === "phone" ? (
                   <View style={styles.phoneRow}>
-                    <View style={styles.dial} accessibilityLabel="Código de país Venezuela +58">
-                      <Image source={veFlag} style={styles.flag} resizeMode="contain" />
-                      <Text style={styles.dialText}>{VE_DIAL}</Text>
-                    </View>
+                    <CountryDialPicker value={country} onChange={setCountry} />
                     <TextInput
                       accessibilityLabel="Número de teléfono"
                       autoComplete="tel"
                       inputMode="numeric"
                       keyboardType="number-pad"
                       onChangeText={setPhoneLocal}
-                      placeholder="412 345 6789"
+                      placeholder={country.iso2 === "VE" ? "412 345 6789" : "Número"}
                       placeholderTextColor={colors.muted}
                       style={[styles.input, styles.phoneInput]}
                       value={phoneLocal}
@@ -549,7 +522,7 @@ export function SignInScreen({
                 <Text style={styles.subtitle}>
                   Te enviamos un código de 6 dígitos a{" "}
                   <Text style={styles.destinationStrong}>
-                    {channel === "phone" ? formatPhoneDisplay(destination) : destination}
+                    {channel === "phone" ? formatE164Display(destination, country.dial) : destination}
                   </Text>
                 </Text>
                 <View style={styles.otpRow}>
@@ -753,24 +726,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: spaceTokens[2],
     marginBottom: spaceTokens[4],
-  },
-  dial: {
-    alignItems: "center",
-    borderColor: colors.border,
-    borderRadius: radiusTokens.md,
-    borderWidth: 1,
-    flexDirection: "row",
-    gap: spaceTokens[2],
-    minHeight: 52,
-    paddingHorizontal: spaceTokens[3],
-  },
-  flag: {
-    height: 14,
-    width: 22,
-  },
-  dialText: {
-    color: colors.deep,
-    fontWeight: "700",
   },
   phoneInput: {
     flex: 1,
