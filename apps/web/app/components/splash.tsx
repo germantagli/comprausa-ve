@@ -81,9 +81,10 @@ export function Splash({
           <Image
             src="/brand/splash/hero-full.webp"
             alt=""
-            width={1380}
-            height={990}
+            width={1536}
+            height={1024}
             priority
+            quality={92}
             sizes="100vw"
             style={{
               display: "block",
