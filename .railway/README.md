@@ -33,3 +33,26 @@ El repositorio queda listo para vincularse. El proyecto en Railway no se crea ha
 | `PORT` | lo inyecta Railway |
 
 Redis y worker quedan fuera de este corte.
+
+
+## Activar OTP email (Resend) en el API ya desplegado
+
+En el dashboard de Railway → servicio **comprausa-api** → **Variables**, añade:
+
+```
+OTP_PROVIDER=resend
+RESEND_API_KEY=re_...
+OTP_EMAIL_FROM=TraeLo <onboarding@resend.dev>
+WEB_ORIGIN=https://comprausaweb-production.up.railway.app
+```
+
+Redeploy el servicio. Luego:
+
+```bash
+curl -sS https://comprausaapi-production.up.railway.app/health
+# debe mostrar "otp":"resend"
+```
+
+Con `onboarding@resend.dev` Resend solo entrega a tu email de cuenta. Para enviar a cualquier usuario, verifica un dominio propio en Resend y úsalo en `OTP_EMAIL_FROM`.
+
+Script opcional (CLI): `scripts/activate-resend-railway.sh` con `RAILWAY_API_TOKEN` + `RESEND_API_KEY`.
