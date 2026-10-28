@@ -113,6 +113,39 @@ export async function refreshSession(
   return authenticatedSchema.parse(payload);
 }
 
+const totpEnrollmentSchema = z
+  .object({
+    secret: z.string(),
+    otpauthUri: z.string(),
+  })
+  .strict();
+
+const totpSessionSchema = z
+  .object({
+    status: z.literal("authenticated"),
+    accessToken: z.string(),
+    expiresInSeconds: z.number().int(),
+  })
+  .strict();
+
+export type TotpEnrollment = z.infer<typeof totpEnrollmentSchema>;
+export type TotpSession = z.infer<typeof totpSessionSchema>;
+
+export async function enrollTotp(baseUrl: string, accessToken: string, fetchImpl: typeof fetch = fetch): Promise<TotpEnrollment> {
+  const payload = await postJson(baseUrl, "/v1/auth/totp/enrollments", {}, accessToken, fetchImpl);
+  return totpEnrollmentSchema.parse(payload);
+}
+
+export async function verifyTotp(
+  baseUrl: string,
+  accessToken: string,
+  code: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<TotpSession> {
+  const payload = await postJson(baseUrl, "/v1/auth/totp/verifications", { code }, accessToken, fetchImpl);
+  return totpSessionSchema.parse(payload);
+}
+
 export async function revokeSession(
   baseUrl: string,
   accessToken: string,

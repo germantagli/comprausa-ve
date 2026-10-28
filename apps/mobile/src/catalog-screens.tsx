@@ -18,6 +18,7 @@ import { colorTokens, fontTokens, radiusTokens, spaceTokens } from "@comprausa/d
 import { catalogPriceLabel } from "@comprausa/utils";
 import { useEffect, useState, type ReactNode } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { MobileOrdersScreen } from "./tracking-screens";
 
 const colors = colorTokens.light;
 const apiBase = "http://127.0.0.1:3001";
@@ -128,51 +129,8 @@ export function ExploreScreen({ onOpenProduct }: { onOpenProduct: (productId: st
   );
 }
 
-export function OrdersScreen() {
-  const [tab, setTab] = useState<"activos" | "historial">("activos");
-  return (
-    <ScrollView contentContainerStyle={styles.page}>
-      <Text accessibilityRole="header" style={styles.title}>
-        Mis pedidos
-      </Text>
-      <View style={styles.tabRow}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ selected: tab === "activos" }}
-          onPress={() => setTab("activos")}
-          style={tab === "activos" ? styles.primary : styles.secondary}
-        >
-          <Text style={tab === "activos" ? styles.primaryText : styles.body}>Activos</Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ selected: tab === "historial" }}
-          onPress={() => setTab("historial")}
-          style={tab === "historial" ? styles.primary : styles.secondary}
-        >
-          <Text style={tab === "historial" ? styles.primaryText : styles.body}>Historial</Text>
-        </Pressable>
-      </View>
-      <View style={styles.card}>
-        <Text accessibilityLiveRegion="polite" style={styles.heading}>
-          {tab === "activos" ? "No tienes pedidos activos." : "Todavía no hay historial."}
-        </Text>
-        <Text style={styles.caption}>Cuando exista un pedido, aquí verás el estado y el seguimiento.</Text>
-      </View>
-      <View style={styles.card}>
-        <Text style={styles.heading}>Seguimiento</Text>
-        <Text style={styles.caption}>Estructura visual del diseño. No hay un envío real asociado.</Text>
-        {["Pago confirmado", "Compra en USA", "Recibido en almacén USA", "En tránsito internacional", "En Venezuela", "Entregado"].map(
-          (label) => (
-            <View key={label} style={styles.timelineRow}>
-              <View style={styles.timelineDot} />
-              <Text style={styles.body}>{label}</Text>
-            </View>
-          ),
-        )}
-      </View>
-    </ScrollView>
-  );
+export function OrdersScreen({ session }: { session: AuthenticatedSession | null }) {
+  return <MobileOrdersScreen session={session} />;
 }
 
 export function ProfileScreen({
@@ -181,12 +139,16 @@ export function ProfileScreen({
   onSignedOut,
   onHelp,
   onOrders,
+  onReview,
+  onTrack,
 }: {
   session: AuthenticatedSession | null;
   onSignIn: () => void;
   onSignedOut: () => void;
   onHelp: () => void;
   onOrders: () => void;
+  onReview: () => void;
+  onTrack: () => void;
 }) {
   const [phase, setPhase] = useState<Load<AccountProfile>>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
@@ -195,7 +157,7 @@ export function ProfileScreen({
 
   useEffect(() => {
     if (!session) {
-      setPhase({ status: "ready", data: { givenName: null, familyName: null } });
+      setPhase({ status: "ready", data: { givenName: null, familyName: null, role: "CUSTOMER", mfaSatisfied: false } });
       return;
     }
     let cancelled = false;
@@ -235,6 +197,8 @@ export function ProfileScreen({
 
   const menu: readonly { label: string; note?: string; onPress: () => void }[] = [
     { label: "Mis pedidos", onPress: onOrders },
+    { label: "Revisión de pagos", note: "Cola interna del operador.", onPress: onReview },
+    { label: "Seguimiento de pedidos", note: "Cola y línea de tiempo del operador.", onPress: onTrack },
     { label: "Direcciones", note: "La dirección se pide al cotizar.", onPress: onHelp },
     { label: "Métodos de pago", note: "Disponibles en la cotización aceptada.", onPress: onHelp },
     { label: "Favoritos", note: "Todavía no está disponible.", onPress: onHelp },

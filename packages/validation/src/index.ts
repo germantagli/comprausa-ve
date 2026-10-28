@@ -139,6 +139,85 @@ export const cartItemSchema = z
   })
   .strict();
 
+/** Positive integer cents written by an operator. No default tariff. */
+export const operatorAmountSchema = z
+  .object({
+    amountMinor: z.number().int().positive().max(MAX_SAFE_MINOR),
+  })
+  .strict();
+
+export const totpCodeSchema = z
+  .object({
+    code: z.string().regex(/^\d{6}$/),
+  })
+  .strict();
+
+export const fulfillmentTargetSchema = z.enum([
+  "PROCUREMENT_PENDING",
+  "PURCHASED_FROM_STORE",
+  "RECEIVED_AT_US_WAREHOUSE",
+  "INTERNATIONAL_TRANSIT",
+  "CUSTOMS_PROCESSING",
+  "IN_VENEZUELA",
+  "OUT_FOR_DELIVERY",
+  "DELIVERED",
+  "CANCELLED",
+  "EXCEPTION",
+]);
+
+/** The operator records what already happened. The body has no delivery date. */
+export const trackingEventSchema = z
+  .object({
+    status: fulfillmentTargetSchema,
+    note: z.string().trim().min(1).max(280),
+  })
+  .strict();
+
+const paymentReferenceSchema = z
+  .string()
+  .trim()
+  .min(4)
+  .max(40)
+  .regex(/^[A-Za-z0-9-]+$/);
+
+export const paymentRequestSchema = z.discriminatedUnion("method", [
+  z
+    .object({
+      method: z.literal("STRIPE"),
+      idempotencyKey: z.string().trim().min(8).max(80),
+    })
+    .strict(),
+  z.object({ method: z.literal("PAYPAL") }).strict(),
+  z
+    .object({
+      method: z.literal("ZELLE"),
+      reference: paymentReferenceSchema,
+    })
+    .strict(),
+  z
+    .object({
+      method: z.literal("PAGO_MOVIL"),
+      bank: z.string().trim().min(2).max(80),
+      phone: z.string().trim().regex(/^\+?[0-9]{7,15}$/),
+      reference: paymentReferenceSchema,
+      amountMinor: z.number().int().positive().max(MAX_SAFE_MINOR),
+    })
+    .strict(),
+]);
+
+export const proofUploadSchema = z
+  .object({
+    contentType: z.enum(["image/jpeg", "image/png", "application/pdf"]),
+    dataBase64: z.string().trim().min(1).max(2_800_000),
+  })
+  .strict();
+
+export const paymentRejectionSchema = z
+  .object({
+    reason: z.string().trim().min(1).max(280),
+  })
+  .strict();
+
 export type MoneyInput = z.infer<typeof moneySchema>;
 export type CatalogSearchInput = z.infer<typeof catalogSearchSchema>;
 export type OtpChallengeInput = z.infer<typeof otpChallengeSchema>;

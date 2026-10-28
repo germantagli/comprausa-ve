@@ -8,8 +8,9 @@ import type {
   RegistrationGrantRecord,
   SessionRecord,
   SessionWrite,
+  TotpRecord,
 } from "./auth.repository";
-import { selectRole } from "./roles";
+import { isRoleCode, selectRole, type RoleCode } from "./roles";
 import { PrismaService } from "../prisma/prisma.service";
 
 const userInclude = {
@@ -150,6 +151,54 @@ export class PrismaAuthRepository implements AuthRepository {
         consumedAt: grant.consumedAt,
       },
     });
+  }
+
+  async assignRole(userId: string, roleCode: RoleCode): Promise<void> {
+    if (!isRoleCode(roleCode)) {
+      throw new Error("Unknown role");
+    }
+    const role = await this.prisma.role.findUnique({ where: { code: roleCode } });
+    if (!role) {
+      throw new Error("Unknown role");
+    }
+    await this.prisma.$transaction([
+      this.prisma.userRole.deleteMany({ where: { userId } }),
+      this.prisma.userRole.create({ data: { userId, roleId: role.id } }),
+    ]);
+  }
+
+  async setSessionMfa(sessionId: string, mfaSatisfied: boolean): Promise<void> {
+    await this.prisma.session.update({ where: { id: sessionId }, data: { mfaSatisfied } });
+  }
+
+  async saveTotp(record: TotpRecord): Promise<void> {
+    await this.prisma.totpCredential.upsert({
+      where: { userId: record.userId },
+      create: {
+        userId: record.userId,
+        secretCiphertext: record.secretCiphertext,
+        confirmedAt: record.confirmed ? new Date() : null,
+        lastAcceptedStep: record.lastAcceptedStep,
+      },
+      update: {
+        secretCiphertext: record.secretCiphertext,
+        confirmedAt: record.confirmed ? new Date() : null,
+        lastAcceptedStep: record.lastAcceptedStep,
+      },
+    });
+  }
+
+  async readTotp(userId: string): Promise<TotpRecord | null> {
+    const record = await this.prisma.totpCredential.findUnique({ where: { userId } });
+    if (!record) {
+      return null;
+    }
+    return {
+      userId: record.userId,
+      secretCiphertext: record.secretCiphertext,
+      confirmed: record.confirmedAt !== null,
+      lastAcceptedStep: record.lastAcceptedStep,
+    };
   }
 
   async consumeRegistrationGrant(jti: string, at: Date): Promise<RegistrationGrantRecord | null> {

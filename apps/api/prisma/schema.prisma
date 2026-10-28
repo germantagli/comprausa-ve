@@ -180,6 +180,7 @@ model User {
   tickets         SupportTicket[]
   auditLogs       AuditLog[]
   paymentReviews  PaymentProof[] @relation("PaymentProofReviewer")
+  totpCredential  TotpCredential?
 
   @@index([status])
 }
@@ -706,6 +707,17 @@ model SupportTicket {
 
   @@index([userId])
   @@index([status])
+}
+
+/// TOTP secret sealed with AES-256-GCM. OTP alone does not set mfaSatisfied.
+model TotpCredential {
+  userId            String    @id @db.Uuid
+  secretCiphertext String
+  confirmedAt       DateTime?
+  lastAcceptedStep  Int?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model AuditLog {

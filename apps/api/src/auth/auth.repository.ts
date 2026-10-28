@@ -45,6 +45,13 @@ export interface RegistrationGrantRecord {
   consumedAt: Date | null;
 }
 
+export interface TotpRecord {
+  userId: string;
+  secretCiphertext: string;
+  confirmed: boolean;
+  lastAcceptedStep: number | null;
+}
+
 export interface AuthRepository {
   findUserByDestination(channel: AuthChannel, destination: string): Promise<AuthUser | null>;
   findUserById(id: string): Promise<AuthUser | null>;
@@ -62,4 +69,8 @@ export interface AuthRepository {
   revokeSession(id: string, at: Date): Promise<void>;
   saveRegistrationGrant(grant: RegistrationGrantRecord): Promise<void>;
   consumeRegistrationGrant(jti: string, at: Date): Promise<RegistrationGrantRecord | null>;
+  assignRole(userId: string, roleCode: RoleCode): Promise<void>;
+  setSessionMfa(sessionId: string, mfaSatisfied: boolean): Promise<void>;
+  saveTotp(record: TotpRecord): Promise<void>;
+  readTotp(userId: string): Promise<TotpRecord | null>;
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { finalizeBySystem, type QuoteLine, type StoredQuote } from "./quote-policy";
+import { finalizeBySystem, publishOperatorAmount, type QuoteLine, type StoredQuote } from "./quote-policy";
 
 function line(partial: Partial<QuoteLine> & Pick<QuoteLine, "unitAmountMinor">): QuoteLine {
   return {
@@ -36,5 +36,18 @@ describe("finalizeBySystem", () => {
     }).toThrow();
     const again = finalizeBySystem(quote);
     expect(again.snapshot).toBe(quote.snapshot);
+  });
+});
+
+describe("publishOperatorAmount", () => {
+  it("freezes the cents the operator wrote and leaves an unknown price null", () => {
+    const quote = publishOperatorAmount(pending([line({ unitAmountMinor: null, quantity: 2 })]), 1800);
+    expect(quote.status).toBe("FINAL");
+    expect(quote.snapshot?.knownMinor).toBe(1800);
+    expect(quote.lines[0]?.unitAmountMinor).toBeNull();
+    expect(quote.snapshot?.lines[0]?.unitAmountMinor).toBeNull();
+    const again = publishOperatorAmount(quote, 9999);
+    expect(again.snapshot).toBe(quote.snapshot);
+    expect(again.snapshot?.knownMinor).toBe(1800);
   });
 });

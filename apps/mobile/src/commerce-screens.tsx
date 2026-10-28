@@ -21,6 +21,7 @@ import { colorTokens, fontTokens, radiusTokens, spaceTokens } from "@comprausa/d
 import { catalogPriceLabel, formatUsdFromMinor, subtotalLabel } from "@comprausa/utils";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { MobilePaymentPanel } from "./payment-screens";
 
 const colors = colorTokens.light;
 const apiBase = "http://127.0.0.1:3001";
@@ -370,7 +371,10 @@ export function MobileQuoteScreen({
       ) : null}
       {phase === "ready" && quote ? (
         <View>
-          <Text style={styles.heading}>{quote.status === "PENDING_VALIDATION" ? "Pendiente de validación" : "Final"}</Text>
+          <Text style={styles.heading}>
+            {quote.status === "PENDING_VALIDATION" ? "Pendiente de validación" : quote.status === "FINAL" ? "Importe publicado" : "Aceptada"}
+          </Text>
+          <Text style={styles.body}>Identificador: {quote.id}</Text>
           <Text style={styles.body}>Esta cotización no se puede marcar como pagada ni como final desde aquí.</Text>
           <Text style={styles.body}>
             {quote.address.state}, {quote.address.city}, {quote.address.municipality}. {quote.address.reference}
@@ -384,6 +388,7 @@ export function MobileQuoteScreen({
             </View>
           ))}
           <Text style={styles.heading}>{subtotalLabel(quote.subtotal)}</Text>
+          {session ? <MobilePaymentPanel quote={quote} session={session} onChanged={() => setAttempt((current) => current + 1)} /> : null}
         </View>
       ) : null}
     </ScrollView>

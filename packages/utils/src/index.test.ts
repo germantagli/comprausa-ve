@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { catalogPriceLabel, formatUsdFromMinor, groupByStore, rememberPastedUrl, subtotalLabel, sumKnownMinor } from "./index";
+import { catalogPriceLabel, formatUsdFromMinor, fulfillmentLabel, groupByStore, recordedAtLabel, rememberPastedUrl, subtotalLabel, sumKnownMinor } from "./index";
 
 describe("formatUsdFromMinor", () => {
   it("formats cents without binary floating point", () => {
@@ -66,6 +66,15 @@ describe("formatUsdFromMinor", () => {
     } finally {
       target.fetch = original;
     }
+  });
+
+  it("names a recorded movement without promising a delivery date", () => {
+    expect(fulfillmentLabel("PURCHASED_FROM_STORE")).toBe("Comprado en la tienda");
+    expect(fulfillmentLabel("PAID")).toBe("Pagado");
+    const recorded = recordedAtLabel("2026-10-26T15:04:00.000Z");
+    expect(recorded.startsWith("Registrado el ")).toBe(true);
+    expect(recorded).toContain("2026");
+    expect(recorded.toLowerCase()).not.toMatch(/estimad|llega el|fecha de entrega/);
   });
 
   it("rejects fractional numbers", () => {

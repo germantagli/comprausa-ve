@@ -3,10 +3,12 @@ export {
   refreshSession,
   registerAccount,
   requestOtpChallenge,
+  enrollTotp,
   revokeSession,
   verifyOtp,
+  verifyTotp,
 } from "./auth";
-export type { AuthenticatedSession, OtpChallengeResponse, OtpDestination, OtpVerificationResponse } from "./auth";
+export type { AuthenticatedSession, OtpChallengeResponse, OtpDestination, OtpVerificationResponse, TotpEnrollment, TotpSession } from "./auth";
 export {
   getAccountProfile,
   getCatalogAvailability,
@@ -19,15 +21,27 @@ export {
 } from "./catalog";
 export type { AccountProfile, CatalogAvailability, CatalogDetail, CatalogFilters, CatalogPricing, CatalogSummary, NamedCatalogList } from "./catalog";
 export {
+  acceptQuote,
   addCartItem,
+  createPayment,
   createQuote,
   getCart,
+  getPaymentMethods,
+  getOrder,
   getQuote,
+  listFulfillmentQueue,
+  listOrders,
+  listProofQueue,
+  publishQuoteAmount,
+  recordTrackingEvent,
+  rejectPayment,
   removeCartItem,
   saveCartItem,
   setCartQuantity,
+  submitProof,
+  verifyPayment,
 } from "./commerce";
-export type { CartView, QuoteView, VenezuelaAddressInput } from "./commerce";
+export type { CartView, CustomerOrder, OperatorOrder, PaymentMethods, PaymentView, QuoteView, VenezuelaAddressInput } from "./commerce";
 
 import { z } from "zod";
 

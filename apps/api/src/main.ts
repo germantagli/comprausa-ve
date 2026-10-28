@@ -8,7 +8,7 @@ import { ZodExceptionFilter } from "./http/zod-exception.filter";
 
 async function bootstrap(): Promise<void> {
   const env = parseAppEnv(process.env);
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, { cors: false });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { cors: false, rawBody: true });
   app.set("trust proxy", false);
   if (env.webOrigin) {
     const origins =
@@ -25,7 +25,7 @@ async function bootstrap(): Promise<void> {
   if (env.nodeEnv !== "production") {
     const config = new DocumentBuilder()
       .setTitle(env.displayName)
-      .setDescription("Identidad por OTP y catálogo interno de demostración. Sin pagos y sin tiendas externas.")
+      .setDescription("Identidad por OTP, catálogo demo, cotización, pago en revisión y seguimiento manual. Sin fecha prometida y sin despliegue.")
       .setVersion("0.0.0")
       .addBearerAuth()
       .build();

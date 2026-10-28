@@ -160,6 +160,16 @@ export function ProfileScreen() {
         </div>
       ) : null}
       <p style={{ ...bodyStyle, marginTop: spaceTokens[4] }}>
+        <Link href="/operador" style={linkStyle}>
+          Revisión de pagos
+        </Link>
+      </p>
+      <p style={bodyStyle}>
+        <Link href="/operador/pedidos" style={linkStyle}>
+          Seguimiento de pedidos
+        </Link>
+      </p>
+      <p style={bodyStyle}>
         <Link href="/ayuda" style={linkStyle}>
           Ayuda
         </Link>
