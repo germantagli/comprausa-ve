@@ -1,9 +1,10 @@
 "use client";
 
+import { decideEntryGate, probeServerReachable, restoreAuthenticatedSession } from "@comprausa/api-client";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { ONBOARDING_KEY } from "../lib/api";
-import { readSession } from "../lib/session";
+import { apiBase, ONBOARDING_KEY } from "../lib/api";
+import { clearSession, readSession, saveSession } from "../lib/session";
 import { AppHeader } from "./app-header";
 import { BottomNav } from "./bottom-nav";
 import { Onboarding } from "./onboarding";
@@ -25,30 +26,53 @@ function isPhoneViewport(): boolean {
 export function ClientShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [gate, setGate] = useState<Gate>("checking");
+  const [serverReachable, setServerReachable] = useState<boolean | null>(null);
 
   useEffect(() => {
-    function resolve(): void {
+    let cancelled = false;
+
+    async function bootstrap(): Promise<void> {
       const phone = isPhoneViewport();
-      const session = readSession();
+      const stored = readSession();
       const seenOnboarding = window.localStorage.getItem(ONBOARDING_KEY) === "1";
 
-      // En teléfono sin sesión: splash con Comenzar → registro/OTP. Nunca el buscador primero.
-      if (phone && !session) {
-        setGate("splash");
+      const restorePromise = restoreAuthenticatedSession(apiBase, stored);
+      const healthPromise = probeServerReachable(apiBase);
+
+      const { session, cleared } = await restorePromise;
+      if (cancelled) {
         return;
       }
-      if (!seenOnboarding) {
-        setGate("onboarding");
-        return;
+      if (cleared) {
+        clearSession();
+      } else if (session && session !== stored) {
+        saveSession(session);
       }
-      setGate("app");
+
+      const nextGate = decideEntryGate({
+        requiresSplash: phone,
+        hasValidSession: Boolean(session),
+        onboardingCompleted: seenOnboarding,
+      });
+      setGate(nextGate);
+
+      void healthPromise.then((reachable) => {
+        if (!cancelled) {
+          setServerReachable(reachable);
+        }
+      });
     }
 
-    resolve();
+    void bootstrap();
     const media = window.matchMedia("(max-width: 767px)");
-    const onChange = () => resolve();
+    const onChange = () => {
+      void bootstrap();
+    };
     media.addEventListener("change", onChange);
-    return () => media.removeEventListener("change", onChange);
+    return () => {
+      cancelled = true;
+      media.removeEventListener("change", onChange);
+    };
   }, []);
 
   function finishOnboarding(): void {
@@ -62,22 +86,26 @@ export function ClientShell({ children }: { children: ReactNode }) {
   }
 
   function onComenzar(): void {
-    // Flujo maqueta: splash → registro/OTP. Sin OTP simulado en producción.
-    router.push("/entrar");
+    router.push("/entrar?modo=registro");
+  }
+
+  function onIniciarSesion(): void {
+    router.push("/entrar?modo=entrar");
   }
 
   if (gate === "checking") {
     return (
-      <main style={pageStyle} aria-busy="true">
-        <div className="cve-page">
-          <p style={{ margin: 0 }}>Cargando…</p>
+      <main style={{ ...pageStyle, background: colors.surface }} aria-busy="true">
+        <div className="cve-page" style={{ alignContent: "center", minHeight: "100dvh", textAlign: "center" }}>
+          <p style={{ color: colors.primary, fontWeight: 800, margin: 0 }}>CompraUSA</p>
+          <p style={{ color: colors.muted, margin: "12px 0 0" }}>Cargando…</p>
         </div>
       </main>
     );
   }
 
   if (gate === "splash") {
-    return <Splash onComenzar={onComenzar} />;
+    return <Splash onComenzar={onComenzar} onIniciarSesion={onIniciarSesion} serverReachable={serverReachable} />;
   }
 
   if (gate === "onboarding") {

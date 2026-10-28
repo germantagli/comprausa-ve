@@ -21,9 +21,9 @@ import { colorTokens, fontTokens, radiusTokens, spaceTokens } from "@comprausa/d
 import { formatUsdFromMinor } from "@comprausa/utils";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { apiBase } from "./api";
 
 const colors = colorTokens.light;
-const apiBase = "http://127.0.0.1:3001";
 const reviewRoles = new Set(["SUPER_ADMIN", "OPERATIONS_ADMIN", "FINANCE_AGENT"]);
 
 export function MobilePaymentPanel({

@@ -1,16 +1,23 @@
 "use client";
 
 import { fontTokens, radiusTokens, spaceTokens } from "@comprausa/design-tokens";
-import { colors, pageStyle } from "./styles";
+import { buttonStyle, colors, secondaryButtonStyle } from "./styles";
 
-export function Splash({ onComenzar }: { onComenzar: () => void }) {
+export function Splash({
+  onComenzar,
+  onIniciarSesion,
+  serverReachable,
+}: {
+  onComenzar: () => void;
+  onIniciarSesion: () => void;
+  serverReachable: boolean | null;
+}) {
   return (
     <main
       className="cve-splash"
       style={{
-        ...pageStyle,
-        background: `linear-gradient(165deg, ${colors.deep} 0%, ${colors.primary} 55%, #0d6aa8 100%)`,
-        color: colors.primaryOn,
+        background: colors.surface,
+        color: colors.text,
         display: "grid",
         gridTemplateRows: "1fr auto",
         minHeight: "100dvh",
@@ -22,6 +29,7 @@ export function Splash({ onComenzar }: { onComenzar: () => void }) {
         <p
           className="cve-splash-mark"
           style={{
+            color: colors.primary,
             fontSize: 40,
             fontWeight: 800,
             letterSpacing: "-0.03em",
@@ -34,27 +42,29 @@ export function Splash({ onComenzar }: { onComenzar: () => void }) {
         <p
           className="cve-fade-up-delay"
           style={{
-            fontSize: fontTokens.sizes.caption,
-            letterSpacing: "0.08em",
-            margin: `${spaceTokens[3]}px 0 0`,
-            opacity: 0.9,
-            textTransform: "uppercase",
-          }}
-        >
-          VE · USA → Venezuela
-        </p>
-        <p
-          className="cve-fade-up-delay"
-          style={{
+            color: colors.muted,
             fontSize: fontTokens.sizes.body,
             lineHeight: `${fontTokens.lineHeight.body}px`,
             margin: `${spaceTokens[6]}px auto 0`,
-            maxWidth: 280,
-            opacity: 0.95,
+            maxWidth: 300,
           }}
         >
-          Compra en tiendas de USA y recíbelo en Venezuela.
+          Compra en USA, recíbelo en Venezuela
         </p>
+        {serverReachable === false ? (
+          <p
+            role="status"
+            style={{
+              color: colors.warning,
+              fontSize: fontTokens.sizes.caption,
+              lineHeight: `${fontTokens.lineHeight.caption}px`,
+              margin: `${spaceTokens[4]}px auto 0`,
+              maxWidth: 280,
+            }}
+          >
+            Sin conexión con el servidor. Puedes continuar; algunas acciones fallarán hasta recuperar la red.
+          </p>
+        ) : null}
       </div>
 
       <div style={{ display: "grid", gap: spaceTokens[3], justifyItems: "stretch", paddingBottom: spaceTokens[4] }}>
@@ -63,32 +73,32 @@ export function Splash({ onComenzar }: { onComenzar: () => void }) {
           className="cve-fade-up"
           onClick={onComenzar}
           style={{
-            background: colors.surface,
-            border: "none",
+            ...buttonStyle,
             borderRadius: radiusTokens.md,
-            color: colors.primary,
-            cursor: "pointer",
-            font: "inherit",
             fontSize: fontTokens.sizes.body,
             fontWeight: 700,
             minHeight: 52,
-            padding: `0 ${spaceTokens[4]}px`,
             width: "100%",
           }}
         >
           Comenzar
         </button>
-        <p
+        <button
+          type="button"
+          className="cve-fade-up"
+          onClick={onIniciarSesion}
           style={{
-            fontSize: fontTokens.sizes.caption,
-            lineHeight: `${fontTokens.lineHeight.caption}px`,
-            margin: 0,
-            opacity: 0.85,
-            textAlign: "center",
+            ...secondaryButtonStyle,
+            borderColor: colors.primary,
+            color: colors.primary,
+            fontSize: fontTokens.sizes.body,
+            fontWeight: 700,
+            minHeight: 52,
+            width: "100%",
           }}
         >
-          Siguiente: registro y código de un solo uso.
-        </p>
+          Iniciar sesión
+        </button>
       </div>
     </main>
   );
