@@ -6,7 +6,7 @@ export const DEVELOPMENT_AUTH_TOKEN_SECRET = "development-only-not-a-secret-00";
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().min(1).max(65535).default(3001),
-  APP_DISPLAY_NAME: z.string().trim().min(1).max(80).default("CompraUSA VE"),
+  APP_DISPLAY_NAME: z.string().trim().min(1).max(80).default("TraeLo"),
   DATABASE_URL: z.string().trim().min(1).optional(),
   OTP_PROVIDER: z.enum(["simulated", "none"]).default("none"),
   AUTH_TOKEN_SECRET: z.string().optional(),

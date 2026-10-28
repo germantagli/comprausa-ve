@@ -50,7 +50,7 @@ export function HomeScreen({
 
   return (
     <ScrollView contentContainerStyle={styles.page}>
-      <Text style={styles.brand}>CompraUSA VE</Text>
+      <Text style={styles.brand}>TraeLo</Text>
       <Text accessibilityRole="header" style={styles.title}>
         {greeting}
       </Text>
@@ -238,7 +238,7 @@ export function ProfileScreen({
       {session && phase.status === "ready" ? (
         <View style={styles.card}>
           <Text style={styles.heading}>{displayName(phase.data)}</Text>
-          <Text style={styles.caption}>Cuenta CompraUSA VE</Text>
+          <Text style={styles.caption}>Cuenta TraeLo</Text>
         </View>
       ) : null}
       {menu.map((item) => (

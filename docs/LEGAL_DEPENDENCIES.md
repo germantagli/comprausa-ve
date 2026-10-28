@@ -25,7 +25,7 @@ Esas piezas no están en el código y el producto no finge tenerlas.
 - Qué mercancías se pueden importar a Venezuela y cuáles rechaza la tienda. No hay lista en este repo a propósito.
 - Política de privacidad, términos de servicio y base para guardar cédula, teléfono, dirección y comprobantes.
 - Tratamiento de datos de pago: no guardar PAN; el proveedor certificado es quien tokeniza.
-- Nombre comercial. "CompraUSA VE" es provisional y configurable. No se hizo búsqueda de marca.
+- Nombre comercial. "TraeLo" es el nombre comercial; verificar marca y configurable. No se hizo búsqueda de marca.
 - Cuentas de desarrollador de Apple y Google, y la revisión de sus políticas sobre pagos y envíos, antes de publicar apps.
 - Socio logístico en EE. UU. y en Venezuela, con responsabilidades de aduana y última milla. Sin eso no se promete entrega.
 - Impuestos, percepción y facturación en las jurisdicciones que apliquen. No hay tasa cargada en `PricingRule`.

@@ -1,6 +1,6 @@
 # Arquitectura
 
-Fecha de estas decisiones: 26 de octubre de 2026. El nombre visible es configurable (`APP_DISPLAY_NAME`, valor inicial CompraUSA VE). La moneda de producto es USD.
+Fecha de estas decisiones: 26 de octubre de 2026. El nombre visible es configurable (`APP_DISPLAY_NAME`, valor inicial TraeLo). La moneda de producto es USD.
 
 ## Qué existe ahora
 

@@ -1,6 +1,6 @@
-# CompraUSA VE
+# TraeLo
 
-Plataforma en construcción para que una persona en Venezuela pida productos de tiendas de Estados Unidos y los reciba en Venezuela, sin administrar un casillero. El nombre es provisional y sale de `APP_DISPLAY_NAME`. La moneda de trabajo es USD.
+Plataforma en construcción para que una persona en Venezuela pida productos de tiendas de Estados Unidos y los reciba en Venezuela, sin administrar un casillero. El nombre visible sale de `APP_DISPLAY_NAME` (TraeLo). La moneda de trabajo es USD.
 
 Este repositorio tiene la arquitectura de la fase 1, el ingreso por OTP, la app de cliente y el pago en revisión. No hay compra en tienda ni panel completo.
 
@@ -64,7 +64,7 @@ curl -s -X POST http://127.0.0.1:3001/v1/auth/dev/otp-code \
   -d '{"channel":"email","destination":"ana@example.com"}'
 ```
 
-El sitio, en `http://127.0.0.1:3000`, en viewport estrecho abre el splash CompraUSA (fondo blanco, marca en azul) con **Comenzar** e **Iniciar sesión** (nunca el buscador primero). Ambos llevan a registro/OTP (`/entrar`); si hay sesión válida se omite el splash. El health check del API no bloquea la entrada. Tras entrar ves bienvenida (si aplica) e inicio. En escritorio el chrome ancho sigue disponible sin pasar por el splash de teléfono.
+El sitio, en `http://127.0.0.1:3000`, en viewport estrecho abre el splash TraeLo (fondo blanco, marca en azul) con **Comenzar** e **Iniciar sesión** (nunca el buscador primero). Ambos llevan a registro/OTP (`/entrar`); si hay sesión válida se omite el splash. El health check del API no bloquea la entrada. Tras entrar ves bienvenida (si aplica) e inicio. En escritorio el chrome ancho sigue disponible sin pasar por el splash de teléfono.
 
 Expo (`apps/mobile`) usa el mismo splash y restaura la sesión desde SecureStore. Configura `EXPO_PUBLIC_API_URL` según el entorno (Simulator, `10.0.2.2` en emulador Android, IP LAN o Railway en dispositivo físico).
 

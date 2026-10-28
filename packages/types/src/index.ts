@@ -1,3 +1,4 @@
+export { APP_BRAND_NAME } from "./brand";
 export type { Money, OrderStatus, PaymentStatus, ProcurementStatus } from "./money";
 export { orderStatuses, paymentStatuses, procurementStatuses } from "./money";
 export type {

@@ -116,7 +116,7 @@ export function ProfileScreen() {
       {phase.status === "ready" ? (
         <div style={{ ...cardStyle, marginBottom: spaceTokens[4] }}>
           <p style={{ ...headingStyle, margin: 0 }}>{displayName(phase.profile)}</p>
-          <p style={mutedStyle}>Cuenta CompraUSA VE</p>
+          <p style={mutedStyle}>Cuenta TraeLo</p>
         </div>
       ) : null}
 

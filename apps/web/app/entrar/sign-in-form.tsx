@@ -227,7 +227,7 @@ export function SignInForm() {
         .entrar-control:focus-visible { outline: 3px solid ${colors.primary}; outline-offset: 2px; }
       `}</style>
       <p style={{ color: colors.deep, fontSize: fontTokens.sizes.title, fontWeight: 800, letterSpacing: "-0.02em", margin: `0 0 ${spaceTokens[4]}px` }}>
-        CompraUSA
+        TraeLo
       </p>
       <h1 style={titleStyle}>{stepTitle(step, channel)}</h1>
       <p style={{ color: colors.muted, fontSize: fontTokens.sizes.caption, lineHeight: `${fontTokens.lineHeight.caption}px`, margin: `0 0 ${spaceTokens[4]}px` }}>

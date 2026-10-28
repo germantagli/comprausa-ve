@@ -19,7 +19,7 @@ export default function AdminHomePage() {
   return (
     <div className="adm-shell">
       <aside className="adm-side" aria-label="Navegación interna">
-        <p style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.02em", margin: "0 0 8px" }}>CompraUSA</p>
+        <p style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.02em", margin: "0 0 8px" }}>TraeLo</p>
         <p style={{ color: "rgba(255,255,255,0.72)", fontSize: 13, margin: "0 0 24px" }}>Panel de administración</p>
         <nav style={{ display: "grid", gap: 8 }}>
           {nav.map((item, index) => (

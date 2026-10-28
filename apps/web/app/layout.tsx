@@ -5,7 +5,7 @@ import "./globals.css";
 const colors = colorTokens.light;
 
 export const metadata = {
-  title: "CompraUSA VE",
+  title: "TraeLo",
   description: "Compra en tiendas de USA y recíbelo en Venezuela. Catálogo de demostración sin checkout indexable.",
   robots: { index: false, follow: false },
 };

@@ -10,7 +10,7 @@ describe("getHealth", () => {
       jsonResponse({
         status: "ok",
         service: "api",
-        displayName: "CompraUSA VE",
+        displayName: "TraeLo",
         catalog: "internal-demo",
         otp: "simulated",
         payments: "not_configured",
@@ -63,7 +63,7 @@ describe("getHealth", () => {
         jsonResponse({
           status: "ok",
           service: "api",
-          displayName: "CompraUSA VE",
+          displayName: "TraeLo",
           catalog: "internal-demo",
           otp: "simulated",
           payments: "stripe",

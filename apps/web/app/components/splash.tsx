@@ -1,6 +1,7 @@
 "use client";
 
 import { fontTokens, radiusTokens, spaceTokens } from "@comprausa/design-tokens";
+import { APP_BRAND_NAME } from "@comprausa/types";
 import { buttonStyle, colors, secondaryButtonStyle } from "./styles";
 
 export function Splash({
@@ -23,7 +24,7 @@ export function Splash({
         minHeight: "100dvh",
         padding: spaceTokens[6],
       }}
-      aria-label="CompraUSA"
+      aria-label={APP_BRAND_NAME}
     >
       <div style={{ alignContent: "center", textAlign: "center" }}>
         <p
@@ -37,7 +38,7 @@ export function Splash({
             margin: 0,
           }}
         >
-          CompraUSA
+          {APP_BRAND_NAME}
         </p>
         <p
           className="cve-fade-up-delay"
