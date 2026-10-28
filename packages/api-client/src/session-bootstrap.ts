@@ -61,14 +61,18 @@ export async function probeServerReachable(
 
 export type EntryGate = "splash" | "onboarding" | "app";
 
-/** Pure routing for Pantalla 1 after local + session restore. */
+/**
+ * Pure routing after local + session restore.
+ * Bienvenida (onboarding) solo con sesión válida y aún no vista —
+ * nunca antes del registro / login.
+ */
 export function decideEntryGate(input: {
   requiresSplash: boolean;
   hasValidSession: boolean;
   onboardingCompleted: boolean;
 }): EntryGate {
-  if (input.requiresSplash && !input.hasValidSession) {
-    return "splash";
+  if (!input.hasValidSession) {
+    return input.requiresSplash ? "splash" : "app";
   }
   if (!input.onboardingCompleted) {
     return "onboarding";
