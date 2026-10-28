@@ -284,6 +284,10 @@ a {
   .cve-splash-mark {
     animation: cve-splash-in 700ms ease both;
   }
+
+  .cve-splash-hero {
+    animation: cve-splash-in 700ms ease both;
+  }
 }
 
 @keyframes cve-splash-in {
@@ -317,3 +321,4 @@ a {
     transform: translateY(-6px);
   }
 }
+

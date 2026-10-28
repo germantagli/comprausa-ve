@@ -96,10 +96,13 @@ export function ClientShell({ children }: { children: ReactNode }) {
 
   if (gate === "checking") {
     return (
-      <main style={{ background: "#000000", color: "#fff", minHeight: "100dvh" }} aria-busy="true">
+      <main
+        style={{ background: "linear-gradient(180deg, #EAF3FF 0%, #FFFFFF 100%)", color: colors.text, minHeight: "100dvh" }}
+        aria-busy="true"
+      >
         <div className="cve-page" style={{ alignContent: "center", justifyItems: "center", minHeight: "100dvh", textAlign: "center" }}>
-          <Image src="/brand/logo-mark.webp" alt="TraeLo" width={160} height={160} priority style={{ height: "auto", width: 160 }} />
-          <p style={{ color: "rgba(255,255,255,0.7)", margin: "12px 0 0" }}>Cargando…</p>
+          <Image src="/brand/splash/app-mark.webp" alt="TraeLo" width={120} height={120} priority style={{ height: "auto", width: 120 }} />
+          <p style={{ color: colors.muted, margin: "12px 0 0" }}>Cargando…</p>
         </div>
       </main>
     );
