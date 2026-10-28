@@ -33,7 +33,7 @@ import {
 type OtpInputRef = ElementRef<typeof TextInput>;
 import { apiBase } from "./api";
 import { CountryDialPicker } from "./country-dial-picker";
-import { readOrCreateDeviceId } from "./session-store";
+import { readOrCreateDeviceId, resetOnboardingCompleted } from "./session-store";
 import {
   mobileOauthConfigured,
   requestAppleIdTokenNative,
@@ -240,6 +240,7 @@ export function SignInScreen({
         deviceId,
         platform,
       });
+      await resetOnboardingCompleted();
       setSession(result);
       setStep("done");
       onAuthenticated?.(result);
