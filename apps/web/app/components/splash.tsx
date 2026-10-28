@@ -92,7 +92,7 @@ export function Splash({
         >
           {benefits.map((item) => (
             <li key={item.label} style={{ alignItems: "center", display: "flex", gap: spaceTokens[3] }}>
-              <Image src={item.icon} alt="" width={36} height={36} style={{ height: 36, width: 36 }} />
+              <Image src={item.icon} alt="" width={36} height={36} unoptimized style={{ height: 36, width: 36 }} />
               <span
                 style={{
                   color: colors.deep,
