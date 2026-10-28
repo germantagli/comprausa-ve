@@ -93,10 +93,11 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
             }}
           >
             <Image
+              key={current.id}
               src={`/brand/onboarding/step-${current.id}.webp`}
               alt=""
-              width={1119}
-              height={944}
+              width={1200}
+              height={1000}
               priority
               sizes="(max-width: 480px) 100vw, 480px"
               style={{ display: "block", height: "auto", maxHeight: "34dvh", objectFit: "contain", width: "100%" }}

@@ -90,6 +90,9 @@ export function ClientShell({ children }: { children: ReactNode }) {
   function finishOnboarding(): void {
     window.localStorage.setItem(ONBOARDING_KEY, "1");
     setGate("app");
+    if (new URLSearchParams(window.location.search).get("bienvenida") === "1") {
+      router.replace("/");
+    }
   }
 
   function replay(): void {
