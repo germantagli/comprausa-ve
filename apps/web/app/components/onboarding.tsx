@@ -30,7 +30,10 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
           margin: "0 auto",
           maxWidth: 480,
           minHeight: "100dvh",
-          padding: `${spaceTokens[4]}px ${spaceTokens[4]}px ${spaceTokens[6]}px`,
+          paddingBottom: `max(${spaceTokens[6]}px, env(safe-area-inset-bottom, 0px))`,
+          paddingLeft: `max(${spaceTokens[4]}px, env(safe-area-inset-left, 0px))`,
+          paddingRight: `max(${spaceTokens[4]}px, env(safe-area-inset-right, 0px))`,
+          paddingTop: `max(${spaceTokens[4]}px, env(safe-area-inset-top, 0px))`,
           width: "100%",
         }}
       >

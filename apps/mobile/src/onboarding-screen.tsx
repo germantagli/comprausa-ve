@@ -1,10 +1,12 @@
 import { colorTokens, fontTokens, radiusTokens, spaceTokens } from "@comprausa/design-tokens";
-import { onboardingSteps, type OnboardingBulletIcon } from "@comprausa/types";
+import { APP_BRAND_NAME, onboardingSteps, type OnboardingBulletIcon } from "@comprausa/types";
 import { useState } from "react";
 import {
   Image,
+  Platform,
   Pressable,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   View,
@@ -12,6 +14,20 @@ import {
 } from "react-native";
 
 const colors = colorTokens.light;
+
+/** Top inset for notch / status bar on both iOS and Android. */
+const topInset = Platform.select({
+  ios: 52,
+  android: (StatusBar.currentHeight ?? 0) + spaceTokens[3],
+  default: spaceTokens[4],
+})!;
+
+/** Bottom inset for home indicator / gesture nav. */
+const bottomInset = Platform.select({
+  ios: 28,
+  android: spaceTokens[6],
+  default: spaceTokens[6],
+})!;
 
 const heroes: Record<(typeof onboardingSteps)[number]["id"], ImageSourcePropType> = {
   "1": require("../assets/brand/onboarding/step-1.png"),
@@ -38,14 +54,24 @@ const icons: Record<OnboardingBulletIcon, ImageSourcePropType> = {
 
 const cartMark = require("../assets/brand/splash/cart.png");
 
+/**
+ * Post-registration bienvenida (4 pantallas).
+ * Shared Expo UI for Android and iOS — same copy/assets as web mobile.
+ */
 export function OnboardingScreen({ onDone }: { onDone: () => void }) {
   const [step, setStep] = useState(0);
   const current = onboardingSteps[step] ?? onboardingSteps[0];
   const last = step >= onboardingSteps.length - 1;
 
   return (
-    <View style={styles.page}>
-      <ScrollView contentContainerStyle={styles.scroll} bounces={false} showsVerticalScrollIndicator={false}>
+    <View style={styles.page} accessibilityLabel={`Bienvenida ${APP_BRAND_NAME}`}>
+      <StatusBar barStyle="dark-content" />
+      <ScrollView
+        contentContainerStyle={[styles.scroll, { paddingTop: topInset }]}
+        bounces={false}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.header}>
           <View style={styles.brandRow}>
             <Image source={cartMark} accessibilityLabel="" style={styles.cart} resizeMode="contain" />
@@ -67,7 +93,13 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
         </Text>
         <Text style={styles.subtitle}>{current.subtitle}</Text>
 
-        <Image source={heroes[current.id]} accessibilityLabel="" style={styles.hero} resizeMode="contain" />
+        <Image
+          key={current.id}
+          source={heroes[current.id]}
+          accessibilityLabel=""
+          style={styles.hero}
+          resizeMode="contain"
+        />
 
         <View style={styles.bullets}>
           {current.bullets.map((bullet) => (
@@ -79,20 +111,26 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
         </View>
       </ScrollView>
 
-      <View style={styles.footer}>
-        <View style={styles.dots} accessibilityElementsHidden>
+      <View style={[styles.footer, { paddingBottom: bottomInset }]}>
+        <View style={styles.dots} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           {onboardingSteps.map((item, index) => (
             <View key={item.id} style={[styles.dot, index === step ? styles.dotActive : null]} />
           ))}
         </View>
         <Pressable
           accessibilityRole="button"
+          accessibilityLabel={current.primaryLabel}
           onPress={() => (last ? onDone() : setStep((currentStep) => currentStep + 1))}
-          style={styles.primary}
+          style={({ pressed }) => [styles.primary, pressed ? styles.pressed : null]}
         >
           <Text style={styles.primaryText}>{current.primaryLabel}</Text>
         </Pressable>
-        <Pressable accessibilityRole="button" onPress={onDone} style={styles.secondary}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Omitir"
+          onPress={onDone}
+          style={({ pressed }) => [styles.secondary, pressed ? styles.pressed : null]}
+        >
           <Text style={styles.secondaryText}>Omitir</Text>
         </Pressable>
       </View>
@@ -108,7 +146,6 @@ const styles = StyleSheet.create({
   scroll: {
     paddingBottom: spaceTokens[4],
     paddingHorizontal: spaceTokens[4],
-    paddingTop: spaceTokens[4],
   },
   header: {
     alignItems: "center",
@@ -164,7 +201,7 @@ const styles = StyleSheet.create({
   },
   hero: {
     alignSelf: "center",
-    height: 220,
+    height: Platform.select({ ios: 240, android: 220, default: 220 }),
     marginBottom: spaceTokens[4],
     maxWidth: "100%",
     width: "100%",
@@ -190,8 +227,8 @@ const styles = StyleSheet.create({
     lineHeight: fontTokens.lineHeight.body,
   },
   footer: {
+    backgroundColor: "#FFFFFF",
     gap: spaceTokens[3],
-    paddingBottom: spaceTokens[6],
     paddingHorizontal: spaceTokens[4],
     paddingTop: spaceTokens[2],
   },
@@ -236,5 +273,8 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontSize: fontTokens.sizes.body,
     fontWeight: "700",
+  },
+  pressed: {
+    opacity: 0.88,
   },
 });

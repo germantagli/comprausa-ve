@@ -7,10 +7,22 @@
     "icon": "./assets/brand/icon.png",
     "platforms": ["ios", "android"],
     "newArchEnabled": true,
+    "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/brand/logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#000000"
+      "backgroundColor": "#EAF3FF"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.traelo.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/brand/icon.png",
+        "backgroundColor": "#EAF3FF"
+      },
+      "package": "com.traelo.app"
     }
   }
 }
