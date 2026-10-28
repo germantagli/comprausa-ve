@@ -136,6 +136,7 @@ export function formatUsdFromMinor(amountMinor: number): string {
   return `USD ${whole}.${fraction}`;
 }
 
+export { PHONE_OTP_ENABLED } from "./auth-client-flags";
 export {
   COUNTRY_DIAL_CODES,
   DEFAULT_COUNTRY_ISO2,

@@ -8,13 +8,13 @@ Este repositorio tiene la arquitectura de la fase 1, el ingreso por OTP, la app 
 
 - Monorepo TypeScript (pnpm y Turborepo).
 - API NestJS con `GET /health`, OpenAPI en `/docs` fuera de producción, y Prisma.
-- Ingreso por correo o teléfono: OTP de un solo uso, alta con nombre y apellido, sesión con refresh token opaco, rotación y revocación. Los tokens de acceso los firma `jose`.
+- Ingreso por correo (OTP), Google y Apple. El OTP por SMS/teléfono está oculto en los clientes (`PHONE_OTP_ENABLED=false`) por coste. Sesión con refresh token opaco, rotación y revocación (`jose`).
 - Roles sembrados y una ruta `GET /v1/admin/access` que exige MFA. El OTP no marca MFA, así que esa ruta responde prohibido. No hay panel.
 - Catálogo interno de demostración, con artículos ficticios, sin precio ni existencia.
 - Esquemas Zod para dinero en centavos, correo, teléfono y el ingreso.
 - App de cliente en `apps/web` y `apps/mobile`: introducción, inicio, explorar, carrito, pedidos y perfil. El ingreso sigue en `/entrar`.
-- Validación de entorno: en producción hacen falta `DATABASE_URL` y `AUTH_TOKEN_SECRET`. `OTP_PROVIDER=simulated` solo arranca con `NODE_ENV=development`. Producción admite `resend` (email) o `twilio` (SMS + email vía Verify) con sus secretos.
-- Proveedores OTP reales cableados: `ResendOtpProvider` y `TwilioVerifyOtpProvider`. Sin credenciales, `OTP_PROVIDER=none` y el challenge responde 503.
+- Validación de entorno: en producción hacen falta `DATABASE_URL` y `AUTH_TOKEN_SECRET`. `OTP_PROVIDER=simulated` solo arranca con `NODE_ENV=development`. Producción admite `resend` (email). `TwilioVerifyOtpProvider` sigue en código pero no se ofrece en la UI.
+- Proveedor OTP de email: `ResendOtpProvider`. Sin credenciales, `OTP_PROVIDER=none` y el challenge responde 503.
 - Google y Apple: `POST /v1/auth/oauth/exchanges` con ID token. Requiere `GOOGLE_CLIENT_IDS` / `APPLE_CLIENT_IDS` en la API y `NEXT_PUBLIC_*` / `EXPO_PUBLIC_*` en los clientes.
 
 ## Qué está simulado
@@ -72,7 +72,7 @@ Expo (`apps/mobile`) usa el mismo splash y restaura la sesión desde SecureStore
 
 En desarrollo, `/entrar` puede rellenar el OTP llamando a `POST /v1/auth/dev/otp-code` solo si `NODE_ENV=development` y la API arrancó con `OTP_PROVIDER=simulated`. En la web pública (Railway / producción) ese endpoint no existe: el login sigue llamando a la API; el código llega con `OTP_PROVIDER=resend` o `OTP_PROVIDER=twilio` y las variables del proveedor. No hay bypass de producción (`OTP_PROVIDER=simulated` se rechaza fuera de development).
 
-Para activar email real (Resend, free tier) o SMS (Twilio Verify), ver `.env.example` y poner las variables en Railway.
+Para activar email real (Resend, free tier), ver `.env.example` y poner las variables en Railway. SMS/Twilio queda fuera de la UI hasta reactivar `PHONE_OTP_ENABLED`.
 
 ```bash
 pnpm --filter @comprausa/web exec next dev --port 3000

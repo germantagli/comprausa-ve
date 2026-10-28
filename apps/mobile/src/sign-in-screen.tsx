@@ -8,7 +8,13 @@ import {
   type AuthenticatedSession,
 } from "@comprausa/api-client";
 import { colorTokens, fontTokens, radiusTokens, spaceTokens } from "@comprausa/design-tokens";
-import { composeE164, formatE164Display, getDefaultCountry, type CountryDialCode } from "@comprausa/utils";
+import {
+  PHONE_OTP_ENABLED,
+  composeE164,
+  formatE164Display,
+  getDefaultCountry,
+  type CountryDialCode,
+} from "@comprausa/utils";
 import { emailSchema, otpCodeSchema, personNameSchema } from "@comprausa/validation";
 import { useEffect, useRef, useState, type ElementRef } from "react";
 import {
@@ -77,7 +83,7 @@ export function SignInScreen({
 } = {}) {
   const [deviceId] = useState(createDeviceId);
   const [step, setStep] = useState<Step>("destination");
-  const [channel, setChannel] = useState<Channel>("phone");
+  const [channel, setChannel] = useState<Channel>(PHONE_OTP_ENABLED ? "phone" : "email");
   const [email, setEmail] = useState("");
   const [country, setCountry] = useState<CountryDialCode>(() => getDefaultCountry());
   const [phoneLocal, setPhoneLocal] = useState("");
@@ -140,6 +146,10 @@ export function SignInScreen({
         return;
       }
       await requestChallenge(parsed.data, "email");
+      return;
+    }
+    if (!PHONE_OTP_ENABLED) {
+      setError("El ingreso por teléfono no está disponible. Usa email, Google o Apple.");
       return;
     }
     const e164 = composeE164(country.dial, phoneLocal);
@@ -412,32 +422,39 @@ export function SignInScreen({
                 <Text accessibilityRole="header" style={styles.title}>
                   {headline}
                 </Text>
-                <View style={styles.tabs}>
-                  <Pressable
-                    accessibilityRole="tab"
-                    accessibilityState={{ selected: channel === "phone" }}
-                    onPress={() => {
-                      setChannel("phone");
-                      setError(null);
-                    }}
-                    style={[styles.tab, channel === "phone" ? styles.tabActive : null]}
-                  >
-                    <Text style={[styles.tabText, channel === "phone" ? styles.tabTextActive : null]}>Teléfono</Text>
-                  </Pressable>
-                  <Pressable
-                    accessibilityRole="tab"
-                    accessibilityState={{ selected: channel === "email" }}
-                    onPress={() => {
-                      setChannel("email");
-                      setError(null);
-                    }}
-                    style={[styles.tab, channel === "email" ? styles.tabActive : null]}
-                  >
-                    <Text style={[styles.tabText, channel === "email" ? styles.tabTextActive : null]}>Email</Text>
-                  </Pressable>
-                </View>
+                <Text style={styles.subtitle}>
+                  {PHONE_OTP_ENABLED
+                    ? "Usa tu correo o teléfono. También puedes continuar con Google o Apple."
+                    : "Usa tu correo. También puedes continuar con Google o Apple."}
+                </Text>
+                {PHONE_OTP_ENABLED ? (
+                  <View style={styles.tabs}>
+                    <Pressable
+                      accessibilityRole="tab"
+                      accessibilityState={{ selected: channel === "phone" }}
+                      onPress={() => {
+                        setChannel("phone");
+                        setError(null);
+                      }}
+                      style={[styles.tab, channel === "phone" ? styles.tabActive : null]}
+                    >
+                      <Text style={[styles.tabText, channel === "phone" ? styles.tabTextActive : null]}>Teléfono</Text>
+                    </Pressable>
+                    <Pressable
+                      accessibilityRole="tab"
+                      accessibilityState={{ selected: channel === "email" }}
+                      onPress={() => {
+                        setChannel("email");
+                        setError(null);
+                      }}
+                      style={[styles.tab, channel === "email" ? styles.tabActive : null]}
+                    >
+                      <Text style={[styles.tabText, channel === "email" ? styles.tabTextActive : null]}>Email</Text>
+                    </Pressable>
+                  </View>
+                ) : null}
 
-                {channel === "phone" ? (
+                {PHONE_OTP_ENABLED && channel === "phone" ? (
                   <View style={styles.phoneRow}>
                     <CountryDialPicker value={country} onChange={setCountry} />
                     <TextInput

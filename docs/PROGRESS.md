@@ -13,12 +13,12 @@
 ### Ya existente (otros cortes)
 
 - Flujo móvil de maqueta posterior al splash, login OTP contra API, carrito/cotización, pago en revisión y seguimiento operador.
-- OTP: Resend (email) y Twilio Verify (SMS+email). OAuth: Google y Apple vía ID token (`/v1/auth/oauth/exchanges`). En Railway OTP/OAuth quedan apagados hasta cargar client IDs y secretos.
+- OTP email (Resend). SMS/teléfono oculto en clientes (`PHONE_OTP_ENABLED=false`). OAuth Google y Apple. En Railway OTP/OAuth quedan apagados hasta cargar secretos/client IDs.
 - Commerce (carrito/pedidos/pagos) aún en memoria de proceso aunque Prisma tenga modelos.
 
 ## Siguiente incremento
 
-1. Cargar credenciales Resend o Twilio en Railway y activar `OTP_PROVIDER`.
+1. Cargar Resend + Google/Apple client IDs en Railway.
 2. Pantalla interna para publicar precio de cotización.
 3. Persistencia commerce en Postgres.
 4. Pagos solo con medio elegible.
