@@ -8,9 +8,14 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().min(1).max(65535).default(3001),
   APP_DISPLAY_NAME: z.string().trim().min(1).max(80).default("TraeLo"),
   DATABASE_URL: z.string().trim().min(1).optional(),
-  OTP_PROVIDER: z.enum(["simulated", "none"]).default("none"),
+  OTP_PROVIDER: z.enum(["simulated", "none", "resend", "twilio"]).default("none"),
   AUTH_TOKEN_SECRET: z.string().optional(),
   WEB_ORIGIN: z.string().trim().min(1).optional(),
+  RESEND_API_KEY: z.string().optional(),
+  OTP_EMAIL_FROM: z.string().optional(),
+  TWILIO_ACCOUNT_SID: z.string().optional(),
+  TWILIO_AUTH_TOKEN: z.string().optional(),
+  TWILIO_VERIFY_SERVICE_SID: z.string().optional(),
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
   ZELLE_INSTRUCTIONS: z.string().optional(),
@@ -19,14 +24,27 @@ const envSchema = z.object({
   PAGO_MOVIL_HOLDER: z.string().optional(),
 });
 
+export interface ResendOtpEnv {
+  apiKey: string;
+  from: string;
+}
+
+export interface TwilioVerifyEnv {
+  accountSid: string;
+  authToken: string;
+  verifyServiceSid: string;
+}
+
 export interface AppEnv {
   nodeEnv: "development" | "test" | "production";
   port: number;
   displayName: string;
   databaseUrl: string | undefined;
-  otpProvider: "simulated" | "none";
+  otpProvider: "simulated" | "none" | "resend" | "twilio";
   /** True only when NODE_ENV is development and OTP_PROVIDER is simulated. */
   simulatedOtpAllowed: boolean;
+  resendOtp: ResendOtpEnv | undefined;
+  twilioVerify: TwilioVerifyEnv | undefined;
   authTokenSecret: string;
   webOrigin: string | undefined;
   /** Present only for an sk_test_ key. Live keys are refused. */
@@ -44,6 +62,11 @@ export interface EnvSource {
   OTP_PROVIDER?: string;
   AUTH_TOKEN_SECRET?: string;
   WEB_ORIGIN?: string;
+  RESEND_API_KEY?: string;
+  OTP_EMAIL_FROM?: string;
+  TWILIO_ACCOUNT_SID?: string;
+  TWILIO_AUTH_TOKEN?: string;
+  TWILIO_VERIFY_SERVICE_SID?: string;
   STRIPE_SECRET_KEY?: string;
   STRIPE_WEBHOOK_SECRET?: string;
   ZELLE_INSTRUCTIONS?: string;
@@ -56,6 +79,11 @@ export function parseAppEnv(source: EnvSource): AppEnv {
   const databaseUrl = blankToUndefined(source.DATABASE_URL);
   const authTokenSecret = blankToUndefined(source.AUTH_TOKEN_SECRET);
   const webOrigin = blankToUndefined(source.WEB_ORIGIN);
+  const resendApiKey = blankToUndefined(source.RESEND_API_KEY);
+  const otpEmailFrom = blankToUndefined(source.OTP_EMAIL_FROM);
+  const twilioAccountSid = blankToUndefined(source.TWILIO_ACCOUNT_SID);
+  const twilioAuthToken = blankToUndefined(source.TWILIO_AUTH_TOKEN);
+  const twilioVerifyServiceSid = blankToUndefined(source.TWILIO_VERIFY_SERVICE_SID);
   const stripeSecretKey = blankToUndefined(source.STRIPE_SECRET_KEY);
   const stripeWebhookSecret = blankToUndefined(source.STRIPE_WEBHOOK_SECRET);
   const zelleInstructions = blankToUndefined(source.ZELLE_INSTRUCTIONS);
@@ -83,6 +111,21 @@ export function parseAppEnv(source: EnvSource): AppEnv {
   }
   if (webOrigin) {
     input.WEB_ORIGIN = webOrigin;
+  }
+  if (resendApiKey) {
+    input.RESEND_API_KEY = resendApiKey;
+  }
+  if (otpEmailFrom) {
+    input.OTP_EMAIL_FROM = otpEmailFrom;
+  }
+  if (twilioAccountSid) {
+    input.TWILIO_ACCOUNT_SID = twilioAccountSid;
+  }
+  if (twilioAuthToken) {
+    input.TWILIO_AUTH_TOKEN = twilioAuthToken;
+  }
+  if (twilioVerifyServiceSid) {
+    input.TWILIO_VERIFY_SERVICE_SID = twilioVerifyServiceSid;
   }
   if (stripeSecretKey) {
     input.STRIPE_SECRET_KEY = stripeSecretKey;
@@ -113,6 +156,25 @@ export function parseAppEnv(source: EnvSource): AppEnv {
   if (otpProvider === "simulated" && nodeEnv !== "development") {
     issues.push("OTP_PROVIDER=simulated is refused unless NODE_ENV is development");
   }
+  if (otpProvider === "resend") {
+    if (!resendApiKey) {
+      issues.push("RESEND_API_KEY is required when OTP_PROVIDER=resend");
+    }
+    if (!otpEmailFrom) {
+      issues.push("OTP_EMAIL_FROM is required when OTP_PROVIDER=resend");
+    }
+  }
+  if (otpProvider === "twilio") {
+    if (!twilioAccountSid) {
+      issues.push("TWILIO_ACCOUNT_SID is required when OTP_PROVIDER=twilio");
+    }
+    if (!twilioAuthToken) {
+      issues.push("TWILIO_AUTH_TOKEN is required when OTP_PROVIDER=twilio");
+    }
+    if (!twilioVerifyServiceSid) {
+      issues.push("TWILIO_VERIFY_SERVICE_SID is required when OTP_PROVIDER=twilio");
+    }
+  }
   if (nodeEnv === "production" && parsed.data.DATABASE_URL === undefined) {
     issues.push("DATABASE_URL is required in production");
   }
@@ -142,6 +204,18 @@ export function parseAppEnv(source: EnvSource): AppEnv {
     databaseUrl: parsed.data.DATABASE_URL,
     otpProvider,
     simulatedOtpAllowed: nodeEnv === "development" && otpProvider === "simulated",
+    resendOtp:
+      otpProvider === "resend" && resendApiKey && otpEmailFrom
+        ? { apiKey: resendApiKey, from: otpEmailFrom }
+        : undefined,
+    twilioVerify:
+      otpProvider === "twilio" && twilioAccountSid && twilioAuthToken && twilioVerifyServiceSid
+        ? {
+            accountSid: twilioAccountSid,
+            authToken: twilioAuthToken,
+            verifyServiceSid: twilioVerifyServiceSid,
+          }
+        : undefined,
     authTokenSecret: authTokenSecret ?? DEVELOPMENT_AUTH_TOKEN_SECRET,
     webOrigin: webOrigin ?? (nodeEnv === "development" ? "http://localhost:3000" : undefined),
     stripeTestKey: stripeSecretKey,

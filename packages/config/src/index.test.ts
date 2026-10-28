@@ -56,6 +56,33 @@ describe("parseAppEnv", () => {
     expect(env.stripeTestKey).toBeUndefined();
   });
 
+  it("requires Resend credentials when OTP_PROVIDER=resend", () => {
+    expect(() => parseAppEnv({ NODE_ENV: "development", OTP_PROVIDER: "resend" })).toThrow(/RESEND_API_KEY/);
+    const env = parseAppEnv({
+      NODE_ENV: "development",
+      OTP_PROVIDER: "resend",
+      RESEND_API_KEY: "re_test",
+      OTP_EMAIL_FROM: "TraeLo <otp@traelo.test>",
+    });
+    expect(env.otpProvider).toBe("resend");
+    expect(env.resendOtp?.from).toContain("otp@traelo.test");
+  });
+
+  it("requires Twilio credentials when OTP_PROVIDER=twilio", () => {
+    expect(() => parseAppEnv({ NODE_ENV: "development", OTP_PROVIDER: "twilio" })).toThrow(/TWILIO_ACCOUNT_SID/);
+    const env = parseAppEnv({
+      NODE_ENV: "production",
+      DATABASE_URL: "postgresql://comprausa:comprausa@127.0.0.1:5432/comprausa",
+      AUTH_TOKEN_SECRET: productionSecret,
+      OTP_PROVIDER: "twilio",
+      TWILIO_ACCOUNT_SID: "ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      TWILIO_AUTH_TOKEN: "token",
+      TWILIO_VERIFY_SERVICE_SID: "VAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    });
+    expect(env.otpProvider).toBe("twilio");
+    expect(env.twilioVerify?.verifyServiceSid).toMatch(/^VA/);
+  });
+
   it("accepts a Stripe test key and refuses a live key", () => {
     const env = parseAppEnv({ NODE_ENV: "development", STRIPE_SECRET_KEY: "sk_test_local_only" });
     expect(env.stripeTestKey).toBe("sk_test_local_only");

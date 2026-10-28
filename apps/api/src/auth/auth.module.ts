@@ -19,8 +19,10 @@ import { MemoryAuthRepository } from "./memory-auth.repository";
 import { MemoryRateLimiter } from "./memory-rate-limiter";
 import { PrismaAuthRepository } from "./prisma-auth.repository";
 import { defaultAuthRatePolicy, type AuthRatePolicy } from "./rate-limiter";
+import { ResendOtpProvider } from "./resend-otp.provider";
 import { SimulatedOtpProvider } from "./simulated-otp.provider";
 import { TokenService } from "./token.service";
+import { TwilioVerifyOtpProvider } from "./twilio-verify-otp.provider";
 
 const MODULE_ENV = Symbol("AUTH_MODULE_ENV");
 
@@ -94,6 +96,20 @@ export class AuthModule {
         { provide: OTP_PROVIDER, useExisting: SimulatedOtpProvider },
       );
       exportsList.push(SimulatedOtpProvider);
+    } else if (env.otpProvider === "resend" && env.resendOtp) {
+      providers.push({
+        provide: OTP_PROVIDER,
+        useValue: new ResendOtpProvider({
+          apiKey: env.resendOtp.apiKey,
+          from: env.resendOtp.from,
+          appDisplayName: env.displayName,
+        }),
+      });
+    } else if (env.otpProvider === "twilio" && env.twilioVerify) {
+      providers.push({
+        provide: OTP_PROVIDER,
+        useValue: new TwilioVerifyOtpProvider(env.twilioVerify),
+      });
     } else {
       providers.push({ provide: OTP_PROVIDER, useValue: null });
     }
