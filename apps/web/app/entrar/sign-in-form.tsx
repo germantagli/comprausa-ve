@@ -2,6 +2,7 @@
 
 import {
   ApiClientError,
+  exchangeOAuth,
   registerAccount,
   requestOtpChallenge,
   revokeSession,
@@ -27,6 +28,8 @@ import {
 } from "react";
 import { apiBase } from "../lib/api";
 import { clearSession, DEVICE_KEY, readSession, saveSession } from "../lib/session";
+import { oauthConfigured } from "./oauth-clients";
+import { requestAppleIdToken, requestGoogleIdToken } from "./social-sign-in";
 
 const colors = colorTokens.light;
 const isDevClient = process.env.NODE_ENV === "development";
@@ -364,6 +367,71 @@ export function SignInForm() {
     await requestChallenge(destination, channel);
   }
 
+  async function continueWithSocial(provider: "google" | "apple"): Promise<void> {
+    const configured = oauthConfigured();
+    if (provider === "google" && !configured.google) {
+      setSocialNote(
+        "Google aún no tiene Client ID en este entorno. Añade NEXT_PUBLIC_GOOGLE_CLIENT_ID (y GOOGLE_CLIENT_IDS en la API).",
+      );
+      return;
+    }
+    if (provider === "apple" && !configured.apple) {
+      setSocialNote(
+        "Apple aún no tiene Services ID en este entorno. Añade NEXT_PUBLIC_APPLE_CLIENT_ID (y APPLE_CLIENT_IDS en la API).",
+      );
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    setSocialNote(null);
+    try {
+      const tokenBundle =
+        provider === "google"
+          ? { idToken: await requestGoogleIdToken() }
+          : await requestAppleIdToken();
+      const result = await exchangeOAuth(apiBase, {
+        provider,
+        idToken: tokenBundle.idToken,
+        deviceId,
+        platform: "WEB",
+        ...("givenName" in tokenBundle ? { givenName: tokenBundle.givenName, familyName: tokenBundle.familyName } : {}),
+      });
+      if (result.status === "throttled") {
+        setError("Espera un momento e intenta otra vez.");
+        return;
+      }
+      if (result.status === "rejected") {
+        setError("No pudimos validar ese acceso. Intenta de nuevo o usa email/teléfono.");
+        return;
+      }
+      if (result.status === "profile_required") {
+        setRegistrationToken(result.registrationToken);
+        setStep("name");
+        return;
+      }
+      saveSession(result);
+      setSession(result);
+      setStep("done");
+      router.push("/");
+    } catch (caught) {
+      if (caught instanceof Error && caught.message.includes("not_configured")) {
+        setSocialNote(
+          provider === "google"
+            ? "Falta configurar Google OAuth en este entorno."
+            : "Falta configurar Sign in with Apple en este entorno.",
+        );
+        return;
+      }
+      if (caught instanceof Error && (caught.message.includes("cancelled") || caught.message.includes("sdk"))) {
+        setSocialNote("Inicio cancelado. Puedes intentar otra vez o usar email/teléfono.");
+        return;
+      }
+      setError(failureMessage(caught, "destination"));
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function logout(): Promise<void> {
     if (!session) {
       return;
@@ -544,7 +612,8 @@ export function SignInForm() {
                   type="button"
                   className="entrar-control"
                   style={socialButtonStyle}
-                  onClick={() => setSocialNote("Google llegará cuando conectemos OAuth. Por ahora usa teléfono o email con OTP.")}
+                  disabled={loading}
+                  onClick={() => void continueWithSocial("google")}
                 >
                   <GoogleMark />
                   <span>Google</span>
@@ -553,7 +622,8 @@ export function SignInForm() {
                   type="button"
                   className="entrar-control"
                   style={socialButtonStyle}
-                  onClick={() => setSocialNote("Apple llegará cuando conectemos OAuth. Por ahora usa teléfono o email con OTP.")}
+                  disabled={loading}
+                  onClick={() => void continueWithSocial("apple")}
                 >
                   <AppleMark />
                   <span>Apple</span>

@@ -2,9 +2,19 @@ import { randomUUID } from "node:crypto";
 import { Inject, Injectable, Optional } from "@nestjs/common";
 import type { OtpProvider } from "@comprausa/types";
 import type { AuthRepository, AuthUser, ClientPlatform } from "./auth.repository";
-import { AUTH_CLOCK, AUTH_RATE_POLICY, AUTH_REPOSITORY, DEV_OPERATOR, OTP_PROVIDER, RATE_LIMITER } from "./auth.tokens";
+import {
+  AUTH_CLOCK,
+  AUTH_RATE_POLICY,
+  AUTH_REPOSITORY,
+  DEV_OPERATOR,
+  OAUTH_TOKEN_VERIFIER,
+  OTP_PROVIDER,
+  RATE_LIMITER,
+} from "./auth.tokens";
 import type { Clock } from "./clock";
 import type { AuthChannel } from "./destination";
+import type { OAuthProvider } from "./oauth-identity";
+import type { OAuthTokenVerifier } from "./oauth-token.verifier";
 import type { RoleCode } from "./roles";
 import { normalizeDestination, otpDestinationKey } from "./destination";
 import type { AuthRatePolicy, RateLimiter } from "./rate-limiter";
@@ -49,6 +59,7 @@ export class AuthService {
     @Inject(AUTH_REPOSITORY) private readonly repository: AuthRepository,
     @Inject(RATE_LIMITER) private readonly limiter: RateLimiter,
     @Inject(OTP_PROVIDER) private readonly otp: OtpProvider | null,
+    @Optional() @Inject(OAUTH_TOKEN_VERIFIER) private readonly oauth: OAuthTokenVerifier | null,
     @Inject(TokenService) private readonly tokens: TokenService,
     @Inject(AUTH_CLOCK) private readonly clock: Clock,
     @Inject(AUTH_RATE_POLICY) private readonly policy: AuthRatePolicy,
@@ -132,8 +143,64 @@ export class AuthService {
         givenName: input.givenName.trim(),
         familyName: input.familyName.trim(),
       }));
+    if (claims.oauthProvider && claims.oauthSubject) {
+      await this.repository.linkSocialIdentity({
+        userId: created.id,
+        provider: claims.oauthProvider,
+        subject: claims.oauthSubject,
+      });
+    }
     const user = await this.withDevelopmentRole(created, grant.channel, grant.destination);
     return this.openSession(user, { clientDeviceId: input.deviceId, platform: input.platform });
+  }
+
+  async exchangeOAuth(input: {
+    provider: OAuthProvider;
+    idToken: string;
+    deviceId: string;
+    platform: ClientPlatform;
+    givenName?: string;
+    familyName?: string;
+    ip: string;
+  }): Promise<VerifyBody> {
+    if (!this.oauth) {
+      return { status: "unavailable" };
+    }
+    const allowed = await this.allow("challenge", {
+      ip: input.ip,
+      channel: "email",
+      destination: `oauth:${input.provider}`,
+      deviceId: input.deviceId,
+    });
+    if (!allowed) {
+      return { status: "throttled" };
+    }
+    const identity = await this.oauth.verify(input.provider, input.idToken);
+    if (!identity) {
+      return { status: "rejected" };
+    }
+    const givenName = cleanName(input.givenName) ?? identity.givenName;
+    const familyName = cleanName(input.familyName) ?? identity.familyName;
+    const email = identity.emailVerified ? identity.email : identity.email;
+    const upserted = await this.repository.upsertSocialCustomer({
+      provider: identity.provider,
+      subject: identity.subject,
+      email,
+      givenName,
+      familyName,
+    });
+    if (upserted && upserted.givenName && upserted.familyName) {
+      const user = await this.withDevelopmentRole(upserted, "email", email ?? `oauth:${identity.subject}`);
+      return this.openSession(user, { clientDeviceId: input.deviceId, platform: input.platform });
+    }
+    if (!email) {
+      return { status: "rejected" };
+    }
+    const registrationToken = await this.issueRegistration("email", email, {
+      oauthProvider: identity.provider,
+      oauthSubject: identity.subject,
+    });
+    return { status: "profile_required", registrationToken };
   }
 
   async refresh(refreshToken: string): Promise<SessionBody> {
@@ -200,7 +267,11 @@ export class AuthService {
     await this.repository.revokeSession(sessionId, new Date(this.clock.now()));
   }
 
-  private async issueRegistration(channel: AuthChannel, destination: string): Promise<string> {
+  private async issueRegistration(
+    channel: AuthChannel,
+    destination: string,
+    oauth?: { oauthProvider: OAuthProvider; oauthSubject: string },
+  ): Promise<string> {
     const jti = randomUUID();
     const expiresAt = new Date(this.clock.now() + REGISTRATION_TTL_SECONDS * 1000);
     await this.repository.saveRegistrationGrant({
@@ -210,7 +281,10 @@ export class AuthService {
       expiresAt,
       consumedAt: null,
     });
-    return this.tokens.signRegistration({ jti, channel, destination }, REGISTRATION_TTL_SECONDS);
+    return this.tokens.signRegistration(
+      { jti, channel, destination, ...oauth },
+      REGISTRATION_TTL_SECONDS,
+    );
   }
 
   private async openSession(
@@ -266,4 +340,12 @@ export class AuthService {
     }
     return allowed;
   }
+}
+
+function cleanName(value: string | undefined): string | null {
+  if (!value) {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed.slice(0, 80) : null;
 }

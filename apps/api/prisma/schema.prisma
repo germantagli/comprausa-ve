@@ -22,6 +22,8 @@ enum UserStatus {
 enum IdentityProvider {
   EMAIL_OTP
   PHONE_OTP
+  GOOGLE
+  APPLE
 }
 
 enum ClientPlatform {

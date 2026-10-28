@@ -101,6 +101,19 @@ export const registrationSchema = z
   })
   .strict();
 
+export const oauthProviderSchema = z.enum(["google", "apple"]);
+
+export const oauthExchangeSchema = z
+  .object({
+    provider: oauthProviderSchema,
+    idToken: z.string().trim().min(20).max(8192),
+    deviceId: deviceIdSchema,
+    platform: clientPlatformSchema,
+    givenName: personNameSchema.optional(),
+    familyName: personNameSchema.optional(),
+  })
+  .strict();
+
 export const refreshSessionSchema = z
   .object({
     refreshToken: z.string().min(1).max(512),
@@ -223,3 +236,4 @@ export type CatalogSearchInput = z.infer<typeof catalogSearchSchema>;
 export type OtpChallengeInput = z.infer<typeof otpChallengeSchema>;
 export type OtpVerificationInput = z.infer<typeof otpVerificationSchema>;
 export type RegistrationInput = z.infer<typeof registrationSchema>;
+export type OAuthExchangeInput = z.infer<typeof oauthExchangeSchema>;

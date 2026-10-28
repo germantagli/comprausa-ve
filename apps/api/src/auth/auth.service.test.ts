@@ -14,7 +14,7 @@ function build(clock: Clock, policy: AuthRatePolicy = defaultAuthRatePolicy, wit
   const repository = new MemoryAuthRepository();
   const otp = withOtp ? new SimulatedOtpProvider({ nodeEnv: "development", otpProvider: "simulated" }, clock) : null;
   const tokens = new TokenService(secret);
-  const service = new AuthService(repository, new MemoryRateLimiter(clock), otp, tokens, clock, policy);
+  const service = new AuthService(repository, new MemoryRateLimiter(clock), otp, null, tokens, clock, policy);
   return { repository, otp, tokens, service };
 }
 

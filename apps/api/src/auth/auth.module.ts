@@ -10,13 +10,23 @@ import { AuthService } from "./auth.service";
 import { developmentOperator } from "./development-operator";
 import { FinanceGuard } from "./finance.guard";
 import { FulfillmentGuard } from "./fulfillment.guard";
-import { AUTH_CLOCK, AUTH_RATE_POLICY, AUTH_REPOSITORY, DEV_OPERATOR, OTP_PROVIDER, RATE_LIMITER, TOTP_KEY } from "./auth.tokens";
+import {
+  AUTH_CLOCK,
+  AUTH_RATE_POLICY,
+  AUTH_REPOSITORY,
+  DEV_OPERATOR,
+  OAUTH_TOKEN_VERIFIER,
+  OTP_PROVIDER,
+  RATE_LIMITER,
+  TOTP_KEY,
+} from "./auth.tokens";
 import { TotpService } from "./totp.service";
 import type { Clock } from "./clock";
 import { systemClock } from "./clock";
 import { DevOtpController } from "./dev-otp.controller";
 import { MemoryAuthRepository } from "./memory-auth.repository";
 import { MemoryRateLimiter } from "./memory-rate-limiter";
+import { OAuthTokenVerifier } from "./oauth-token.verifier";
 import { PrismaAuthRepository } from "./prisma-auth.repository";
 import { defaultAuthRatePolicy, type AuthRatePolicy } from "./rate-limiter";
 import { ResendOtpProvider } from "./resend-otp.provider";
@@ -113,6 +123,17 @@ export class AuthModule {
     } else {
       providers.push({ provide: OTP_PROVIDER, useValue: null });
     }
+
+    const oauthConfigured = env.googleClientIds.length > 0 || env.appleClientIds.length > 0;
+    providers.push({
+      provide: OAUTH_TOKEN_VERIFIER,
+      useValue: oauthConfigured
+        ? new OAuthTokenVerifier({
+            googleClientIds: env.googleClientIds,
+            appleClientIds: env.appleClientIds,
+          })
+        : null,
+    });
 
     providers.push({ provide: MODULE_ENV, useValue: env });
 

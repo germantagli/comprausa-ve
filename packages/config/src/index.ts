@@ -16,6 +16,9 @@ const envSchema = z.object({
   TWILIO_ACCOUNT_SID: z.string().optional(),
   TWILIO_AUTH_TOKEN: z.string().optional(),
   TWILIO_VERIFY_SERVICE_SID: z.string().optional(),
+  /** Comma-separated OAuth client IDs accepted as ID token audiences. */
+  GOOGLE_CLIENT_IDS: z.string().optional(),
+  APPLE_CLIENT_IDS: z.string().optional(),
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
   ZELLE_INSTRUCTIONS: z.string().optional(),
@@ -45,6 +48,8 @@ export interface AppEnv {
   simulatedOtpAllowed: boolean;
   resendOtp: ResendOtpEnv | undefined;
   twilioVerify: TwilioVerifyEnv | undefined;
+  googleClientIds: string[];
+  appleClientIds: string[];
   authTokenSecret: string;
   webOrigin: string | undefined;
   /** Present only for an sk_test_ key. Live keys are refused. */
@@ -67,6 +72,8 @@ export interface EnvSource {
   TWILIO_ACCOUNT_SID?: string;
   TWILIO_AUTH_TOKEN?: string;
   TWILIO_VERIFY_SERVICE_SID?: string;
+  GOOGLE_CLIENT_IDS?: string;
+  APPLE_CLIENT_IDS?: string;
   STRIPE_SECRET_KEY?: string;
   STRIPE_WEBHOOK_SECRET?: string;
   ZELLE_INSTRUCTIONS?: string;
@@ -84,6 +91,8 @@ export function parseAppEnv(source: EnvSource): AppEnv {
   const twilioAccountSid = blankToUndefined(source.TWILIO_ACCOUNT_SID);
   const twilioAuthToken = blankToUndefined(source.TWILIO_AUTH_TOKEN);
   const twilioVerifyServiceSid = blankToUndefined(source.TWILIO_VERIFY_SERVICE_SID);
+  const googleClientIdsRaw = blankToUndefined(source.GOOGLE_CLIENT_IDS);
+  const appleClientIdsRaw = blankToUndefined(source.APPLE_CLIENT_IDS);
   const stripeSecretKey = blankToUndefined(source.STRIPE_SECRET_KEY);
   const stripeWebhookSecret = blankToUndefined(source.STRIPE_WEBHOOK_SECRET);
   const zelleInstructions = blankToUndefined(source.ZELLE_INSTRUCTIONS);
@@ -126,6 +135,12 @@ export function parseAppEnv(source: EnvSource): AppEnv {
   }
   if (twilioVerifyServiceSid) {
     input.TWILIO_VERIFY_SERVICE_SID = twilioVerifyServiceSid;
+  }
+  if (googleClientIdsRaw) {
+    input.GOOGLE_CLIENT_IDS = googleClientIdsRaw;
+  }
+  if (appleClientIdsRaw) {
+    input.APPLE_CLIENT_IDS = appleClientIdsRaw;
   }
   if (stripeSecretKey) {
     input.STRIPE_SECRET_KEY = stripeSecretKey;
@@ -216,6 +231,8 @@ export function parseAppEnv(source: EnvSource): AppEnv {
             verifyServiceSid: twilioVerifyServiceSid,
           }
         : undefined,
+    googleClientIds: splitCsv(parsed.data.GOOGLE_CLIENT_IDS),
+    appleClientIds: splitCsv(parsed.data.APPLE_CLIENT_IDS),
     authTokenSecret: authTokenSecret ?? DEVELOPMENT_AUTH_TOKEN_SECRET,
     webOrigin: webOrigin ?? (nodeEnv === "development" ? "http://localhost:3000" : undefined),
     stripeTestKey: stripeSecretKey,
@@ -233,4 +250,14 @@ function blankToUndefined(value: string | undefined): string | undefined {
     return undefined;
   }
   return value.trim();
+}
+
+function splitCsv(value: string | undefined): string[] {
+  if (!value) {
+    return [];
+  }
+  return value
+    .split(",")
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
 }

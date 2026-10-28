@@ -1,6 +1,7 @@
 import { Body, Controller, HttpCode, HttpException, HttpStatus, Inject, Post, Req, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
 import {
+  oauthExchangeSchema,
   otpChallengeSchema,
   otpVerificationSchema,
   refreshSessionSchema,
@@ -45,6 +46,18 @@ export class AuthController {
     const result = await this.auth.verify({ ...parsed, ip: clientAddress(request) });
     if (result.status === "unavailable") {
       throw new HttpException({ error: "otp_not_configured" }, HttpStatus.SERVICE_UNAVAILABLE);
+    }
+    return result;
+  }
+
+  @Post("oauth/exchanges")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Canjea un ID token de Google o Apple por sesión o token de registro." })
+  async exchangeOAuth(@Body() body: unknown, @Req() request: { ip?: string }) {
+    const parsed = oauthExchangeSchema.parse(body);
+    const result = await this.auth.exchangeOAuth({ ...parsed, ip: clientAddress(request) });
+    if (result.status === "unavailable") {
+      throw new HttpException({ error: "oauth_not_configured" }, HttpStatus.SERVICE_UNAVAILABLE);
     }
     return result;
   }

@@ -30,6 +30,10 @@ export class HealthController {
             : this.env.otpProvider === "twilio"
               ? "twilio"
               : "not_configured",
+      oauth: {
+        google: this.env.googleClientIds.length > 0,
+        apple: this.env.appleClientIds.length > 0,
+      },
       payments: "not_configured",
       stores: "no_external_connector",
     };

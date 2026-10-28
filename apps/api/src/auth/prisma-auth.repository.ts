@@ -8,8 +8,10 @@ import type {
   RegistrationGrantRecord,
   SessionRecord,
   SessionWrite,
+  SocialIdentityProvider,
   TotpRecord,
 } from "./auth.repository";
+import { prismaIdentityProvider } from "./oauth-identity";
 import { isRoleCode, selectRole, type RoleCode } from "./roles";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -35,6 +37,126 @@ export class PrismaAuthRepository implements AuthRepository {
       include: userInclude,
     });
     return user ? this.toUser(user) : null;
+  }
+
+  async findUserBySocialIdentity(provider: SocialIdentityProvider, subject: string): Promise<AuthUser | null> {
+    const identity = await this.prisma.userIdentity.findUnique({
+      where: {
+        provider_providerSubject: {
+          provider: prismaIdentityProvider(provider),
+          providerSubject: subject,
+        },
+      },
+      include: { user: { include: userInclude } },
+    });
+    return identity ? this.toUser(identity.user) : null;
+  }
+
+  async upsertSocialCustomer(input: {
+    provider: SocialIdentityProvider;
+    subject: string;
+    email: string | null;
+    givenName: string | null;
+    familyName: string | null;
+  }): Promise<AuthUser | null> {
+    const existingIdentity = await this.findUserBySocialIdentity(input.provider, input.subject);
+    if (existingIdentity) {
+      if ((!existingIdentity.givenName || !existingIdentity.familyName) && (input.givenName || input.familyName)) {
+        await this.prisma.userProfile.update({
+          where: { userId: existingIdentity.id },
+          data: {
+            givenName: existingIdentity.givenName ?? input.givenName ?? undefined,
+            familyName: existingIdentity.familyName ?? input.familyName ?? undefined,
+          },
+        });
+        return (await this.findUserById(existingIdentity.id)) ?? existingIdentity;
+      }
+      return existingIdentity;
+    }
+    if (input.email) {
+      const byEmail = await this.findUserByDestination("email", input.email);
+      if (byEmail) {
+        await this.linkSocialIdentity({ userId: byEmail.id, provider: input.provider, subject: input.subject });
+        if ((!byEmail.givenName || !byEmail.familyName) && (input.givenName || input.familyName)) {
+          await this.prisma.userProfile.update({
+            where: { userId: byEmail.id },
+            data: {
+              givenName: byEmail.givenName ?? input.givenName ?? undefined,
+              familyName: byEmail.familyName ?? input.familyName ?? undefined,
+            },
+          });
+          return (await this.findUserById(byEmail.id)) ?? byEmail;
+        }
+        return byEmail;
+      }
+    }
+    if (!input.email || !input.givenName || !input.familyName) {
+      return null;
+    }
+    const role = await this.prisma.role.findUnique({ where: { code: "CUSTOMER" } });
+    if (!role) {
+      throw new Error("CUSTOMER role is not seeded");
+    }
+    try {
+      const user = await this.prisma.user.create({
+        data: {
+          email: input.email,
+          status: "ACTIVE",
+          profile: {
+            create: {
+              givenName: input.givenName,
+              familyName: input.familyName,
+              locale: "es-VE",
+              preferredCurrency: "USD",
+            },
+          },
+          identities: {
+            create: [
+              {
+                provider: "EMAIL_OTP",
+                providerSubject: input.email,
+                verifiedAt: new Date(),
+              },
+              {
+                provider: prismaIdentityProvider(input.provider),
+                providerSubject: input.subject,
+                verifiedAt: new Date(),
+              },
+            ],
+          },
+          userRoles: { create: { roleId: role.id } },
+        },
+        include: userInclude,
+      });
+      return this.toUser(user);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        return this.findUserBySocialIdentity(input.provider, input.subject);
+      }
+      throw error;
+    }
+  }
+
+  async linkSocialIdentity(input: {
+    userId: string;
+    provider: SocialIdentityProvider;
+    subject: string;
+  }): Promise<void> {
+    try {
+      await this.prisma.userIdentity.create({
+        data: {
+          userId: input.userId,
+          provider: prismaIdentityProvider(input.provider),
+          providerSubject: input.subject,
+          verifiedAt: new Date(),
+        },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        return;
+      }
+      throw error;
+    }
   }
 
   async createCustomer(input: {

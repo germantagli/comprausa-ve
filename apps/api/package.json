@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "typecheck": "DATABASE_URL=postgresql://comprausa:comprausa@127.0.0.1:5432/comprausa prisma validate && DATABASE_URL=postgresql://comprausa:comprausa@127.0.0.1:5432/comprausa prisma generate && tsc --noEmit",
-    "test": "vitest run",
+    "test": "OTP_PROVIDER=none NODE_ENV=test vitest run",
     "start": "tsx src/main.ts"
   },
   "dependencies": {
