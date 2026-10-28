@@ -26,7 +26,7 @@ El repositorio queda listo para vincularse. El proyecto en Railway no se crea ha
 | Variable | Origen |
 | --- | --- |
 | `NODE_ENV` | `production` (IaC) |
-| `OTP_PROVIDER` | `none` (IaC; OTP simulado prohibido) |
+| `OTP_PROVIDER` | `none` por defecto (IaC). Para email: `resend` + `RESEND_API_KEY` + `OTP_EMAIL_FROM`. Para SMS+email: `twilio` + `TWILIO_*` |
 | `DATABASE_URL` | referencia a Postgres (IaC) |
 | `AUTH_TOKEN_SECRET` | se fija a mano / CLI (no vive en git) |
 | `WEB_ORIGIN` | opcional; CORS del sitio cuando exista URL pública |

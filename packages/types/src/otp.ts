@@ -1,6 +1,7 @@
 export type OtpIssueResult =
   | { status: "accepted"; expiresInSeconds: number }
-  | { status: "throttled"; expiresInSeconds: 0 };
+  | { status: "throttled"; expiresInSeconds: 0 }
+  | { status: "unsupported" };
 
 export type OtpVerifyResult = "approved" | "rejected";
 

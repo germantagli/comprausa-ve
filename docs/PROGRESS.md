@@ -13,15 +13,15 @@
 ### Ya existente (otros cortes)
 
 - Flujo móvil de maqueta posterior al splash, login OTP contra API, carrito/cotización, pago en revisión y seguimiento operador.
-- OTP simulado solo en local. En Railway: `GET /health` y `/health/ready` verificados (API viva + Postgres ready); `otp: not_configured`.
+- OTP simulado solo en local. Proveedores reales implementados: Resend (email) y Twilio Verify (SMS+email). En Railway sigue `otp: not_configured` hasta cargar secretos.
 - Commerce (carrito/pedidos/pagos) aún en memoria de proceso aunque Prisma tenga modelos.
 
 ## Siguiente incremento
 
-1. **Pantalla 2 — Registro / Login** (contratos OTP reales, proveedor configurado).
+1. Cargar credenciales Resend o Twilio en Railway y activar `OTP_PROVIDER`.
 2. Pantalla interna para publicar precio de cotización.
 3. Persistencia commerce en Postgres.
-4. Pagos solo con medio elegible; OTP real en producción.
+4. Pagos solo con medio elegible.
 
 ## Railway (verificado por HTTP en esta sesión)
 

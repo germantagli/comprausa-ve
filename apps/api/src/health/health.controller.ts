@@ -22,7 +22,14 @@ export class HealthController {
       service: "api",
       displayName: this.env.displayName,
       catalog: "internal-demo",
-      otp: this.env.simulatedOtpAllowed ? "simulated" : "not_configured",
+      otp:
+        this.env.otpProvider === "simulated" && this.env.simulatedOtpAllowed
+          ? "simulated"
+          : this.env.otpProvider === "resend"
+            ? "resend"
+            : this.env.otpProvider === "twilio"
+              ? "twilio"
+              : "not_configured",
       payments: "not_configured",
       stores: "no_external_connector",
     };

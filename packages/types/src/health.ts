@@ -3,7 +3,7 @@ export interface HealthReport {
   service: "api";
   displayName: string;
   catalog: "internal-demo";
-  otp: "simulated" | "not_configured";
+  otp: "simulated" | "resend" | "twilio" | "not_configured";
   payments: "not_configured";
   stores: "no_external_connector";
 }

@@ -24,7 +24,8 @@ export interface AuthenticatedBody {
 export type ChallengeBody =
   | { status: "accepted"; expiresInSeconds: number }
   | { status: "throttled" }
-  | { status: "unavailable" };
+  | { status: "unavailable" }
+  | { status: "unsupported_channel" };
 
 export type VerifyBody =
   | { status: "rejected" }
@@ -71,6 +72,9 @@ export class AuthService {
     const issued = await this.otp.issue(otpDestinationKey(input.channel, destination));
     if (issued.status === "throttled") {
       return { status: "throttled" };
+    }
+    if (issued.status === "unsupported") {
+      return { status: "unsupported_channel" };
     }
     return { status: "accepted", expiresInSeconds: issued.expiresInSeconds };
   }

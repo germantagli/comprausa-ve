@@ -20,4 +20,26 @@ describe("AuthModule", () => {
     };
     expect(() => AuthModule.registerFrom(forged)).toThrow(/development/);
   });
+
+  it("mounts Resend and Twilio providers without the development OTP route", () => {
+    const resend = AuthModule.registerFrom(
+      parseAppEnv({
+        NODE_ENV: "development",
+        OTP_PROVIDER: "resend",
+        RESEND_API_KEY: "re_test",
+        OTP_EMAIL_FROM: "TraeLo <otp@traelo.test>",
+      }),
+    );
+    const twilio = AuthModule.registerFrom(
+      parseAppEnv({
+        NODE_ENV: "development",
+        OTP_PROVIDER: "twilio",
+        TWILIO_ACCOUNT_SID: "ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        TWILIO_AUTH_TOKEN: "token",
+        TWILIO_VERIFY_SERVICE_SID: "VAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      }),
+    );
+    expect(resend.controllers ?? []).not.toContain(DevOtpController);
+    expect(twilio.controllers ?? []).not.toContain(DevOtpController);
+  });
 });

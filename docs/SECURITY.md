@@ -14,6 +14,8 @@ El OTP dura 120 segundos, acepta 5 intentos y se consume al acertar. Un destino 
 
 `SimulatedOtpProvider` genera el código con `crypto.randomInt`. Se construye solo si `NODE_ENV=development` y `OTP_PROVIDER=simulated`. Producción y `NODE_ENV=test` lo rechazan al arrancar. Las pruebas leen el código con `peekCode()`. En ese mismo modo de desarrollo, `POST /v1/auth/dev/otp-code` devuelve el código vigente. Esa ruta no se monta en otro modo.
 
+`ResendOtpProvider` (`OTP_PROVIDER=resend`) genera el código en proceso, lo envía por la API de Resend y lo verifica en memoria local (mismo ledger que el simulado). Solo canal email; teléfono responde `otp_channel_unsupported`. `TwilioVerifyOtpProvider` (`OTP_PROVIDER=twilio`) delega emisión y verificación en Twilio Verify (SMS y email). El código no se escribe en logs. Sin credenciales, `OTP_PROVIDER=none` y el challenge responde `otp_not_configured`.
+
 El límite de tasa está detrás del puerto `RateLimiter`. El adaptador de este corte es `MemoryRateLimiter`: ventana deslizante en el proceso, para desarrollo y pruebas. También queda activo si el proceso de producción arrancara, y sigue siendo memoria local. No es Redis y no se comparte entre instancias. Las claves son IP del socket, identidad (canal + destino normalizado) y `deviceId`. `trust proxy` está apagado: `X-Forwarded-For` no cambia la IP. El cupo de verificación es mayor que 5 para que un código bloqueado siga respondiendo `rejected`.
 
 Correo y teléfono se normalizan antes de limitar y de emitir. Una cuenta nueva pide nombre y apellido, queda en rol `CUSTOMER`, locale `es-VE`, y abre sesión. Una cuenta existente abre sesión y conserva el nombre. No se piden dirección ni cédula.
@@ -64,4 +66,4 @@ El ingreso valida el cuerpo con Zod y responde `invalid_request` sin repetir el 
 
 ## Qué no está hecho
 
-El cifrado del secreto TOTP es AES-256-GCM de Node. La firma del access token es `jose` y el refresh es un aleatorio de Node con hash SHA-256. No hay WAF, no hay prueba de penetración y no hay gestión de llaves. No hay proveedor real de correo o SMS. El límite de tasa no cruza procesos. El pago de prueba no cobra en vivo.
+El cifrado del secreto TOTP es AES-256-GCM de Node. La firma del access token es `jose` y el refresh es un aleatorio de Node con hash SHA-256. No hay WAF, no hay prueba de penetración y no hay gestión de llaves. Los proveedores Resend/Twilio están implementados pero Railway sigue en `OTP_PROVIDER=none` hasta cargar secretos. El límite de tasa no cruza procesos. El pago de prueba no cobra en vivo.

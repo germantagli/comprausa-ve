@@ -31,6 +31,9 @@ export class AuthController {
     if (result.status === "unavailable") {
       throw new HttpException({ error: "otp_not_configured" }, HttpStatus.SERVICE_UNAVAILABLE);
     }
+    if (result.status === "unsupported_channel") {
+      throw new HttpException({ error: "otp_channel_unsupported" }, HttpStatus.BAD_REQUEST);
+    }
     return result;
   }
 

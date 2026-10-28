@@ -13,7 +13,8 @@ Este repositorio tiene la arquitectura de la fase 1, el ingreso por OTP, la app 
 - Catálogo interno de demostración, con artículos ficticios, sin precio ni existencia.
 - Esquemas Zod para dinero en centavos, correo, teléfono y el ingreso.
 - App de cliente en `apps/web` y `apps/mobile`: introducción, inicio, explorar, carrito, pedidos y perfil. El ingreso sigue en `/entrar`.
-- Validación de entorno: en producción hacen falta `DATABASE_URL` y `AUTH_TOKEN_SECRET`. `OTP_PROVIDER=simulated` solo arranca con `NODE_ENV=development`.
+- Validación de entorno: en producción hacen falta `DATABASE_URL` y `AUTH_TOKEN_SECRET`. `OTP_PROVIDER=simulated` solo arranca con `NODE_ENV=development`. Producción admite `resend` (email) o `twilio` (SMS + email vía Verify) con sus secretos.
+- Proveedores OTP reales cableados: `ResendOtpProvider` y `TwilioVerifyOtpProvider`. Sin credenciales, `OTP_PROVIDER=none` y el challenge responde 503.
 
 ## Qué está simulado
 
@@ -68,7 +69,9 @@ El sitio, en `http://127.0.0.1:3000`, en viewport estrecho abre el splash TraeLo
 
 Expo (`apps/mobile`) usa el mismo splash y restaura la sesión desde SecureStore. Configura `EXPO_PUBLIC_API_URL` según el entorno (Simulator, `10.0.2.2` en emulador Android, IP LAN o Railway en dispositivo físico).
 
-En desarrollo, `/entrar` puede rellenar el OTP llamando a `POST /v1/auth/dev/otp-code` solo si `NODE_ENV=development` y la API arrancó con `OTP_PROVIDER=simulated`. En la web pública (Railway / producción) ese endpoint no existe: el login sigue llamando a la API, pero el código solo llega si hay un proveedor OTP real. No hay bypass de producción (`OTP_PROVIDER=simulated` se rechaza fuera de development).
+En desarrollo, `/entrar` puede rellenar el OTP llamando a `POST /v1/auth/dev/otp-code` solo si `NODE_ENV=development` y la API arrancó con `OTP_PROVIDER=simulated`. En la web pública (Railway / producción) ese endpoint no existe: el login sigue llamando a la API; el código llega con `OTP_PROVIDER=resend` o `OTP_PROVIDER=twilio` y las variables del proveedor. No hay bypass de producción (`OTP_PROVIDER=simulated` se rechaza fuera de development).
+
+Para activar email real (Resend, free tier) o SMS (Twilio Verify), ver `.env.example` y poner las variables en Railway.
 
 ```bash
 pnpm --filter @comprausa/web exec next dev --port 3000

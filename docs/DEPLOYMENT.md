@@ -44,10 +44,10 @@ Dockerfile multi-stage: instala con pnpm, genera el cliente Prisma y arranca la 
 | --- | --- | --- | --- | --- |
 | Desarrollo | Postgres local opcional | Simulado solo con la bandera | Apagados | Ninguna |
 | Prueba (CI) | Sin base | El unitario construye el proveedor en memoria | Apagados | Ninguna |
-| Staging | Por crear vía IaC | `OTP_PROVIDER=none` hasta proveedor real | Apagados hasta elegibilidad | Ninguna |
-| Producción | Por crear | Real | Solo los que estén permitidos | Solo un conector probado |
+| Staging | Por crear vía IaC | `none` / `resend` / `twilio` | Apagados hasta elegibilidad | Ninguna |
+| Producción | Por crear | `resend` (email) o `twilio` (SMS+email) | Solo los que estén permitidos | Solo un conector probado |
 
-En staging/producción el OTP simulado **no puede activarse**: `parseAppEnv` rechaza `OTP_PROVIDER=simulated` si `NODE_ENV` no es `development`, y la ruta `POST /v1/auth/dev/otp-code` no se monta. La web de cliente sigue el flujo `/entrar` contra la API; el código solo llega al correo/teléfono cuando exista un proveedor real. No inventar un bypass en la UI pública.
+En staging/producción el OTP simulado **no puede activarse**: `parseAppEnv` rechaza `OTP_PROVIDER=simulated` si `NODE_ENV` no es `development`, y la ruta `POST /v1/auth/dev/otp-code` no se monta. Para email real: `OTP_PROVIDER=resend` + `RESEND_API_KEY` + `OTP_EMAIL_FROM`. Para SMS+email: `OTP_PROVIDER=twilio` + `TWILIO_ACCOUNT_SID` + `TWILIO_AUTH_TOKEN` + `TWILIO_VERIFY_SERVICE_SID`. Con Resend, el canal teléfono responde `otp_channel_unsupported`. No inventar un bypass en la UI pública.
 
 CI de verificación (`.github/workflows/verify.yml`) instala, hace typecheck y corre pruebas. No despliega la app.
 
@@ -59,7 +59,7 @@ Rollback previsto: volver el despliegue anterior de la API en Railway y no aplic
 
 ## Variables
 
-`.env.example` lista `NODE_ENV`, `PORT`, `APP_DISPLAY_NAME`, `DATABASE_URL` local, `OTP_PROVIDER`, `AUTH_TOKEN_SECRET` y huecos para Stripe, PayPal y Redis. Ningún valor de ese archivo es una credencial de un proveedor.
+`.env.example` lista `NODE_ENV`, `PORT`, `APP_DISPLAY_NAME`, `DATABASE_URL` local, `OTP_PROVIDER`, huecos Resend/Twilio, `AUTH_TOKEN_SECRET` y huecos para Stripe, PayPal y Redis. Ningún valor de ese archivo es una credencial de un proveedor.
 
 ## Local
 

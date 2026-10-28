@@ -24,7 +24,7 @@ Cotización por enlace ya persistida, pagos, compra en tienda, logística, panel
 | Staging | Railway | API y Postgres definidos en `.railway/railway.ts`. El vínculo y el apply del proyecto no están hechos hasta autenticar el CLI. Redis/worker quedan fuera de este corte. |
 | Dinero | Centavos enteros (`BigInt` en Postgres, entero seguro en JSON) | Ni `float` ni `double`. Las tasas de cambio, si algún día existen, van en `Decimal(20, 10)` y no son un precio de venta. |
 | Catálogo | Puerto `ProductProvider` | La única implementación es `InternalDemoCatalogProvider`. No hay conectores externos. |
-| Identidad | Puerto `OtpProvider`, `jose` para el access token | `SimulatedOtpProvider` solo con `NODE_ENV=development` y `OTP_PROVIDER=simulated`. La sesión, la rotación y la revocación ya se emiten. |
+| Identidad | Puerto `OtpProvider`, `jose` para el access token | `SimulatedOtpProvider` solo en development. `ResendOtpProvider` (email) y `TwilioVerifyOtpProvider` (SMS+email) con `OTP_PROVIDER=resend|twilio`. La sesión, la rotación y la revocación ya se emiten. |
 
 ## Monorepo
 
@@ -52,7 +52,7 @@ docs/
 
 ## Límites de contexto
 
-- Identidad: usuario, perfil, identidad, sesión, dispositivo, OTP, alta y guard de administración. El envío del código sigue simulado en desarrollo.
+- Identidad: usuario, perfil, identidad, sesión, dispositivo, OTP, alta y guard de administración. En desarrollo el envío puede ser simulado; en producción Resend o Twilio Verify.
 - Catálogo: búsqueda y ficha a través de `ProductProvider`.
 - Cotización: enlace pegado, revisión humana, sin precio automático. La API guarda la URL como texto, deja la cotización en `PENDING_VALIDATION` y no la descarga. El cliente no puede pasarla a final.
 - Pedido: estados propios, separados de pago, compra y envío.

@@ -6,7 +6,7 @@ const healthSchema = z
     service: z.literal("api"),
     displayName: z.string(),
     catalog: z.literal("internal-demo"),
-    otp: z.enum(["simulated", "not_configured"]),
+    otp: z.enum(["simulated", "resend", "twilio", "not_configured"]),
     payments: z.literal("not_configured"),
     stores: z.literal("no_external_connector"),
   })
