@@ -10,9 +10,9 @@ import { colorTokens, fontTokens, radiusTokens, spaceTokens } from "@comprausa/d
 import { emailSchema, otpCodeSchema, personNameSchema, phoneE164Schema } from "@comprausa/validation";
 import { useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { apiBase } from "./api";
 
 const colors = colorTokens.light;
-const apiBase = "http://127.0.0.1:3001";
 
 type Channel = "email" | "phone";
 type Step = "channel" | "destination" | "code" | "name" | "done";

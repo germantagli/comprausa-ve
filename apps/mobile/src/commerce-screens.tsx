@@ -21,10 +21,10 @@ import { colorTokens, fontTokens, radiusTokens, spaceTokens } from "@comprausa/d
 import { catalogPriceLabel, formatUsdFromMinor, subtotalLabel } from "@comprausa/utils";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { apiBase } from "./api";
 import { MobilePaymentPanel } from "./payment-screens";
 
 const colors = colorTokens.light;
-const apiBase = "http://127.0.0.1:3001";
 
 export function MobileProductScreen({
   productId,
