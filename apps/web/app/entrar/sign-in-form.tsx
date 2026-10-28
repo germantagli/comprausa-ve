@@ -11,7 +11,13 @@ import {
 } from "@comprausa/api-client";
 import { colorTokens, fontTokens, radiusTokens, spaceTokens } from "@comprausa/design-tokens";
 import { APP_BRAND_NAME } from "@comprausa/types";
-import { composeE164, formatE164Display, getDefaultCountry, type CountryDialCode } from "@comprausa/utils";
+import {
+  PHONE_OTP_ENABLED,
+  composeE164,
+  formatE164Display,
+  getDefaultCountry,
+  type CountryDialCode,
+} from "@comprausa/utils";
 import { emailSchema, otpCodeSchema, personNameSchema } from "@comprausa/validation";
 import Image from "next/image";
 import Link from "next/link";
@@ -93,7 +99,7 @@ export function SignInForm() {
 
   const [ready, setReady] = useState(false);
   const [step, setStep] = useState<Step>("destination");
-  const [channel, setChannel] = useState<Channel>("phone");
+  const [channel, setChannel] = useState<Channel>(PHONE_OTP_ENABLED ? "phone" : "email");
   const [email, setEmail] = useState("");
   const [country, setCountry] = useState<CountryDialCode>(() => getDefaultCountry());
   const [phoneLocal, setPhoneLocal] = useState("");
@@ -183,6 +189,10 @@ export function SignInForm() {
         return;
       }
       await requestChallenge(parsed.data, "email");
+      return;
+    }
+    if (!PHONE_OTP_ENABLED) {
+      setError("El ingreso por teléfono no está disponible. Usa email, Google o Apple.");
       return;
     }
     const e164 = composeE164(country.dial, phoneLocal);
@@ -497,36 +507,43 @@ export function SignInForm() {
           {step === "destination" ? (
             <>
               <h1 style={titleStyle}>{headline}</h1>
-              <div role="tablist" aria-label="Método de ingreso" style={tabsStyle}>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={channel === "phone"}
-                  className="entrar-control"
-                  onClick={() => {
-                    setChannel("phone");
-                    setError(null);
-                  }}
-                  style={tabStyle(channel === "phone")}
-                >
-                  Teléfono
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={channel === "email"}
-                  className="entrar-control"
-                  onClick={() => {
-                    setChannel("email");
-                    setError(null);
-                  }}
-                  style={tabStyle(channel === "email")}
-                >
-                  Email
-                </button>
-              </div>
+              <p style={subtitleStyle}>
+                {PHONE_OTP_ENABLED
+                  ? "Usa tu correo o teléfono. También puedes continuar con Google o Apple."
+                  : "Usa tu correo. También puedes continuar con Google o Apple."}
+              </p>
+              {PHONE_OTP_ENABLED ? (
+                <div role="tablist" aria-label="Método de ingreso" style={tabsStyle}>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={channel === "phone"}
+                    className="entrar-control"
+                    onClick={() => {
+                      setChannel("phone");
+                      setError(null);
+                    }}
+                    style={tabStyle(channel === "phone")}
+                  >
+                    Teléfono
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={channel === "email"}
+                    className="entrar-control"
+                    onClick={() => {
+                      setChannel("email");
+                      setError(null);
+                    }}
+                    style={tabStyle(channel === "email")}
+                  >
+                    Email
+                  </button>
+                </div>
+              ) : null}
 
-              {channel === "phone" ? (
+              {PHONE_OTP_ENABLED && channel === "phone" ? (
                 <div style={phoneRowStyle}>
                   <CountryDialPicker value={country} onChange={setCountry} />
                   <label style={{ ...labelStyle, flex: 1, marginBottom: 0 }}>
