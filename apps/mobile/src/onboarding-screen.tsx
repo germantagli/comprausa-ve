@@ -1,9 +1,10 @@
 import { colorTokens, fontTokens, radiusTokens, spaceTokens } from "@comprausa/design-tokens";
 import { onboardingSteps } from "@comprausa/types";
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 const colors = colorTokens.light;
+const headerLogo = require("../assets/brand/logo-header.png");
 
 export function OnboardingScreen({ onDone, videoUrl }: { onDone: () => void; videoUrl?: string }) {
   const [step, setStep] = useState(0);
@@ -12,7 +13,9 @@ export function OnboardingScreen({ onDone, videoUrl }: { onDone: () => void; vid
 
   return (
     <View style={styles.page}>
-      <Text style={styles.brand}>TraeLo</Text>
+      <View style={styles.brandWrap}>
+        <Image source={headerLogo} accessibilityLabel="TraeLo" style={styles.brandLogo} resizeMode="contain" />
+      </View>
       <Text style={styles.body}>
         Paso {step + 1} de {onboardingSteps.length}
       </Text>
@@ -48,11 +51,17 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: spaceTokens[6],
   },
-  brand: {
-    color: colors.deep,
-    fontSize: fontTokens.sizes.title,
-    fontWeight: "800",
-    lineHeight: fontTokens.lineHeight.title,
+  brandWrap: {
+    alignSelf: "flex-start",
+    backgroundColor: "#000000",
+    borderRadius: radiusTokens.md,
+    marginBottom: spaceTokens[2],
+    paddingHorizontal: spaceTokens[3],
+    paddingVertical: spaceTokens[2],
+  },
+  brandLogo: {
+    height: 36,
+    width: 136,
   },
   title: {
     color: colors.text,

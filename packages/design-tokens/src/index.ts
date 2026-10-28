@@ -5,9 +5,12 @@
  */
 export const colorTokens = {
   light: {
-    primary: "#1054B8",
+    primary: "#1B5FC7",
     primaryOn: "#FFFFFF",
-    deep: "#092C62",
+    deep: "#0D3A7A",
+    /** Orange from TraeLo wordmark ("Lo") and smile curve. */
+    accent: "#F7931E",
+    accentOn: "#14243B",
     cyan: "#16B8D5",
     background: "#F3F7FC",
     surface: "#FFFFFF",
@@ -21,9 +24,11 @@ export const colorTokens = {
     warning: "#C45C16",
   },
   dark: {
-    primary: "#1054B8",
+    primary: "#3B7DE0",
     primaryOn: "#FFFFFF",
     deep: "#D6E4FF",
+    accent: "#F7931E",
+    accentOn: "#14243B",
     cyan: "#16B8D5",
     background: "#0B1220",
     surface: "#14243B",

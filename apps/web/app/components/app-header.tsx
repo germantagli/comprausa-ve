@@ -1,10 +1,12 @@
 "use client";
 
+import { APP_BRAND_NAME } from "@comprausa/types";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { IconSearch } from "./icons";
-import { colors, fontTokens, inputStyle, spaceTokens } from "./styles";
+import { colors, inputStyle, spaceTokens } from "./styles";
 
 const desktopLinks = [
   { href: "/", label: "Inicio" },
@@ -28,19 +30,15 @@ export function AppHeader() {
   return (
     <header className="cve-site-header" aria-label="Cabecera del sitio">
       <div className="cve-site-header-inner">
-        <Link
-          href="/"
-          style={{
-            color: colors.primaryOn,
-            fontSize: fontTokens.sizes.title,
-            fontWeight: 800,
-            letterSpacing: "-0.02em",
-            lineHeight: `${fontTokens.lineHeight.title}px`,
-            textDecoration: "none",
-            whiteSpace: "nowrap",
-          }}
-        >
-          TraeLo
+        <Link href="/" aria-label={APP_BRAND_NAME} style={{ display: "inline-flex", lineHeight: 0 }}>
+          <Image
+            src="/brand/logo-header.webp"
+            alt={APP_BRAND_NAME}
+            width={200}
+            height={67}
+            priority
+            style={{ height: 44, width: "auto" }}
+          />
         </Link>
 
         <nav className="cve-site-header-nav" aria-label="Secciones">
@@ -99,7 +97,7 @@ export function AppHeader() {
           <button
             type="submit"
             style={{
-              background: colors.deep,
+              background: colors.primary,
               border: "none",
               borderRadius: 12,
               color: colors.primaryOn,

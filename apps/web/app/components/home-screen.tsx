@@ -1,6 +1,8 @@
 "use client";
 
 import { getAccountProfile } from "@comprausa/api-client";
+import { APP_BRAND_NAME } from "@comprausa/types";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -22,7 +24,6 @@ import {
   secondaryButtonStyle,
   spaceTokens,
   titleStyle,
-  wordmarkStyle,
 } from "./styles";
 
 export function HomeScreen() {
@@ -33,8 +34,18 @@ export function HomeScreen() {
   return (
     <PageFrame>
       <div className="cve-mobile-only" style={{ marginBottom: spaceTokens[4] }}>
-        <Link href="/" style={wordmarkStyle}>
-          TraeLo
+        <Link
+          href="/"
+          aria-label={APP_BRAND_NAME}
+          style={{
+            background: "#000",
+            borderRadius: 12,
+            display: "inline-flex",
+            lineHeight: 0,
+            padding: "8px 12px",
+          }}
+        >
+          <Image src="/brand/logo-header.webp" alt={APP_BRAND_NAME} width={180} height={60} priority style={{ height: 36, width: "auto" }} />
         </Link>
         <h1 style={{ ...titleStyle, marginTop: spaceTokens[3] }}>{greeting}</h1>
         <SearchForm

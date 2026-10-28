@@ -1,10 +1,7 @@
 # Logos TraeLo
 
-Coloca aquí los archivos oficiales cuando lleguen, por ejemplo:
+- `logo.webp` — marca vertical para splash (fondo negro)
+- `logo-mark.webp` — marca reducida para loading
+- `logo-header.webp` / `logo-header-sm.webp` — logo horizontal para cabecera
 
-- `logo.svg` — marca principal (preferido)
-- `logo-mark.svg` — isotipo / ícono
-- `logo-on-dark.svg` — variante sobre fondo oscuro
-- `app-icon.png` — ícono de aplicación (1024×1024 si es posible)
-
-Hasta entonces la UI usa el wordmark tipográfico **TraeLo**.
+Origen: assets oficiales TraeLo.
