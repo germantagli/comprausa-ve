@@ -14,6 +14,7 @@ export type {
   ProductSummary,
 } from "./product-provider";
 export type { OtpIssueResult, OtpProvider, OtpVerifyResult } from "./otp";
+export type { OnboardingBullet, OnboardingBulletIcon, OnboardingStep } from "./onboarding";
 export { onboardingSteps } from "./onboarding";
 export type { HealthReport } from "./health";
 export type {

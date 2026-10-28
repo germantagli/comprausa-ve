@@ -1,129 +1,240 @@
 import { colorTokens, fontTokens, radiusTokens, spaceTokens } from "@comprausa/design-tokens";
-import { onboardingSteps } from "@comprausa/types";
+import { onboardingSteps, type OnboardingBulletIcon } from "@comprausa/types";
 import { useState } from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  type ImageSourcePropType,
+} from "react-native";
 
 const colors = colorTokens.light;
-const headerLogo = require("../assets/brand/logo-header.png");
 
-export function OnboardingScreen({ onDone, videoUrl }: { onDone: () => void; videoUrl?: string }) {
+const heroes: Record<(typeof onboardingSteps)[number]["id"], ImageSourcePropType> = {
+  "1": require("../assets/brand/onboarding/step-1.png"),
+  "2": require("../assets/brand/onboarding/step-2.png"),
+  "3": require("../assets/brand/onboarding/step-3.png"),
+  "4": require("../assets/brand/onboarding/step-4.png"),
+};
+
+const icons: Record<OnboardingBulletIcon, ImageSourcePropType> = {
+  search: require("../assets/brand/onboarding/icons/search.png"),
+  card: require("../assets/brand/onboarding/icons/card.png"),
+  package: require("../assets/brand/onboarding/icons/package.png"),
+  store: require("../assets/brand/onboarding/icons/store.png"),
+  apparel: require("../assets/brand/onboarding/icons/apparel.png"),
+  grid: require("../assets/brand/onboarding/icons/grid.png"),
+  paypal: require("../assets/brand/onboarding/icons/paypal.png"),
+  zelle: require("../assets/brand/onboarding/icons/zelle.png"),
+  "pago-movil": require("../assets/brand/onboarding/icons/pago-movil.png"),
+  truck: require("../assets/brand/onboarding/icons/truck.png"),
+  pin: require("../assets/brand/onboarding/icons/pin.png"),
+  shield: require("../assets/brand/onboarding/icons/shield.png"),
+  check: require("../assets/brand/onboarding/icons/check.png"),
+};
+
+const cartMark = require("../assets/brand/splash/cart.png");
+
+export function OnboardingScreen({ onDone }: { onDone: () => void }) {
   const [step, setStep] = useState(0);
-  const text = onboardingSteps[step] ?? onboardingSteps[0];
+  const current = onboardingSteps[step] ?? onboardingSteps[0];
   const last = step >= onboardingSteps.length - 1;
 
   return (
     <View style={styles.page}>
-      <View style={styles.brandWrap}>
-        <Image source={headerLogo} accessibilityLabel="TraeLo" style={styles.brandLogo} resizeMode="contain" />
-      </View>
-      <Text style={styles.body}>
-        Paso {step + 1} de {onboardingSteps.length}
-      </Text>
-      <Text accessibilityRole="header" style={styles.title}>
-        {text}
-      </Text>
-      <View style={styles.slot}>
-        <Text style={styles.slotTitle}>De tiendas de USA a tu dirección en Venezuela.</Text>
-        <Text style={styles.slotCaption}>Espacio para un video externo. No hay uno cargado.</Text>
-        {videoUrl ? (
-          <Text accessibilityRole="link" style={styles.link}>
-            {videoUrl}
+      <ScrollView contentContainerStyle={styles.scroll} bounces={false} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <View style={styles.brandRow}>
+            <Image source={cartMark} accessibilityLabel="" style={styles.cart} resizeMode="contain" />
+            <Text style={styles.wordmark}>
+              <Text style={styles.trae}>Trae</Text>
+              <Text style={styles.lo}>Lo</Text>
+            </Text>
+          </View>
+          <Text
+            accessibilityLabel={`Paso ${step + 1} de ${onboardingSteps.length}`}
+            style={styles.counter}
+          >
+            {step + 1}/{onboardingSteps.length}
           </Text>
-        ) : null}
+        </View>
+
+        <Text accessibilityRole="header" style={styles.title}>
+          {current.title}
+        </Text>
+        <Text style={styles.subtitle}>{current.subtitle}</Text>
+
+        <Image source={heroes[current.id]} accessibilityLabel="" style={styles.hero} resizeMode="contain" />
+
+        <View style={styles.bullets}>
+          {current.bullets.map((bullet) => (
+            <View key={bullet.text} style={styles.bulletRow}>
+              <Image source={icons[bullet.icon]} accessibilityLabel="" style={styles.bulletIcon} />
+              <Text style={styles.bulletText}>{bullet.text}</Text>
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+
+      <View style={styles.footer}>
+        <View style={styles.dots} accessibilityElementsHidden>
+          {onboardingSteps.map((item, index) => (
+            <View key={item.id} style={[styles.dot, index === step ? styles.dotActive : null]} />
+          ))}
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => (last ? onDone() : setStep((currentStep) => currentStep + 1))}
+          style={styles.primary}
+        >
+          <Text style={styles.primaryText}>{current.primaryLabel}</Text>
+        </Pressable>
+        <Pressable accessibilityRole="button" onPress={onDone} style={styles.secondary}>
+          <Text style={styles.secondaryText}>Omitir</Text>
+        </Pressable>
       </View>
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => (last ? onDone() : setStep((current) => current + 1))}
-        style={styles.primary}
-      >
-        <Text style={styles.primaryText}>Continuar</Text>
-      </Pressable>
-      <Pressable accessibilityRole="button" onPress={onDone} style={styles.secondary}>
-        <Text style={styles.body}>Omitir</Text>
-      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   page: {
-    backgroundColor: colors.background,
+    backgroundColor: "#FFFFFF",
     flex: 1,
-    padding: spaceTokens[6],
   },
-  brandWrap: {
-    alignSelf: "flex-start",
-    backgroundColor: "#000000",
-    borderRadius: radiusTokens.md,
-    marginBottom: spaceTokens[2],
-    paddingHorizontal: spaceTokens[3],
-    paddingVertical: spaceTokens[2],
+  scroll: {
+    paddingBottom: spaceTokens[4],
+    paddingHorizontal: spaceTokens[4],
+    paddingTop: spaceTokens[4],
   },
-  brandLogo: {
+  header: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
+    marginBottom: spaceTokens[3],
+    minHeight: 44,
+    position: "relative",
+  },
+  brandRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spaceTokens[2],
+  },
+  cart: {
     height: 36,
-    width: 136,
+    width: 44,
+  },
+  wordmark: {
+    fontSize: 26,
+    fontWeight: "800",
+    letterSpacing: -0.6,
+  },
+  trae: {
+    color: colors.primary,
+  },
+  lo: {
+    color: colors.accent,
+  },
+  counter: {
+    color: colors.muted,
+    fontSize: fontTokens.sizes.caption,
+    fontWeight: "600",
+    position: "absolute",
+    right: 0,
+    top: 12,
   },
   title: {
-    color: colors.text,
-    fontSize: fontTokens.sizes.title,
-    fontWeight: "700",
-    lineHeight: fontTokens.lineHeight.title,
-    marginBottom: spaceTokens[4],
+    color: colors.deep,
+    fontSize: 26,
+    fontWeight: "800",
+    letterSpacing: -0.5,
+    lineHeight: 32,
+    marginBottom: spaceTokens[2],
+    textAlign: "center",
   },
-  body: {
-    color: colors.text,
+  subtitle: {
+    color: colors.primary,
     fontSize: fontTokens.sizes.body,
     lineHeight: fontTokens.lineHeight.body,
     marginBottom: spaceTokens[3],
+    textAlign: "center",
   },
-  caption: {
-    color: colors.text,
-    fontSize: fontTokens.sizes.caption,
-    lineHeight: fontTokens.lineHeight.caption,
-  },
-  slotTitle: {
-    color: colors.primaryOn,
-    fontSize: fontTokens.sizes.body,
-    fontWeight: "700",
-    lineHeight: fontTokens.lineHeight.body,
-    marginBottom: spaceTokens[2],
-  },
-  slotCaption: {
-    color: "rgba(255,255,255,0.85)",
-    fontSize: fontTokens.sizes.caption,
-    lineHeight: fontTokens.lineHeight.caption,
-  },
-  link: {
-    color: colors.primaryOn,
-    marginTop: spaceTokens[2],
-  },
-  slot: {
-    backgroundColor: colors.deep,
-    borderRadius: radiusTokens.lg,
+  hero: {
+    alignSelf: "center",
+    height: 220,
     marginBottom: spaceTokens[4],
-    minHeight: 140,
-    padding: spaceTokens[4],
+    maxWidth: "100%",
+    width: "100%",
+  },
+  bullets: {
+    gap: spaceTokens[3],
+  },
+  bulletRow: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    gap: spaceTokens[3],
+  },
+  bulletIcon: {
+    height: 28,
+    marginTop: 2,
+    width: 28,
+  },
+  bulletText: {
+    color: colors.deep,
+    flex: 1,
+    fontSize: fontTokens.sizes.body,
+    fontWeight: "600",
+    lineHeight: fontTokens.lineHeight.body,
+  },
+  footer: {
+    gap: spaceTokens[3],
+    paddingBottom: spaceTokens[6],
+    paddingHorizontal: spaceTokens[4],
+    paddingTop: spaceTokens[2],
+  },
+  dots: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 8,
+    justifyContent: "center",
+    paddingVertical: spaceTokens[1],
+  },
+  dot: {
+    backgroundColor: "#D7E0EC",
+    borderRadius: 999,
+    height: 8,
+    width: 8,
+  },
+  dotActive: {
+    backgroundColor: colors.primary,
   },
   primary: {
     alignItems: "center",
     backgroundColor: colors.primary,
-    borderRadius: radiusTokens.md,
+    borderRadius: radiusTokens.lg,
     justifyContent: "center",
-    marginBottom: spaceTokens[3],
-    minHeight: 48,
+    minHeight: 52,
   },
   primaryText: {
     color: colors.primaryOn,
     fontSize: fontTokens.sizes.body,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   secondary: {
     alignItems: "center",
     backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radiusTokens.md,
-    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: radiusTokens.lg,
+    borderWidth: 1.5,
     justifyContent: "center",
-    minHeight: 44,
+    minHeight: 48,
+  },
+  secondaryText: {
+    color: colors.primary,
+    fontSize: fontTokens.sizes.body,
+    fontWeight: "700",
   },
 });

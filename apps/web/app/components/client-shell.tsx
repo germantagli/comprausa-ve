@@ -36,6 +36,17 @@ export function ClientShell({ children }: { children: ReactNode }) {
       const phone = isPhoneViewport();
       const stored = readSession();
       const seenOnboarding = window.localStorage.getItem(ONBOARDING_KEY) === "1";
+      const forceBienvenida = new URLSearchParams(window.location.search).get("bienvenida") === "1";
+
+      if (forceBienvenida) {
+        setGate("onboarding");
+        void probeServerReachable(apiBase).then((reachable) => {
+          if (!cancelled) {
+            setServerReachable(reachable);
+          }
+        });
+        return;
+      }
 
       const restorePromise = restoreAuthenticatedSession(apiBase, stored);
       const healthPromise = probeServerReachable(apiBase);
