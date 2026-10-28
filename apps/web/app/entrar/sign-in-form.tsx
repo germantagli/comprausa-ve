@@ -11,11 +11,13 @@ import {
 import { colorTokens, fontTokens, radiusTokens, spaceTokens } from "@comprausa/design-tokens";
 import { otpCodeSchema, personNameSchema, phoneE164Schema, emailSchema } from "@comprausa/validation";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useId, useState, type FormEvent } from "react";
 import { apiBase } from "../lib/api";
 import { clearSession, DEVICE_KEY, readSession, saveSession } from "../lib/session";
 
 const colors = colorTokens.light;
+const isDevClient = process.env.NODE_ENV === "development";
 
 type Channel = "email" | "phone";
 type Step = "channel" | "destination" | "code" | "name" | "done";
@@ -34,7 +36,29 @@ function readDeviceId(): string {
   return created;
 }
 
+/** Solo en desarrollo: el endpoint /v1/auth/dev/otp-code no existe fuera de OTP simulado. */
+async function fetchSimulatedOtp(channel: Channel, destination: string): Promise<string | null> {
+  if (!isDevClient) {
+    return null;
+  }
+  try {
+    const response = await fetch(`${apiBase}/v1/auth/dev/otp-code`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ channel, destination }),
+    });
+    if (!response.ok) {
+      return null;
+    }
+    const data = (await response.json()) as { code?: string };
+    return typeof data.code === "string" ? data.code : null;
+  } catch {
+    return null;
+  }
+}
+
 export function SignInForm() {
+  const router = useRouter();
   const errorId = useId();
   const hintId = useId();
   const [ready, setReady] = useState(false);
@@ -42,6 +66,7 @@ export function SignInForm() {
   const [channel, setChannel] = useState<Channel>("email");
   const [destination, setDestination] = useState("");
   const [code, setCode] = useState("");
+  const [devHint, setDevHint] = useState<string | null>(null);
   const [givenName, setGivenName] = useState("");
   const [familyName, setFamilyName] = useState("");
   const [registrationToken, setRegistrationToken] = useState("");
@@ -74,6 +99,7 @@ export function SignInForm() {
         return;
       }
       setLoading(true);
+      setDevHint(null);
       try {
         const result = await requestOtpChallenge(apiBase, {
           channel,
@@ -85,6 +111,17 @@ export function SignInForm() {
           return;
         }
         setDestination(parsed.data);
+        if (isDevClient) {
+          const simulated = await fetchSimulatedOtp(channel, parsed.data);
+          if (simulated) {
+            setCode(simulated);
+            setDevHint("Código de desarrollo (OTP simulado). Solo aparece con NODE_ENV=development y OTP_PROVIDER=simulated.");
+          } else {
+            setDevHint(
+              "En local el código se lee en POST /v1/auth/dev/otp-code si la API arrancó con OTP_PROVIDER=simulated. En producción el código solo llega si hay proveedor real; no hay bypass.",
+            );
+          }
+        }
         setStep("code");
       } catch (caught) {
         setError(failureMessage(caught, "destination"));
@@ -112,13 +149,16 @@ export function SignInForm() {
         if (result.status === "profile_required") {
           setRegistrationToken(result.registrationToken);
           setCode("");
+          setDevHint(null);
           setStep("name");
           return;
         }
         saveSession(result);
         setSession(result);
         setCode("");
+        setDevHint(null);
         setStep("done");
+        router.push("/");
       } catch (caught) {
         setError(failureMessage(caught, "code"));
       } finally {
@@ -145,6 +185,7 @@ export function SignInForm() {
         saveSession(result);
         setSession(result);
         setStep("done");
+        router.push("/");
       } catch (caught) {
         setError(failureMessage(caught, "name"));
       } finally {
@@ -185,20 +226,26 @@ export function SignInForm() {
       <style>{`
         .entrar-control:focus-visible { outline: 3px solid ${colors.primary}; outline-offset: 2px; }
       `}</style>
-      <h1 style={titleStyle}>Entrar</h1>
+      <p style={{ color: colors.deep, fontSize: fontTokens.sizes.title, fontWeight: 800, letterSpacing: "-0.02em", margin: `0 0 ${spaceTokens[4]}px` }}>
+        CompraUSA
+      </p>
+      <h1 style={titleStyle}>{stepTitle(step, channel)}</h1>
+      <p style={{ color: colors.muted, fontSize: fontTokens.sizes.caption, lineHeight: `${fontTokens.lineHeight.caption}px`, margin: `0 0 ${spaceTokens[4]}px` }}>
+        {stepBlurb(step)}
+      </p>
       {step === "done" && session ? (
         <div>
           <p role="status" style={successStyle}>
             Listo, ya entraste.
           </p>
-          <button className="entrar-control" type="button" style={buttonStyle} onClick={() => void logout()} disabled={loading}>
-            {loading ? "Espera…" : "Cerrar sesión"}
-          </button>
           <p style={bodyStyle}>
-            <Link href="/" style={{ color: colors.primary, display: "inline-flex", alignItems: "center", minHeight: 44 }}>
+            <Link href="/" style={{ ...buttonStyle, alignItems: "center", display: "inline-flex", textDecoration: "none" }}>
               Ir al inicio
             </Link>
           </p>
+          <button className="entrar-control" type="button" style={secondaryButtonStyle} onClick={() => void logout()} disabled={loading}>
+            {loading ? "Espera…" : "Cerrar sesión"}
+          </button>
           {error ? (
             <p id={errorId} role="alert" style={errorStyle}>
               {error}
@@ -256,7 +303,7 @@ export function SignInForm() {
           ) : null}
           {step === "code" ? (
             <label style={labelStyle}>
-              Código
+              Código OTP
               <input
                 className="entrar-control"
                 style={inputStyle}
@@ -269,13 +316,16 @@ export function SignInForm() {
                 required
               />
               <span id={hintId} style={hintStyle}>
-                En desarrollo el código no aparece aquí. Consúltalo en el endpoint de la API.
+                {isDevClient
+                  ? (devHint ??
+                    "En desarrollo el código se consulta en la API (OTP simulado). En producción solo llega con proveedor real.")
+                  : "El código solo llega si el entorno tiene un proveedor OTP real. No hay bypass de producción."}
               </span>
             </label>
           ) : null}
           {step === "name" ? (
             <fieldset style={fieldsetStyle}>
-              <legend style={legendStyle}>¿Cómo te llamas?</legend>
+              <legend style={legendStyle}>Registro · ¿Cómo te llamas?</legend>
               <label style={labelStyle}>
                 Nombre
                 <input
@@ -314,8 +364,45 @@ export function SignInForm() {
           </button>
         </form>
       )}
+      <p style={{ ...bodyStyle, marginTop: spaceTokens[6] }}>
+        <Link href="/" style={{ color: colors.primary, display: "inline-flex", minHeight: 44, alignItems: "center" }}>
+          Volver al inicio
+        </Link>
+      </p>
     </main>
   );
+}
+
+function stepTitle(step: Step, channel: Channel): string {
+  if (step === "code") {
+    return "Verifica tu código";
+  }
+  if (step === "name") {
+    return "Registro";
+  }
+  if (step === "destination" && channel === "phone") {
+    return "Tu teléfono";
+  }
+  if (step === "destination") {
+    return "Tu correo";
+  }
+  if (step === "done") {
+    return "Sesión";
+  }
+  return "Entrar";
+}
+
+function stepBlurb(step: Step): string {
+  if (step === "code") {
+    return "Ingreso con un código de un solo uso. Sin contraseña.";
+  }
+  if (step === "name") {
+    return "Primera vez: completa tu nombre para crear la cuenta.";
+  }
+  if (step === "done") {
+    return "Sesión activa contra la API.";
+  }
+  return "Ingreso con un código de un solo uso. Sin contraseña.";
 }
 
 function submitLabel(step: Step): string {
@@ -333,7 +420,7 @@ function failureMessage(error: unknown, step: Step): string {
     return "No pudimos conectar con el servidor.";
   }
   if (error instanceof ApiClientError && error.status === 503) {
-    return "El ingreso no está disponible en este momento.";
+    return "El ingreso no está disponible en este momento. En producción el OTP requiere un proveedor real (OTP_PROVIDER distinto de simulated).";
   }
   if (error instanceof ApiClientError && error.status === 400) {
     return step === "name" ? "Escribe tu nombre y tu apellido." : "Revisa el correo o el teléfono.";
@@ -345,14 +432,15 @@ function failureMessage(error: unknown, step: Step): string {
 }
 
 const pageStyle = {
-  background: colors.background,
+  background: `linear-gradient(180deg, ${colors.background} 0%, ${colors.surface} 45%, ${colors.background} 100%)`,
   color: colors.text,
   fontFamily: fontTokens.family,
   fontSize: fontTokens.sizes.body,
   lineHeight: `${fontTokens.lineHeight.body}px`,
+  margin: "0 auto",
+  maxWidth: 480,
   minHeight: "100vh",
   padding: spaceTokens[6],
-  margin: 0,
 } as const;
 
 const titleStyle = {
@@ -378,12 +466,13 @@ const labelStyle = { display: "grid", gap: spaceTokens[2], marginBottom: spaceTo
 
 const inputStyle = {
   background: colors.surface,
-  border: `1px solid ${colors.deep}`,
+  border: `1px solid ${colors.border}`,
   borderRadius: radiusTokens.sm,
   color: colors.text,
   font: "inherit",
-  minHeight: 44,
+  minHeight: 48,
   padding: `0 ${spaceTokens[3]}px`,
+  width: "100%",
 } as const;
 
 const hintStyle = { color: colors.text, fontSize: fontTokens.sizes.caption, lineHeight: `${fontTokens.lineHeight.caption}px` } as const;
@@ -395,6 +484,17 @@ const buttonStyle = {
   color: colors.primaryOn,
   font: "inherit",
   minHeight: 44,
+  padding: `0 ${spaceTokens[4]}px`,
+} as const;
+
+const secondaryButtonStyle = {
+  background: colors.surface,
+  border: `1px solid ${colors.border}`,
+  borderRadius: radiusTokens.md,
+  color: colors.text,
+  font: "inherit",
+  minHeight: 44,
+  marginTop: spaceTokens[3],
   padding: `0 ${spaceTokens[4]}px`,
 } as const;
 

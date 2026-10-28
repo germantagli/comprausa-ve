@@ -36,11 +36,13 @@ export function HomeScreen({
   onOpenCart,
   onOpenOrders,
   onOpenProduct,
+  onOpenStores,
 }: {
   session: AuthenticatedSession | null;
   onOpenCart: () => void;
   onOpenOrders: () => void;
   onOpenProduct: (productId: string) => void;
+  onOpenStores: () => void;
 }) {
   const greeting = useGreeting(session);
   const [draft, setDraft] = useState("");
@@ -52,18 +54,50 @@ export function HomeScreen({
       <Text accessibilityRole="header" style={styles.title}>
         {greeting}
       </Text>
-      <Pressable accessibilityRole="button" onPress={onOpenCart} style={styles.linkHit}>
-        <Text style={styles.link}>Carrito</Text>
-      </Pressable>
       <SearchBox draft={draft} onChange={setDraft} onSubmit={() => setQuery(draft.trim())} />
-      <NamedSection title="Categorías" empty="Todavía no hay categorías." failure="No pudimos cargar las categorías." load={() => listCatalogCategories(apiBase)} />
-      <NamedSection title="Tiendas destacadas" empty="Todavía no hay tiendas internas." failure="No pudimos cargar las tiendas." load={() => listInternalStores(apiBase)} />
-      <ProductSection query={query} onOpenProduct={onOpenProduct} />
-      <View accessibilityLabel="De Estados Unidos a Venezuela" style={styles.banner}>
-        <Text style={styles.bannerTitle}>De Estados Unidos a Venezuela</Text>
+      <View accessibilityLabel="Compra en USA, recíbelo en Venezuela" style={styles.banner}>
+        <Text style={styles.bannerTitle}>Compra en tus tiendas favoritas de USA. Recíbelo en Venezuela.</Text>
         <Text style={styles.bannerBody}>
-          El catálogo de demostración no publica precios, existencia ni fechas de envío. La compra y el envío a Venezuela todavía no están en esta pantalla.
+          Cotizamos el pedido y el envío. El catálogo demo no publica precios, existencia ni fechas.
         </Text>
+        <View style={styles.bannerActions}>
+          <Pressable accessibilityRole="button" onPress={onOpenStores} style={styles.bannerPrimary}>
+            <Text style={styles.primaryText}>Ver tiendas</Text>
+          </Pressable>
+          <Pressable accessibilityRole="button" onPress={onOpenCart} style={styles.bannerSecondary}>
+            <Text style={styles.bannerSecondaryText}>Carrito</Text>
+          </Pressable>
+        </View>
+      </View>
+      <NamedSection
+        title="Tiendas destacadas"
+        empty="Todavía no hay tiendas internas."
+        failure="No pudimos cargar las tiendas."
+        load={() => listInternalStores(apiBase)}
+        chips
+      />
+      <NamedSection
+        title="Categorías populares"
+        empty="Todavía no hay categorías."
+        failure="No pudimos cargar las categorías."
+        load={() => listCatalogCategories(apiBase)}
+        circles
+      />
+      <ProductSection query={query} title="Ofertas destacadas" onOpenProduct={onOpenProduct} />
+      <View style={styles.section}>
+        <Text accessibilityRole="header" style={styles.heading}>
+          Cómo funciona
+        </Text>
+        {[
+          "Busca en el catálogo demo o pega un enlace de USA.",
+          "Pedimos cotización: el importe lo escribe el equipo.",
+          "Pagas en USD y seguimos el envío a Venezuela.",
+        ].map((step, index) => (
+          <View key={step} style={styles.stepCard}>
+            <Text style={styles.stepIndex}>{index + 1}</Text>
+            <Text style={styles.body}>{step}</Text>
+          </View>
+        ))}
       </View>
       <Pressable accessibilityRole="button" onPress={onOpenOrders} style={styles.linkHit}>
         <Text style={styles.link}>Ver pedidos activos</Text>
@@ -78,12 +112,19 @@ export function ExploreScreen({ onOpenProduct }: { onOpenProduct: (productId: st
   return (
     <ScrollView contentContainerStyle={styles.page}>
       <Text accessibilityRole="header" style={styles.title}>
-        Explorar
+        Tiendas y catálogo
       </Text>
+      <Text style={styles.caption}>Sin logos de marcas externas. Solo catálogo demo e internas.</Text>
       <SearchBox draft={draft} onChange={setDraft} onSubmit={() => setQuery(draft.trim())} />
       <Text style={styles.body}>El único filtro del catálogo demo es el nombre.</Text>
-      <ProductSection query={query} onOpenProduct={onOpenProduct} />
-      <NamedSection title="Tiendas internas" empty="Todavía no hay tiendas internas." failure="No pudimos cargar las tiendas." load={() => listInternalStores(apiBase)} />
+      <NamedSection
+        title="Tiendas internas"
+        empty="Todavía no hay tiendas internas."
+        failure="No pudimos cargar las tiendas."
+        load={() => listInternalStores(apiBase)}
+        chips
+      />
+      <ProductSection query={query} title="Resultados" onOpenProduct={onOpenProduct} />
     </ScrollView>
   );
 }
@@ -97,6 +138,7 @@ export function ProfileScreen({
   onSignIn,
   onSignedOut,
   onHelp,
+  onOrders,
   onReview,
   onTrack,
 }: {
@@ -104,6 +146,7 @@ export function ProfileScreen({
   onSignIn: () => void;
   onSignedOut: () => void;
   onHelp: () => void;
+  onOrders: () => void;
   onReview: () => void;
   onTrack: () => void;
 }) {
@@ -152,13 +195,25 @@ export function ProfileScreen({
     }
   }
 
+  const menu: readonly { label: string; note?: string; onPress: () => void }[] = [
+    { label: "Mis pedidos", onPress: onOrders },
+    { label: "Revisión de pagos", note: "Cola interna del operador.", onPress: onReview },
+    { label: "Seguimiento de pedidos", note: "Cola y línea de tiempo del operador.", onPress: onTrack },
+    { label: "Direcciones", note: "La dirección se pide al cotizar.", onPress: onHelp },
+    { label: "Métodos de pago", note: "Disponibles en la cotización aceptada.", onPress: onHelp },
+    { label: "Favoritos", note: "Todavía no está disponible.", onPress: onHelp },
+    { label: "Notificaciones", note: "Todavía no está disponible.", onPress: onHelp },
+    { label: "Ayuda", onPress: onHelp },
+    { label: "Configuración", note: "Todavía no está disponible.", onPress: onHelp },
+  ];
+
   return (
     <ScrollView contentContainerStyle={styles.page}>
       <Text accessibilityRole="header" style={styles.title}>
         Perfil
       </Text>
       {!session ? (
-        <View>
+        <View style={styles.card}>
           <Text style={styles.body}>Entra para ver tu nombre.</Text>
           <Pressable accessibilityRole="button" onPress={onSignIn} style={styles.primary}>
             <Text style={styles.primaryText}>Entrar</Text>
@@ -181,10 +236,27 @@ export function ProfileScreen({
         </View>
       ) : null}
       {session && phase.status === "ready" ? (
+        <View style={styles.card}>
+          <Text style={styles.heading}>{displayName(phase.data)}</Text>
+          <Text style={styles.caption}>Cuenta CompraUSA VE</Text>
+        </View>
+      ) : null}
+      {menu.map((item) => (
+        <Pressable key={item.label} accessibilityRole="button" onPress={item.onPress} style={styles.menuRow}>
+          <Text style={styles.heading}>{item.label}</Text>
+          {item.note ? <Text style={styles.caption}>{item.note}</Text> : null}
+        </Pressable>
+      ))}
+      {session && phase.status === "ready" ? (
         <View>
-          <Text style={styles.body}>{displayName(phase.data)}</Text>
-          <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy, busy }} disabled={busy} onPress={() => void logout()} style={styles.primary}>
-            <Text style={styles.primaryText}>{busy ? "Espera…" : "Cerrar sesión"}</Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ disabled: busy, busy }}
+            disabled={busy}
+            onPress={() => void logout()}
+            style={styles.logout}
+          >
+            <Text style={styles.logoutText}>{busy ? "Espera…" : "Cerrar sesión"}</Text>
           </Pressable>
           {logoutError ? (
             <Text accessibilityLiveRegion="assertive" style={styles.error}>
@@ -193,15 +265,6 @@ export function ProfileScreen({
           ) : null}
         </View>
       ) : null}
-      <Pressable accessibilityRole="button" onPress={onReview} style={styles.linkHit}>
-        <Text style={styles.link}>Revisión de pagos</Text>
-      </Pressable>
-      <Pressable accessibilityRole="button" onPress={onTrack} style={styles.linkHit}>
-        <Text style={styles.link}>Seguimiento de pedidos</Text>
-      </Pressable>
-      <Pressable accessibilityRole="button" onPress={onHelp} style={styles.linkHit}>
-        <Text style={styles.link}>Ayuda</Text>
-      </Pressable>
     </ScrollView>
   );
 }
@@ -230,7 +293,7 @@ function SearchBox({ draft, onChange, onSubmit }: { draft: string; onChange: (va
         onChangeText={onChange}
         onSubmitEditing={onSubmit}
         placeholder="Busca en el catálogo de demostración"
-        placeholderTextColor={colors.deep}
+        placeholderTextColor={colors.muted}
         style={styles.input}
         value={draft}
       />
@@ -241,12 +304,20 @@ function SearchBox({ draft, onChange, onSubmit }: { draft: string; onChange: (va
   );
 }
 
-function ProductSection({ query, onOpenProduct }: { query: string; onOpenProduct: (productId: string) => void }) {
+function ProductSection({
+  query,
+  title,
+  onOpenProduct,
+}: {
+  query: string;
+  title: string;
+  onOpenProduct: (productId: string) => void;
+}) {
   const load = useLoad(() => loadProducts(query), [query]);
   return (
     <View style={styles.section}>
       <Text accessibilityRole="header" style={styles.heading}>
-        Catálogo demo
+        {title}
       </Text>
       <Region
         load={load}
@@ -262,10 +333,13 @@ function ProductSection({ query, onOpenProduct }: { query: string; onOpenProduct
             <View>
               {cards.map((card) => (
                 <Pressable key={card.item.id} accessibilityRole="button" onPress={() => onOpenProduct(card.item.id)} style={styles.card}>
+                  <View style={styles.photoSlot}>
+                    <Text style={styles.caption}>Sin foto</Text>
+                  </View>
                   <Text style={styles.badge}>Ficticio</Text>
                   <Text style={styles.heading}>{card.item.name}</Text>
-                  <Text style={styles.body}>{catalogPriceLabel(card.pricing)}</Text>
-                  <Text style={styles.body}>{card.availability.note}</Text>
+                  <Text style={styles.price}>{catalogPriceLabel(card.pricing)}</Text>
+                  <Text style={styles.caption}>{card.availability.note}</Text>
                   <Text style={styles.caption}>{card.item.disclaimer}</Text>
                 </Pressable>
               ))}
@@ -282,11 +356,15 @@ function NamedSection({
   empty,
   failure,
   load,
+  chips = false,
+  circles = false,
 }: {
   title: string;
   empty: string;
   failure: string;
   load: () => Promise<NamedCatalogList>;
+  chips?: boolean;
+  circles?: boolean;
 }) {
   const state = useLoad(load, [title]);
   return (
@@ -302,6 +380,25 @@ function NamedSection({
             <Text accessibilityLiveRegion="polite" style={styles.body}>
               {empty}
             </Text>
+          ) : circles ? (
+            <View style={styles.circleRow}>
+              {data.items.map((item) => (
+                <View key={item.id} style={styles.circleItem}>
+                  <View style={styles.circle}>
+                    <Text style={styles.circleLetter}>{item.name.slice(0, 1).toLocaleUpperCase("es")}</Text>
+                  </View>
+                  <Text style={styles.circleLabel}>{item.name}</Text>
+                </View>
+              ))}
+            </View>
+          ) : chips ? (
+            <View style={styles.chipRow}>
+              {data.items.map((item) => (
+                <View key={item.id} style={styles.chip}>
+                  <Text style={styles.chipText}>{item.name}</Text>
+                </View>
+              ))}
+            </View>
           ) : (
             <View>
               {data.items.map((item) => (
@@ -428,18 +525,22 @@ const styles = StyleSheet.create({
   },
   brand: {
     color: colors.deep,
-    fontSize: fontTokens.sizes.caption,
-    lineHeight: fontTokens.lineHeight.caption,
+    fontSize: fontTokens.sizes.title,
+    fontWeight: "800",
+    lineHeight: fontTokens.lineHeight.title,
   },
   title: {
     color: colors.text,
     fontSize: fontTokens.sizes.title,
+    fontWeight: "700",
     lineHeight: fontTokens.lineHeight.title,
     marginBottom: spaceTokens[3],
+    marginTop: spaceTokens[2],
   },
   heading: {
     color: colors.text,
     fontSize: fontTokens.sizes.body,
+    fontWeight: "700",
     lineHeight: fontTokens.lineHeight.body,
     marginBottom: spaceTokens[2],
   },
@@ -450,9 +551,17 @@ const styles = StyleSheet.create({
     marginBottom: spaceTokens[3],
   },
   caption: {
-    color: colors.text,
+    color: colors.muted,
     fontSize: fontTokens.sizes.caption,
     lineHeight: fontTokens.lineHeight.caption,
+    marginBottom: spaceTokens[2],
+  },
+  price: {
+    color: colors.text,
+    fontSize: fontTokens.sizes.body,
+    fontWeight: "700",
+    lineHeight: fontTokens.lineHeight.body,
+    marginBottom: spaceTokens[2],
   },
   link: {
     color: colors.primary,
@@ -465,7 +574,7 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: colors.surface,
-    borderColor: colors.deep,
+    borderColor: colors.border,
     borderRadius: radiusTokens.sm,
     borderWidth: 1,
     color: colors.text,
@@ -487,23 +596,48 @@ const styles = StyleSheet.create({
   primaryText: {
     color: colors.primaryOn,
     fontSize: fontTokens.sizes.body,
+    fontWeight: "600",
+  },
+  secondary: {
+    alignItems: "center",
+    alignSelf: "flex-start",
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radiusTokens.md,
+    borderWidth: 1,
+    justifyContent: "center",
+    marginBottom: spaceTokens[3],
+    marginRight: spaceTokens[2],
+    minHeight: 44,
+    paddingHorizontal: spaceTokens[4],
   },
   section: {
     marginTop: spaceTokens[4],
   },
   card: {
     backgroundColor: colors.surface,
+    borderColor: colors.border,
     borderRadius: radiusTokens.md,
+    borderWidth: 1,
     marginBottom: spaceTokens[3],
     padding: spaceTokens[4],
   },
+  photoSlot: {
+    alignItems: "center",
+    backgroundColor: colors.background,
+    borderRadius: radiusTokens.sm,
+    justifyContent: "center",
+    marginBottom: spaceTokens[3],
+    minHeight: 120,
+  },
   badge: {
     alignSelf: "flex-start",
-    borderColor: colors.deep,
+    borderColor: colors.border,
     borderRadius: radiusTokens.sm,
     borderWidth: 1,
-    color: colors.text,
+    color: colors.deep,
     fontSize: fontTokens.sizes.caption,
+    fontWeight: "600",
     marginBottom: spaceTokens[2],
     paddingHorizontal: spaceTokens[2],
     paddingVertical: 2,
@@ -511,19 +645,162 @@ const styles = StyleSheet.create({
   banner: {
     backgroundColor: colors.deep,
     borderRadius: radiusTokens.lg,
-    marginTop: spaceTokens[6],
+    marginBottom: spaceTokens[2],
+    marginTop: spaceTokens[2],
     padding: spaceTokens[4],
   },
   bannerTitle: {
     color: colors.primaryOn,
-    fontSize: fontTokens.sizes.body,
-    lineHeight: fontTokens.lineHeight.body,
+    fontSize: fontTokens.sizes.title,
+    fontWeight: "700",
+    lineHeight: fontTokens.lineHeight.title,
     marginBottom: spaceTokens[2],
   },
   bannerBody: {
     color: colors.primaryOn,
     fontSize: fontTokens.sizes.body,
     lineHeight: fontTokens.lineHeight.body,
+    marginBottom: spaceTokens[3],
+  },
+  bannerActions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spaceTokens[2],
+  },
+  bannerPrimary: {
+    alignItems: "center",
+    backgroundColor: colors.primary,
+    borderRadius: radiusTokens.md,
+    justifyContent: "center",
+    minHeight: 44,
+    paddingHorizontal: spaceTokens[4],
+  },
+  bannerSecondary: {
+    alignItems: "center",
+    borderColor: "rgba(255,255,255,0.45)",
+    borderRadius: radiusTokens.md,
+    borderWidth: 1,
+    justifyContent: "center",
+    minHeight: 44,
+    paddingHorizontal: spaceTokens[4],
+  },
+  bannerSecondaryText: {
+    color: colors.primaryOn,
+    fontSize: fontTokens.sizes.body,
+    fontWeight: "600",
+  },
+  stepCard: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radiusTokens.md,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: spaceTokens[3],
+    marginBottom: spaceTokens[3],
+    padding: spaceTokens[4],
+  },
+  stepIndex: {
+    alignItems: "center",
+    backgroundColor: colors.primary,
+    borderRadius: 16,
+    color: colors.primaryOn,
+    fontWeight: "700",
+    height: 32,
+    lineHeight: 32,
+    overflow: "hidden",
+    textAlign: "center",
+    width: 32,
+  },
+  chipRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spaceTokens[2],
+  },
+  chip: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radiusTokens.md,
+    borderWidth: 1,
+    minHeight: 40,
+    justifyContent: "center",
+    paddingHorizontal: spaceTokens[3],
+  },
+  chipText: {
+    color: colors.text,
+    fontSize: fontTokens.sizes.caption,
+    fontWeight: "600",
+  },
+  circleRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spaceTokens[3],
+  },
+  circleItem: {
+    alignItems: "center",
+    width: 72,
+  },
+  circle: {
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: 36,
+    borderWidth: 1,
+    height: 72,
+    justifyContent: "center",
+    marginBottom: spaceTokens[2],
+    width: 72,
+  },
+  circleLetter: {
+    color: colors.primary,
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  circleLabel: {
+    color: colors.text,
+    fontSize: fontTokens.sizes.caption,
+    textAlign: "center",
+  },
+  tabRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: spaceTokens[2],
+  },
+  timelineRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spaceTokens[3],
+    marginBottom: spaceTokens[2],
+  },
+  timelineDot: {
+    backgroundColor: colors.border,
+    borderRadius: 6,
+    height: 12,
+    width: 12,
+  },
+  menuRow: {
+    backgroundColor: colors.surface,
+    borderBottomColor: colors.border,
+    borderBottomWidth: 1,
+    minHeight: 56,
+    paddingHorizontal: spaceTokens[4],
+    paddingVertical: spaceTokens[3],
+  },
+  logout: {
+    alignItems: "center",
+    alignSelf: "flex-start",
+    backgroundColor: colors.surface,
+    borderColor: colors.error,
+    borderRadius: radiusTokens.md,
+    borderWidth: 1,
+    justifyContent: "center",
+    marginTop: spaceTokens[4],
+    minHeight: 44,
+    paddingHorizontal: spaceTokens[4],
+  },
+  logoutText: {
+    color: colors.error,
+    fontSize: fontTokens.sizes.body,
+    fontWeight: "600",
   },
   error: {
     color: colors.error,

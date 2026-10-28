@@ -5,13 +5,36 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { apiBase } from "../lib/api";
 import { clearSession, readSession } from "../lib/session";
-import { bodyStyle, buttonStyle, errorStyle, linkStyle, pageStyle, titleStyle } from "./styles";
+import { PageFrame } from "./page-frame";
+import {
+  bodyStyle,
+  buttonStyle,
+  cardStyle,
+  colors,
+  errorStyle,
+  headingStyle,
+  linkStyle,
+  mutedStyle,
+  spaceTokens,
+  titleStyle,
+} from "./styles";
 
 type Phase =
   | { status: "signed-out" }
   | { status: "loading" }
   | { status: "error" }
   | { status: "ready"; profile: AccountProfile };
+
+const menu = [
+  { href: "/pedidos", label: "Mis pedidos / Seguimiento" },
+  { href: "/direccion", label: "Direcciones", note: "Borrador de maqueta en este navegador." },
+  { href: "/pago", label: "Métodos de pago", note: "Maqueta de checkout; aquí no se cobra." },
+  { href: "/tiendas", label: "Tiendas", note: "Referencias en texto, sin logos oficiales." },
+  { href: "/ayuda", label: "Favoritos", note: "Todavía no está disponible." },
+  { href: "/ayuda", label: "Notificaciones", note: "Todavía no está disponible." },
+  { href: "/ayuda", label: "Ayuda" },
+  { href: "/ayuda", label: "Configuración", note: "Todavía no está disponible." },
+] as const;
 
 export function ProfileScreen() {
   const [phase, setPhase] = useState<Phase>({ status: "loading" });
@@ -55,6 +78,8 @@ export function ProfileScreen() {
       await revokeSession(apiBase, session.accessToken);
       clearSession();
       setPhase({ status: "signed-out" });
+      // En teléfono volvemos al splash (Comenzar → registro/OTP), no al buscador.
+      window.location.assign("/");
     } catch (caught) {
       setLogoutError(caught instanceof ApiClientError ? "No pudimos cerrar la sesión." : "No pudimos cerrar la sesión.");
     } finally {
@@ -63,7 +88,7 @@ export function ProfileScreen() {
   }
 
   return (
-    <main style={pageStyle}>
+    <PageFrame>
       <h1 style={titleStyle}>Perfil</h1>
       {phase.status === "loading" ? (
         <p aria-busy="true" style={bodyStyle}>
@@ -71,12 +96,12 @@ export function ProfileScreen() {
         </p>
       ) : null}
       {phase.status === "signed-out" ? (
-        <p style={bodyStyle}>
-          Entra para ver tu nombre.{" "}
-          <Link href="/entrar" style={linkStyle}>
+        <div style={cardStyle}>
+          <p style={bodyStyle}>Entra para ver tu nombre.</p>
+          <Link href="/entrar" style={{ ...buttonStyle, alignItems: "center", display: "inline-flex", textDecoration: "none" }}>
             Entrar
           </Link>
-        </p>
+        </div>
       ) : null}
       {phase.status === "error" ? (
         <div>
@@ -89,9 +114,42 @@ export function ProfileScreen() {
         </div>
       ) : null}
       {phase.status === "ready" ? (
-        <div>
-          <p style={bodyStyle}>{displayName(phase.profile)}</p>
-          <button type="button" style={buttonStyle} onClick={() => void logout()} disabled={busy}>
+        <div style={{ ...cardStyle, marginBottom: spaceTokens[4] }}>
+          <p style={{ ...headingStyle, margin: 0 }}>{displayName(phase.profile)}</p>
+          <p style={mutedStyle}>Cuenta CompraUSA VE</p>
+        </div>
+      ) : null}
+
+      <nav aria-label="Cuenta" style={{ display: "grid", gap: 0 }}>
+        {menu.map((item) => (
+          <Link
+            key={item.label}
+            href={item.href}
+            style={{
+              background: colors.surface,
+              borderBottom: `1px solid ${colors.border}`,
+              color: colors.text,
+              display: "grid",
+              gap: 4,
+              minHeight: 56,
+              padding: `${spaceTokens[3]}px ${spaceTokens[4]}px`,
+              textDecoration: "none",
+            }}
+          >
+            <span style={{ fontWeight: 600 }}>{item.label}</span>
+            {"note" in item && item.note ? <span style={mutedStyle}>{item.note}</span> : null}
+          </Link>
+        ))}
+      </nav>
+
+      {phase.status === "ready" ? (
+        <div style={{ marginTop: spaceTokens[6] }}>
+          <button
+            type="button"
+            style={{ ...buttonStyle, background: colors.surface, border: `1px solid ${colors.error}`, color: colors.error }}
+            onClick={() => void logout()}
+            disabled={busy}
+          >
             {busy ? "Espera…" : "Cerrar sesión"}
           </button>
           {logoutError ? (
@@ -101,7 +159,7 @@ export function ProfileScreen() {
           ) : null}
         </div>
       ) : null}
-      <p style={bodyStyle}>
+      <p style={{ ...bodyStyle, marginTop: spaceTokens[4] }}>
         <Link href="/operador" style={linkStyle}>
           Revisión de pagos
         </Link>
@@ -116,7 +174,7 @@ export function ProfileScreen() {
           Ayuda
         </Link>
       </p>
-    </main>
+    </PageFrame>
   );
 }
 

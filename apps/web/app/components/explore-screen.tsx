@@ -1,11 +1,14 @@
 "use client";
 
 import { listCatalogFilters } from "@comprausa/api-client";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { apiBase } from "../lib/api";
-import { ProductList, SearchForm, StoreList } from "./catalog-views";
-import { bodyStyle, buttonStyle, errorStyle, pageStyle, titleStyle } from "./styles";
+import { partnerStoreNames, popularCategoryLabels } from "../lib/demo-chrome";
+import { FilterSidebar, ProductList, SearchForm } from "./catalog-views";
+import { PageFrame } from "./page-frame";
+import { bodyStyle, buttonStyle, chipStyle, errorStyle, headingStyle, mutedStyle, titleStyle } from "./styles";
 
 export function ExploreScreen() {
   const params = useSearchParams();
@@ -24,9 +27,9 @@ export function ExploreScreen() {
     let cancelled = false;
     setFilters("loading");
     listCatalogFilters(apiBase)
-      .then((result) => {
+      .then(() => {
         if (!cancelled) {
-          setFilters(result.fields.some((field) => field.id === "text") ? "ready" : "ready");
+          setFilters("ready");
         }
       })
       .catch(() => {
@@ -40,9 +43,38 @@ export function ExploreScreen() {
   }, [attempt]);
 
   return (
-    <main style={pageStyle}>
-      <h1 style={titleStyle}>Explorar</h1>
+    <PageFrame wide>
+      <div style={{ alignItems: "baseline", display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "space-between" }}>
+        <h1 style={titleStyle}>Búsqueda</h1>
+        <Link href={`/filtros${query ? `?text=${encodeURIComponent(query)}` : ""}`} style={{ ...buttonStyle, textDecoration: "none" }}>
+          Filtros
+        </Link>
+      </div>
+      <p style={mutedStyle}>Busca en el catálogo demo. Las tiendas de referencia van en texto, sin logos oficiales.</p>
       <SearchForm value={draft} onChange={setDraft} onSubmit={() => setQuery(draft.trim())} />
+
+      <section id="categorias" style={{ marginTop: 24 }}>
+        <h2 style={headingStyle}>Categorías</h2>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {popularCategoryLabels.map((name) => (
+            <Link key={name} href={`/explorar?text=${encodeURIComponent(name)}`} style={chipStyle}>
+              {name}
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section style={{ marginTop: 24 }}>
+        <h2 style={headingStyle}>Tiendas (texto)</h2>
+        <div className="cve-store-strip" style={{ marginTop: 8 }}>
+          {partnerStoreNames.map((name) => (
+            <span key={name} style={chipStyle}>
+              {name}
+            </span>
+          ))}
+        </div>
+      </section>
+
       {filters === "loading" ? (
         <p aria-busy="true" style={bodyStyle}>
           Cargando…
@@ -59,12 +91,19 @@ export function ExploreScreen() {
         </div>
       ) : null}
       {filters === "ready" ? (
-        <p role="status" style={bodyStyle}>
-          El único filtro del catálogo demo es el nombre.
-        </p>
+        <div className="cve-listing-layout" style={{ marginTop: 24 }}>
+          <div className="cve-desktop-only">
+            <FilterSidebar query={query} />
+          </div>
+          <div>
+            <p className="cve-mobile-only" role="status" style={bodyStyle}>
+              El único filtro del catálogo demo es el nombre.
+            </p>
+            {query.trim().length > 0 ? <p style={bodyStyle}>Resultados para «{query}»</p> : null}
+            <ProductList query={query} title="Resultados" label="Resultados del catálogo" />
+          </div>
+        </div>
       ) : null}
-      <ProductList query={query} />
-      <StoreList title="Tiendas internas" label="Tiendas internas" />
-    </main>
+    </PageFrame>
   );
 }

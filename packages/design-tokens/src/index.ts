@@ -12,10 +12,13 @@ export const colorTokens = {
     background: "#F3F7FC",
     surface: "#FFFFFF",
     text: "#14243B",
+    muted: "#5B6B82",
+    border: "#D7E0EC",
     success: "#16865D",
     successOn: "#FFFFFF",
     error: "#D92D20",
     errorOn: "#FFFFFF",
+    warning: "#C45C16",
   },
   dark: {
     primary: "#1054B8",
@@ -25,10 +28,13 @@ export const colorTokens = {
     background: "#0B1220",
     surface: "#14243B",
     text: "#F3F7FC",
+    muted: "#A8B4C7",
+    border: "#2A3A55",
     success: "#16865D",
     successOn: "#FFFFFF",
     error: "#D92D20",
     errorOn: "#FFFFFF",
+    warning: "#E08A45",
   },
 } as const;
 

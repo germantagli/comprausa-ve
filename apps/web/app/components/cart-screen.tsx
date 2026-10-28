@@ -16,7 +16,23 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { apiBase } from "../lib/api";
 import { readSession } from "../lib/session";
-import { bodyStyle, buttonStyle, cardStyle, errorStyle, headingStyle, inputStyle, linkStyle, pageStyle, secondaryButtonStyle, titleStyle } from "./styles";
+import { PageFrame } from "./page-frame";
+import {
+  badgeStyle,
+  bodyStyle,
+  buttonStyle,
+  cardStyle,
+  errorStyle,
+  headingStyle,
+  inputStyle,
+  linkStyle,
+  mutedStyle,
+  secondaryButtonStyle,
+  spaceTokens,
+  colors,
+  summaryBoxStyle,
+  titleStyle,
+} from "./styles";
 
 const emptyAddress = { state: "", city: "", municipality: "", reference: "" };
 
@@ -97,25 +113,35 @@ export function CartScreen() {
 
   if (phase === "loading") {
     return (
-      <main style={pageStyle} aria-busy="true">
+      <PageFrame>
         <h1 style={titleStyle}>Carrito</h1>
         <p style={bodyStyle}>Cargando…</p>
-      </main>
+      </PageFrame>
     );
   }
   if (phase === "signed-out") {
     return (
-      <main style={pageStyle}>
+      <PageFrame>
         <h1 style={titleStyle}>Carrito</h1>
-        <p style={bodyStyle}>
-          Entra para ver tu carrito. <Link href="/entrar" style={linkStyle}>Entrar</Link>
-        </p>
-      </main>
+        <div style={cardStyle}>
+          <p style={bodyStyle}>Tu carrito está vacío hasta que entres y agregues un artículo desde una ficha.</p>
+          <p style={mutedStyle}>Abre un producto demo (por ejemplo Caja de demostración Norte) y usa «Agregar al carrito».</p>
+          <p style={bodyStyle}>
+            <Link href="/entrar" style={linkStyle}>
+              Entrar
+            </Link>
+            {" · "}
+            <Link href="/#ofertas" style={linkStyle}>
+              Ver productos demo
+            </Link>
+          </p>
+        </div>
+      </PageFrame>
     );
   }
   if (phase === "error" || !cart) {
     return (
-      <main style={pageStyle}>
+      <PageFrame>
         <h1 style={titleStyle}>Carrito</h1>
         <p role="alert" style={errorStyle}>
           No pudimos cargar el carrito.
@@ -123,70 +149,120 @@ export function CartScreen() {
         <button type="button" style={buttonStyle} onClick={() => setAttempt((current) => current + 1)}>
           Reintentar
         </button>
-      </main>
+      </PageFrame>
     );
   }
 
   const activeCount = cart.groups.reduce((count, group) => count + group.items.length, 0);
   return (
-    <main style={pageStyle}>
+    <PageFrame wide>
       <h1 style={titleStyle}>Carrito</h1>
-      {activeCount === 0 && cart.saved.length === 0 ? (
-        <p role="status" style={bodyStyle}>
-          Tu carrito está vacío.
-        </p>
-      ) : null}
-      {cart.groups.map((group) => (
-        <section key={group.storeName} aria-label={group.storeName}>
-          <h2 style={headingStyle}>{group.storeName}</h2>
-          {group.items.map((item) => (
-            <LineEditor
-              key={item.productId}
-              item={item}
-              busy={busy}
-              onQuantity={(quantity) => void mutate((token) => setCartQuantity(apiBase, token, item.productId, quantity))}
-              onRemove={() => void mutate((token) => removeCartItem(apiBase, token, item.productId))}
-              onSave={() => void mutate((token) => saveCartItem(apiBase, token, item.productId, true))}
-              saveLabel="Guardar para después"
-            />
+      <div className="cve-cart-layout">
+        <div>
+          {activeCount === 0 && cart.saved.length === 0 ? (
+            <div role="status" style={{ ...cardStyle, marginBottom: spaceTokens[4] }}>
+              <p style={bodyStyle}>Tu carrito está vacío.</p>
+              <p style={mutedStyle}>
+                Todavía no agregaste artículos. Abre una ficha del catálogo demo y pulsa «Agregar al carrito». Los productos demo no tienen precio publicado.
+              </p>
+              <Link href="/#ofertas" style={linkStyle}>
+                Ver productos demo
+              </Link>
+            </div>
+          ) : null}
+          {cart.groups.map((group) => (
+            <section key={group.storeName} aria-label={group.storeName} style={{ marginBottom: spaceTokens[4] }}>
+              <h2 style={headingStyle}>{group.storeName}</h2>
+              {group.items.map((item) => (
+                <LineEditor
+                  key={item.productId}
+                  item={item}
+                  busy={busy}
+                  onQuantity={(quantity) => void mutate((token) => setCartQuantity(apiBase, token, item.productId, quantity))}
+                  onRemove={() => void mutate((token) => removeCartItem(apiBase, token, item.productId))}
+                  onSave={() => void mutate((token) => saveCartItem(apiBase, token, item.productId, true))}
+                  saveLabel="Guardar para después"
+                />
+              ))}
+            </section>
           ))}
-        </section>
-      ))}
-      {cart.saved.length > 0 ? (
-        <section aria-label="Guardados para después">
-          <h2 style={headingStyle}>Guardados para después</h2>
-          {cart.saved.map((item) => (
-            <LineEditor
-              key={item.productId}
-              item={item}
-              busy={busy}
-              onQuantity={(quantity) => void mutate((token) => setCartQuantity(apiBase, token, item.productId, quantity))}
-              onRemove={() => void mutate((token) => removeCartItem(apiBase, token, item.productId))}
-              onSave={() => void mutate((token) => saveCartItem(apiBase, token, item.productId, false))}
-              saveLabel="Volver al carrito"
-            />
-          ))}
-        </section>
-      ) : null}
-      <p style={headingStyle}>{subtotalLabel(cart.subtotal)}</p>
-      <form onSubmit={(event) => void requestQuote(event)}>
-        <h2 style={headingStyle}>Dirección en Venezuela</h2>
-        <AddressFields address={address} onChange={setAddress} />
-        <label style={{ display: "grid", gap: 8, marginTop: 16 }}>
-          Pegar un enlace
-          <input style={inputStyle} value={pastedUrl} onChange={(event) => setPastedUrl(event.target.value)} inputMode="url" placeholder="https://" />
-        </label>
-        <p style={bodyStyle}>La URL se guarda como texto. No la descargamos.</p>
-        <button type="submit" style={buttonStyle} disabled={busy}>
-          {busy ? "Espera…" : "Pedir cotización"}
-        </button>
-      </form>
-      {error ? (
-        <p role="alert" style={errorStyle}>
-          {error}
-        </p>
-      ) : null}
-    </main>
+          {cart.saved.length > 0 ? (
+            <section aria-label="Guardados para después">
+              <h2 style={headingStyle}>Guardados para después</h2>
+              {cart.saved.map((item) => (
+                <LineEditor
+                  key={item.productId}
+                  item={item}
+                  busy={busy}
+                  onQuantity={(quantity) => void mutate((token) => setCartQuantity(apiBase, token, item.productId, quantity))}
+                  onRemove={() => void mutate((token) => removeCartItem(apiBase, token, item.productId))}
+                  onSave={() => void mutate((token) => saveCartItem(apiBase, token, item.productId, false))}
+                  saveLabel="Volver al carrito"
+                />
+              ))}
+            </section>
+          ) : null}
+
+          <form onSubmit={(event) => void requestQuote(event)} style={{ ...cardStyle, marginTop: spaceTokens[4] }}>
+            <h2 style={headingStyle}>Dirección en Venezuela</h2>
+            <AddressFields address={address} onChange={setAddress} />
+            <label style={{ display: "grid", gap: 8, marginTop: 16 }}>
+              Pegar un enlace
+              <input style={inputStyle} value={pastedUrl} onChange={(event) => setPastedUrl(event.target.value)} inputMode="url" placeholder="https://" />
+            </label>
+            <p style={mutedStyle}>La URL se guarda como texto. No la descargamos.</p>
+            {error ? (
+              <p role="alert" style={errorStyle}>
+                {error}
+              </p>
+            ) : null}
+            <button type="submit" style={buttonStyle} disabled={busy}>
+              {busy ? "Espera…" : "Pedir cotización"}
+            </button>
+            <p style={mutedStyle}>El pago llega después de que el equipo publique el importe de la cotización.</p>
+            <p style={mutedStyle}>
+              Flujo de maqueta móvil:{" "}
+              <Link href="/direccion" style={linkStyle}>
+                dirección
+              </Link>
+              {" → "}
+              <Link href="/pago" style={linkStyle}>
+                pago
+              </Link>
+              {" → "}
+              <Link href="/resumen" style={linkStyle}>
+                resumen
+              </Link>
+              . Sin cobro real.
+            </p>
+          </form>
+        </div>
+
+        <aside style={summaryBoxStyle} aria-label="Resumen del pedido">
+          <h2 style={{ ...headingStyle, margin: 0 }}>Resumen del pedido</h2>
+          <SummaryLine label="Subtotal" value={subtotalLabel(cart.subtotal)} />
+          <SummaryLine label="Envío en USA" value="Por cotización" />
+          <SummaryLine label="Comisión del servicio" value="Por cotización" />
+          <SummaryLine label="Envío a Venezuela" value="Por cotización" />
+          <hr style={{ border: 0, borderTop: `1px solid ${colors.border}`, margin: 0 }} />
+          <p style={{ ...headingStyle, margin: 0 }}>Total estimado</p>
+          <p style={{ ...bodyStyle, fontWeight: 700, margin: 0 }}>{subtotalLabel(cart.subtotal)}</p>
+          <p style={mutedStyle}>Sin montos inventados. El total final sale de la cotización revisada.</p>
+          <Link href="/direccion" style={{ ...buttonStyle, alignItems: "center", display: "inline-flex", justifyContent: "center", textDecoration: "none" }}>
+            Continuar · Dirección →
+          </Link>
+        </aside>
+      </div>
+    </PageFrame>
+  );
+}
+
+function SummaryLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ display: "flex", gap: 12, justifyContent: "space-between" }}>
+      <span style={mutedStyle}>{label}</span>
+      <span style={{ ...bodyStyle, margin: 0, textAlign: "right" }}>{value}</span>
+    </div>
   );
 }
 
@@ -207,21 +283,49 @@ function LineEditor({
 }) {
   const [quantity, setQuantity] = useState(String(item.quantity));
   return (
-    <article style={cardStyle}>
-      <p style={bodyStyle}>Ficticio</p>
-      <h3 style={headingStyle}>
+    <article style={{ ...cardStyle, marginBottom: spaceTokens[3] }}>
+      <p style={{ margin: 0 }}>
+        <span style={badgeStyle}>Ficticio</span>
+      </p>
+      <h3 style={{ ...headingStyle, margin: 0 }}>
         <Link href={`/producto/${item.productId}`}>{item.name}</Link>
       </h3>
       <p style={bodyStyle}>{item.unitAmountMinor === null ? "Precio por cotización" : formatUsdFromMinor(item.unitAmountMinor)}</p>
-      <label>
-        Cantidad
-        <input
-          style={{ ...inputStyle, maxWidth: 96 }}
-          value={quantity}
-          inputMode="numeric"
-          onChange={(event) => setQuantity(event.target.value)}
-        />
-      </label>
+      <div style={{ alignItems: "center", display: "flex", flexWrap: "wrap", gap: 12 }}>
+        <button
+          type="button"
+          style={{ ...secondaryButtonStyle, minWidth: 44, padding: 0 }}
+          disabled={busy}
+          onClick={() => {
+            const next = Math.max(1, Number(quantity) - 1);
+            setQuantity(String(next));
+            onQuantity(next);
+          }}
+        >
+          −
+        </button>
+        <label style={{ display: "grid", gap: 4 }}>
+          Cantidad
+          <input
+            style={{ ...inputStyle, maxWidth: 72, textAlign: "center" }}
+            value={quantity}
+            inputMode="numeric"
+            onChange={(event) => setQuantity(event.target.value)}
+          />
+        </label>
+        <button
+          type="button"
+          style={{ ...secondaryButtonStyle, minWidth: 44, padding: 0 }}
+          disabled={busy}
+          onClick={() => {
+            const next = Math.max(1, Number(quantity) + 1);
+            setQuantity(String(next));
+            onQuantity(next);
+          }}
+        >
+          +
+        </button>
+      </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 12 }}>
         <button type="button" style={secondaryButtonStyle} disabled={busy} onClick={() => onQuantity(Number(quantity))}>
           Actualizar

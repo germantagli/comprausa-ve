@@ -1,17 +1,24 @@
-# Plan de staging. Railway no debe autodetectar este archivo: el nombre no es railway.toml.
-# No hay proyecto Railway vinculado desde este repositorio y nadie desplegó esta rama.
+# Histórico. La configuración activa está en .railway/railway.ts.
+# Este archivo NO se llama railway.toml a propósito: Railway no debe autodetectarlo.
+#
+# Staging previsto:
+#   service  comprausa-api  → infrastructure/docker/api.Dockerfile, health /health
+#   plugin   postgresql
+#   worker   reservado (BullMQ); no existe todavía
+#   redis    opcional; la API no lo abre en este corte
 
 [api]
 service = "comprausa-api"
 dockerfile = "infrastructure/docker/api.Dockerfile"
 healthcheck_path = "/health"
+iac = ".railway/railway.ts"
+
+[postgres]
+plugin = "postgresql"
 
 [worker]
 service = "comprausa-worker"
 note = "No existe todavía. Reservado para BullMQ cuando haya jobs reales."
-
-[postgres]
-plugin = "postgresql"
 
 [redis]
 plugin = "redis"

@@ -16,7 +16,7 @@ type Tab = "inicio" | "explorar" | "carrito" | "pedidos" | "perfil";
 
 const tabs: readonly { id: Tab; label: string }[] = [
   { id: "inicio", label: "Inicio" },
-  { id: "explorar", label: "Explorar" },
+  { id: "explorar", label: "Tiendas" },
   { id: "carrito", label: "Carrito" },
   { id: "pedidos", label: "Pedidos" },
   { id: "perfil", label: "Perfil" },
@@ -95,6 +95,7 @@ export function ClientShell() {
             onOpenCart={() => setTab("carrito")}
             onOpenOrders={() => setTab("pedidos")}
             onOpenProduct={setProductId}
+            onOpenStores={() => setTab("explorar")}
           />
         ) : null}
         {!help && !productId && !quoteId && !review && !tracking && tab === "explorar" ? <ExploreScreen onOpenProduct={setProductId} /> : null}
@@ -108,6 +109,7 @@ export function ClientShell() {
             onSignIn={() => setSigningIn(true)}
             onSignedOut={() => setSession(null)}
             onHelp={() => setHelp(true)}
+            onOrders={() => setTab("pedidos")}
             onReview={() => setReview(true)}
             onTrack={() => setTracking(true)}
           />
@@ -150,23 +152,27 @@ const styles = StyleSheet.create({
   },
   tabs: {
     backgroundColor: colors.surface,
+    borderTopColor: colors.border,
+    borderTopWidth: 1,
     flexDirection: "row",
   },
   tab: {
     alignItems: "center",
     flex: 1,
     justifyContent: "center",
-    minHeight: 44,
+    minHeight: 56,
     paddingVertical: spaceTokens[2],
   },
   tabLabel: {
-    color: colors.text,
+    color: colors.muted,
     fontSize: fontTokens.sizes.caption,
+    fontWeight: "500",
     lineHeight: fontTokens.lineHeight.caption,
   },
   tabSelected: {
     color: colors.primary,
     fontSize: fontTokens.sizes.caption,
+    fontWeight: "700",
     lineHeight: fontTokens.lineHeight.caption,
   },
 });

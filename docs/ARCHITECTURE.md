@@ -21,7 +21,7 @@ Cotización por enlace ya persistida, pagos, compra en tienda, logística, panel
 | Datos | Prisma 6.19.3 y Postgres | Prisma 8 seguía en release candidate el 26 de octubre de 2026. Prisma 7 cambia el generador y pide adaptadores. La 6.19.3 es la última 6 estable y el schema clásico genera cliente sin adaptador. |
 | TypeScript | 5.9.3 | `@nestjs/swagger` 12 declara TypeScript 5.5 o 6, no la 7. |
 | Cola | Redis y BullMQ, solo previstos | El esqueleto no tiene worker. Compose deja Redis en un perfil opcional. |
-| Staging | Railway | API, worker futuro, Postgres y Redis. No hay proyecto vinculado ni despliegue hecho. |
+| Staging | Railway | API y Postgres definidos en `.railway/railway.ts`. El vínculo y el apply del proyecto no están hechos hasta autenticar el CLI. Redis/worker quedan fuera de este corte. |
 | Dinero | Centavos enteros (`BigInt` en Postgres, entero seguro en JSON) | Ni `float` ni `double`. Las tasas de cambio, si algún día existen, van en `Decimal(20, 10)` y no son un precio de venta. |
 | Catálogo | Puerto `ProductProvider` | La única implementación es `InternalDemoCatalogProvider`. No hay conectores externos. |
 | Identidad | Puerto `OtpProvider`, `jose` para el access token | `SimulatedOtpProvider` solo con `NODE_ENV=development` y `OTP_PROVIDER=simulated`. La sesión, la rotación y la revocación ya se emiten. |
@@ -41,7 +41,8 @@ packages/config      parseAppEnv y tsconfig base.
 packages/design-tokens  Paleta, tipo, espacio, radio, elevación.
 packages/utils       Formato de centavos con aritmética entera.
 packages/testing     Respuesta JSON para pruebas.
-infrastructure/railway   Plan, no un railway.toml activo.
+.railway                 IaC de staging (railway.ts). Sin apply hasta autenticar.
+infrastructure/railway   Notas históricas del plan; no es config activa.
 infrastructure/docker    Dockerfile de la API y compose local.
 infrastructure/scripts   Validación de Prisma.
 docs/

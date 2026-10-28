@@ -6,8 +6,20 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { apiBase } from "../lib/api";
 import { readSession } from "../lib/session";
+import { PageFrame } from "./page-frame";
 import { PaymentPanel } from "./payment-panel";
-import { bodyStyle, buttonStyle, cardStyle, errorStyle, headingStyle, linkStyle, pageStyle, titleStyle } from "./styles";
+import {
+  bodyStyle,
+  buttonStyle,
+  cardStyle,
+  errorStyle,
+  headingStyle,
+  linkStyle,
+  mutedStyle,
+  spaceTokens,
+  summaryBoxStyle,
+  titleStyle,
+} from "./styles";
 
 export function QuoteScreen({ quoteId }: { quoteId: string }) {
   const [phase, setPhase] = useState<"loading" | "signed-out" | "error" | "ready">("loading");
@@ -41,25 +53,28 @@ export function QuoteScreen({ quoteId }: { quoteId: string }) {
 
   if (phase === "loading") {
     return (
-      <main style={pageStyle} aria-busy="true">
+      <PageFrame>
         <h1 style={titleStyle}>Cotización</h1>
         <p style={bodyStyle}>Cargando…</p>
-      </main>
+      </PageFrame>
     );
   }
   if (phase === "signed-out") {
     return (
-      <main style={pageStyle}>
+      <PageFrame>
         <h1 style={titleStyle}>Cotización</h1>
         <p style={bodyStyle}>
-          Entra para ver la cotización. <Link href="/entrar" style={linkStyle}>Entrar</Link>
+          Entra para ver la cotización.{" "}
+          <Link href="/entrar" style={linkStyle}>
+            Entrar
+          </Link>
         </p>
-      </main>
+      </PageFrame>
     );
   }
   if (phase === "error" || !quote) {
     return (
-      <main style={pageStyle}>
+      <PageFrame>
         <h1 style={titleStyle}>Cotización</h1>
         <p role="alert" style={errorStyle}>
           No pudimos cargar la cotización.
@@ -67,40 +82,52 @@ export function QuoteScreen({ quoteId }: { quoteId: string }) {
         <button type="button" style={buttonStyle} onClick={() => setAttempt((current) => current + 1)}>
           Reintentar
         </button>
-      </main>
+      </PageFrame>
     );
   }
 
   return (
-    <main style={pageStyle}>
+    <PageFrame wide>
       <h1 style={titleStyle}>Cotización</h1>
-      <p role="status" style={headingStyle}>
-        {quote.status === "PENDING_VALIDATION" ? "Pendiente de validación" : quote.status === "FINAL" ? "Importe publicado" : "Aceptada"}
-      </p>
-      <p style={bodyStyle}>Identificador: {quote.id}</p>
-      <p style={bodyStyle}>Esta cotización no se puede marcar como pagada ni como final desde aquí.</p>
-      <p style={bodyStyle}>
-        {quote.address.state}, {quote.address.city}, {quote.address.municipality}. {quote.address.reference}
-      </p>
-      <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-        {quote.lines.map((line, index) => (
-          <li key={`${line.productId ?? "enlace"}-${index}`} style={cardStyle}>
-            <h2 style={headingStyle}>{line.description}</h2>
-            {line.sourceUrl ? <p style={bodyStyle}>{line.sourceUrl}</p> : null}
-            <p style={bodyStyle}>Cantidad: {line.quantity}</p>
-            <p style={bodyStyle}>{line.unitAmountMinor === null ? "Precio por cotización" : formatUsdFromMinor(line.unitAmountMinor)}</p>
-            <p style={bodyStyle}>{line.storeName ?? "Sin tienda."}</p>
-          </li>
-        ))}
-      </ul>
-      <p style={headingStyle}>{subtotalLabel(quote.subtotal)}</p>
-      {quote.snapshot ? <p style={bodyStyle}>Instantánea final: {formatUsdFromMinor(quote.snapshot.knownMinor)}</p> : null}
-      <PaymentPanel quote={quote} token={readSession()?.accessToken ?? ""} onChanged={() => setAttempt((current) => current + 1)} />
-      <p style={bodyStyle}>
-        <Link href="/carrito" style={linkStyle}>
-          Volver al carrito
-        </Link>
-      </p>
-    </main>
+      <div className="cve-cart-layout">
+        <div>
+          <p role="status" style={headingStyle}>
+            {quote.status === "PENDING_VALIDATION"
+              ? "Pendiente de validación"
+              : quote.status === "FINAL"
+                ? "Importe publicado"
+                : "Aceptada"}
+          </p>
+          <p style={bodyStyle}>Identificador: {quote.id}</p>
+          <p style={bodyStyle}>Esta cotización no se puede marcar como pagada ni como final desde aquí.</p>
+          <p style={mutedStyle}>
+            {quote.address.state}, {quote.address.city}, {quote.address.municipality}. {quote.address.reference}
+          </p>
+          <ul style={{ display: "grid", gap: spaceTokens[3], listStyle: "none", margin: 0, padding: 0 }}>
+            {quote.lines.map((line, index) => (
+              <li key={`${line.productId ?? "enlace"}-${index}`} style={cardStyle}>
+                <h2 style={{ ...headingStyle, margin: 0 }}>{line.description}</h2>
+                {line.sourceUrl ? <p style={mutedStyle}>{line.sourceUrl}</p> : null}
+                <p style={bodyStyle}>Cantidad: {line.quantity}</p>
+                <p style={bodyStyle}>{line.unitAmountMinor === null ? "Precio por cotización" : formatUsdFromMinor(line.unitAmountMinor)}</p>
+                <p style={mutedStyle}>{line.storeName ?? "Sin tienda."}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <aside style={summaryBoxStyle}>
+          <h2 style={{ ...headingStyle, margin: 0 }}>Resumen</h2>
+          <p style={headingStyle}>{subtotalLabel(quote.subtotal)}</p>
+          {quote.snapshot ? <p style={bodyStyle}>Instantánea final: {formatUsdFromMinor(quote.snapshot.knownMinor)}</p> : null}
+          <p style={mutedStyle}>Envío USA, comisión y envío a Venezuela se confirman al publicar el importe.</p>
+          <PaymentPanel quote={quote} token={readSession()?.accessToken ?? ""} onChanged={() => setAttempt((current) => current + 1)} />
+          <p style={{ ...bodyStyle, marginTop: spaceTokens[3] }}>
+            <Link href="/carrito" style={linkStyle}>
+              Volver al carrito
+            </Link>
+          </p>
+        </aside>
+      </div>
+    </PageFrame>
   );
 }

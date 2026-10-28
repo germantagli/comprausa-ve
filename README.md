@@ -25,7 +25,7 @@ Este repositorio tiene la arquitectura de la fase 1, el ingreso por OTP, la app 
 
 - Compra en Amazon, Walmart, eBay y el resto de tiendas de la lista. No hay conector autorizado en este repositorio.
 - Stripe, PayPal, Zelle y Pago Móvil. No hay cobros, ni de prueba.
-- Despliegue. Railway está descrito y no está ejecutado.
+- Despliegue. Railway está definido en `.railway/railway.ts` y todavía no está vinculado ni aplicado.
 
 El detalle está en `docs/API_INTEGRATIONS.md` y `docs/LEGAL_DEPENDENCIES.md`.
 
@@ -64,7 +64,9 @@ curl -s -X POST http://127.0.0.1:3001/v1/auth/dev/otp-code \
   -d '{"channel":"email","destination":"ana@example.com"}'
 ```
 
-El sitio, en `http://127.0.0.1:3000`, abre la introducción y después el inicio. El ingreso está en `/entrar`, pide el código y no lo muestra. El móvil apunta a `http://127.0.0.1:3001`.
+El sitio, en `http://127.0.0.1:3000`, en viewport estrecho abre el splash CompraUSA con botón **Comenzar** (nunca el buscador primero). Comenzar lleva a registro/OTP (`/entrar`); tras entrar ves bienvenida (si aplica) e inicio con el buscador. El flujo de maqueta sigue con tiendas, búsqueda, filtros, ficha, carrito, dirección, pago, resumen, seguimiento y perfil. En escritorio el chrome ancho sigue disponible sin pasar por el splash de teléfono.
+
+En desarrollo, `/entrar` puede rellenar el OTP llamando a `POST /v1/auth/dev/otp-code` solo si `NODE_ENV=development` y la API arrancó con `OTP_PROVIDER=simulated`. En la web pública (Railway / producción) ese endpoint no existe: el login sigue llamando a la API, pero el código solo llega si hay un proveedor OTP real. No hay bypass de producción (`OTP_PROVIDER=simulated` se rechaza fuera de development).
 
 ```bash
 pnpm --filter @comprausa/web exec next dev --port 3000

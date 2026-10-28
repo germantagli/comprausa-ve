@@ -106,14 +106,18 @@ export function MobileProductScreen({
       ) : null}
       {phase === "ready" && detail ? (
         <View>
+          <View style={styles.photoSlot}>
+            <Text style={styles.caption}>
+              {detail.product.photos.length === 0 ? "No hay fotos." : detail.product.photos.join(", ")}
+            </Text>
+          </View>
           <Text style={styles.badge}>Ficticio</Text>
-          <Text style={styles.body}>{detail.product.photos.length === 0 ? "No hay fotos." : detail.product.photos.join(", ")}</Text>
           <Text accessibilityRole="header" style={styles.title}>
             {detail.product.name}
           </Text>
-          <Text style={styles.body}>Marca: {detail.product.brand ?? "Sin marca en esta ficha."}</Text>
-          <Text style={styles.body}>Tienda: {detail.product.store?.name ?? "Sin tienda."}</Text>
-          <Text style={styles.body}>{catalogPriceLabel(detail.pricing)}</Text>
+          <Text style={styles.caption}>Marca: {detail.product.brand ?? "Sin marca en esta ficha."}</Text>
+          <Text style={styles.caption}>Tienda: {detail.product.store?.name ?? "Sin tienda."}</Text>
+          <Text style={styles.heading}>{catalogPriceLabel(detail.pricing)}</Text>
           <Text style={styles.body}>
             {detail.product.variants.length === 0 ? "No hay variantes." : detail.product.variants.map((item) => item.name).join(", ")}
           </Text>
@@ -284,7 +288,16 @@ export function MobileCartScreen({
           onSave={() => void mutate((token) => saveCartItem(apiBase, token, item.productId, false))}
         />
       ))}
-      <Text style={styles.heading}>{subtotalLabel(cart.subtotal)}</Text>
+      <View style={styles.summary}>
+        <Text style={styles.heading}>Resumen del pedido</Text>
+        <Text style={styles.body}>Subtotal: {subtotalLabel(cart.subtotal)}</Text>
+        <Text style={styles.caption}>Envío en USA: por cotización</Text>
+        <Text style={styles.caption}>Comisión del servicio: por cotización</Text>
+        <Text style={styles.caption}>Envío a Venezuela: por cotización</Text>
+        <Text style={styles.heading}>Total estimado</Text>
+        <Text style={styles.body}>{subtotalLabel(cart.subtotal)}</Text>
+        <Text style={styles.caption}>Sin montos inventados. El total final sale de la cotización revisada.</Text>
+      </View>
       <Text style={styles.heading}>Dirección en Venezuela</Text>
       <Field label="Estado" value={address.state} onChange={(state) => setAddress({ ...address, state })} />
       <Field label="Ciudad" value={address.city} onChange={(city) => setAddress({ ...address, city })} />
@@ -296,6 +309,7 @@ export function MobileCartScreen({
       <Pressable accessibilityRole="button" disabled={busy} onPress={() => void requestQuote()} style={styles.primary}>
         <Text style={styles.primaryText}>{busy ? "Espera…" : "Pedir cotización"}</Text>
       </Pressable>
+      <Text style={styles.caption}>El pago llega después de que el equipo publique el importe.</Text>
       {error ? <Text style={styles.error}>{error}</Text> : null}
     </ScrollView>
   );
@@ -406,8 +420,33 @@ function CartLine({
         <Text style={styles.heading}>{item.name}</Text>
       </Pressable>
       <Text style={styles.body}>{item.unitAmountMinor === null ? "Precio por cotización" : formatUsdFromMinor(item.unitAmountMinor)}</Text>
-      <Text style={styles.body}>Cantidad</Text>
-      <TextInput accessibilityLabel="Cantidad" keyboardType="number-pad" onChangeText={setQuantity} style={styles.input} value={quantity} />
+      <View style={styles.qtyRow}>
+        <Pressable
+          accessibilityRole="button"
+          disabled={busy}
+          onPress={() => {
+            const next = Math.max(1, Number(quantity) - 1);
+            setQuantity(String(next));
+            onQuantity(next);
+          }}
+          style={styles.qtyButton}
+        >
+          <Text style={styles.body}>−</Text>
+        </Pressable>
+        <TextInput accessibilityLabel="Cantidad" keyboardType="number-pad" onChangeText={setQuantity} style={styles.qtyInput} value={quantity} />
+        <Pressable
+          accessibilityRole="button"
+          disabled={busy}
+          onPress={() => {
+            const next = Math.max(1, Number(quantity) + 1);
+            setQuantity(String(next));
+            onQuantity(next);
+          }}
+          style={styles.qtyButton}
+        >
+          <Text style={styles.body}>+</Text>
+        </Pressable>
+      </View>
       <Pressable accessibilityRole="button" disabled={busy} onPress={() => onQuantity(Number(quantity))} style={styles.secondary}>
         <Text style={styles.body}>Actualizar</Text>
       </Pressable>
@@ -432,15 +471,27 @@ function Field({ label, value, onChange }: { label: string; value: string; onCha
 
 const styles = StyleSheet.create({
   page: { backgroundColor: colors.background, padding: spaceTokens[4], paddingBottom: spaceTokens[8] },
-  title: { color: colors.text, fontSize: fontTokens.sizes.title, lineHeight: fontTokens.lineHeight.title, marginBottom: spaceTokens[3] },
-  heading: { color: colors.text, fontSize: fontTokens.sizes.body, lineHeight: fontTokens.lineHeight.body, marginBottom: spaceTokens[2] },
+  title: {
+    color: colors.text,
+    fontSize: fontTokens.sizes.title,
+    fontWeight: "700",
+    lineHeight: fontTokens.lineHeight.title,
+    marginBottom: spaceTokens[3],
+  },
+  heading: {
+    color: colors.text,
+    fontSize: fontTokens.sizes.body,
+    fontWeight: "700",
+    lineHeight: fontTokens.lineHeight.body,
+    marginBottom: spaceTokens[2],
+  },
   body: { color: colors.text, fontSize: fontTokens.sizes.body, lineHeight: fontTokens.lineHeight.body, marginBottom: spaceTokens[3] },
-  caption: { color: colors.text, fontSize: fontTokens.sizes.caption, lineHeight: fontTokens.lineHeight.caption, marginBottom: spaceTokens[3] },
+  caption: { color: colors.muted, fontSize: fontTokens.sizes.caption, lineHeight: fontTokens.lineHeight.caption, marginBottom: spaceTokens[3] },
   link: { color: colors.primary, fontSize: fontTokens.sizes.body },
   linkHit: { justifyContent: "center", minHeight: 44 },
   input: {
     backgroundColor: colors.surface,
-    borderColor: colors.deep,
+    borderColor: colors.border,
     borderRadius: radiusTokens.sm,
     borderWidth: 1,
     color: colors.text,
@@ -458,11 +509,11 @@ const styles = StyleSheet.create({
     minHeight: 44,
     paddingHorizontal: spaceTokens[4],
   },
-  primaryText: { color: colors.primaryOn, fontSize: fontTokens.sizes.body },
+  primaryText: { color: colors.primaryOn, fontSize: fontTokens.sizes.body, fontWeight: "600" },
   secondary: {
     alignItems: "center",
     alignSelf: "flex-start",
-    borderColor: colors.deep,
+    borderColor: colors.border,
     borderRadius: radiusTokens.md,
     borderWidth: 1,
     justifyContent: "center",
@@ -470,14 +521,60 @@ const styles = StyleSheet.create({
     minHeight: 44,
     paddingHorizontal: spaceTokens[4],
   },
-  card: { backgroundColor: colors.surface, borderRadius: radiusTokens.md, marginBottom: spaceTokens[3], padding: spaceTokens[4] },
-  badge: {
-    alignSelf: "flex-start",
-    borderColor: colors.deep,
+  card: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radiusTokens.md,
+    borderWidth: 1,
+    marginBottom: spaceTokens[3],
+    padding: spaceTokens[4],
+  },
+  summary: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radiusTokens.lg,
+    borderWidth: 1,
+    marginBottom: spaceTokens[4],
+    marginTop: spaceTokens[2],
+    padding: spaceTokens[4],
+  },
+  photoSlot: {
+    alignItems: "center",
+    backgroundColor: colors.background,
+    borderRadius: radiusTokens.md,
+    justifyContent: "center",
+    marginBottom: spaceTokens[3],
+    minHeight: 180,
+  },
+  qtyRow: { alignItems: "center", flexDirection: "row", gap: spaceTokens[2], marginBottom: spaceTokens[3] },
+  qtyButton: {
+    alignItems: "center",
+    borderColor: colors.border,
+    borderRadius: radiusTokens.sm,
+    borderWidth: 1,
+    height: 44,
+    justifyContent: "center",
+    width: 44,
+  },
+  qtyInput: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
     borderRadius: radiusTokens.sm,
     borderWidth: 1,
     color: colors.text,
+    minHeight: 44,
+    paddingHorizontal: spaceTokens[3],
+    textAlign: "center",
+    width: 72,
+  },
+  badge: {
+    alignSelf: "flex-start",
+    borderColor: colors.border,
+    borderRadius: radiusTokens.sm,
+    borderWidth: 1,
+    color: colors.deep,
     fontSize: fontTokens.sizes.caption,
+    fontWeight: "600",
     marginBottom: spaceTokens[2],
     paddingHorizontal: spaceTokens[2],
   },
