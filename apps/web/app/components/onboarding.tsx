@@ -121,8 +121,9 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
             style={{
               display: "block",
               height: "auto",
-              maxHeight: "min(44dvh, 380px)",
-              objectFit: "contain",
+              maxHeight: "48dvh",
+              minHeight: 220,
+              objectFit: "cover",
               objectPosition: "center center",
               width: "100%",
             }}
