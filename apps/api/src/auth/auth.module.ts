@@ -1,4 +1,4 @@
-import { Module, type DynamicModule, type Type } from "@nestjs/common";
+import { Global, Module, type DynamicModule, type Type } from "@nestjs/common";
 import type { AppEnv } from "@comprausa/config";
 import { parseAppEnv } from "@comprausa/config";
 import { AccountController } from "./account.controller";
@@ -36,6 +36,7 @@ import { TwilioVerifyOtpProvider } from "./twilio-verify-otp.provider";
 
 const MODULE_ENV = Symbol("AUTH_MODULE_ENV");
 
+@Global()
 @Module({})
 export class AuthModule {
   static register(): DynamicModule {

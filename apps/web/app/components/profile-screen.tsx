@@ -2,8 +2,9 @@
 
 import { ApiClientError, getAccountProfile, revokeSession, type AccountProfile } from "@comprausa/api-client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { apiBase } from "../lib/api";
+import { isStaffProfile } from "../lib/product-request-ui";
 import { clearSession, readSession } from "../lib/session";
 import { PageFrame } from "./page-frame";
 import {
@@ -25,16 +26,7 @@ type Phase =
   | { status: "error" }
   | { status: "ready"; profile: AccountProfile };
 
-const menu = [
-  { href: "/pedidos", label: "Mis pedidos / Seguimiento" },
-  { href: "/direccion", label: "Direcciones", note: "Borrador de maqueta en este navegador." },
-  { href: "/pago", label: "Métodos de pago", note: "Maqueta de checkout; aquí no se cobra." },
-  { href: "/tiendas", label: "Tiendas", note: "Referencias en texto, sin logos oficiales." },
-  { href: "/ayuda", label: "Favoritos", note: "Todavía no está disponible." },
-  { href: "/ayuda", label: "Notificaciones", note: "Todavía no está disponible." },
-  { href: "/ayuda", label: "Ayuda" },
-  { href: "/ayuda", label: "Configuración", note: "Todavía no está disponible." },
-] as const;
+type MenuItem = { href: string; label: string; note?: string };
 
 export function ProfileScreen() {
   const [phase, setPhase] = useState<Phase>({ status: "loading" });
@@ -87,6 +79,23 @@ export function ProfileScreen() {
     }
   }
 
+  const menu = useMemo(() => {
+    const items: MenuItem[] = [
+      { href: "/pedidos", label: "Mis pedidos" },
+      { href: "/mis-cotizaciones", label: "Mis cotizaciones" },
+      { href: "/ayuda", label: "Mis favoritos", note: "Todavía no está disponible." },
+      { href: "/direccion", label: "Mi cuenta", note: "Direcciones y datos de entrega." },
+      { href: "/notificaciones", label: "Notificaciones" },
+      { href: "/ayuda", label: "Ayuda" },
+    ];
+    if (phase.status === "ready" && isStaffProfile(phase.profile)) {
+      items.push({ href: "/admin", label: "Administración", note: "Solicitudes y cotizaciones." });
+      items.push({ href: "/operador", label: "Revisión de pagos", note: "Requiere MFA." });
+      items.push({ href: "/operador/pedidos", label: "Seguimiento de pedidos", note: "Requiere MFA." });
+    }
+    return items;
+  }, [phase]);
+
   return (
     <PageFrame>
       <h1 style={titleStyle}>Perfil</h1>
@@ -116,14 +125,14 @@ export function ProfileScreen() {
       {phase.status === "ready" ? (
         <div style={{ ...cardStyle, marginBottom: spaceTokens[4] }}>
           <p style={{ ...headingStyle, margin: 0 }}>{displayName(phase.profile)}</p>
-          <p style={mutedStyle}>Cuenta TraeLo</p>
+          <p style={mutedStyle}>Cuenta TraeLo{isStaffProfile(phase.profile) ? ` · ${phase.profile.role}` : ""}</p>
         </div>
       ) : null}
 
       <nav aria-label="Cuenta" style={{ display: "grid", gap: 0 }}>
         {menu.map((item) => (
           <Link
-            key={item.label}
+            key={`${item.href}-${item.label}`}
             href={item.href}
             style={{
               background: colors.surface,
@@ -137,7 +146,7 @@ export function ProfileScreen() {
             }}
           >
             <span style={{ fontWeight: 600 }}>{item.label}</span>
-            {"note" in item && item.note ? <span style={mutedStyle}>{item.note}</span> : null}
+            {item.note ? <span style={mutedStyle}>{item.note}</span> : null}
           </Link>
         ))}
       </nav>
@@ -160,16 +169,6 @@ export function ProfileScreen() {
         </div>
       ) : null}
       <p style={{ ...bodyStyle, marginTop: spaceTokens[4] }}>
-        <Link href="/operador" style={linkStyle}>
-          Revisión de pagos
-        </Link>
-      </p>
-      <p style={bodyStyle}>
-        <Link href="/operador/pedidos" style={linkStyle}>
-          Seguimiento de pedidos
-        </Link>
-      </p>
-      <p style={bodyStyle}>
         <Link href="/ayuda" style={linkStyle}>
           Ayuda
         </Link>

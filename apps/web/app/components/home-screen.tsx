@@ -1,6 +1,6 @@
 "use client";
 
-import { probeServerReachable } from "@comprausa/api-client";
+import { listInboxNotifications, probeServerReachable } from "@comprausa/api-client";
 import { APP_BRAND_NAME } from "@comprausa/types";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,13 +9,13 @@ import { useCallback, useEffect, useState, type CSSProperties, type ReactNode } 
 import { apiBase } from "../lib/api";
 import { useDemoCommerce } from "../lib/demo-commerce";
 import {
-  homeDemoBadges,
   homeDemoCategories,
   homeDemoHero,
   homeDemoOffers,
   homeDemoRequest,
 } from "../lib/home.mock";
 import { demoProducts } from "../lib/products.mock";
+import { readSession } from "../lib/session";
 import { IconBell, IconHeart, IconSearch } from "./icons";
 import { PageFrame } from "./page-frame";
 import { ProductCard } from "./product-card";
@@ -34,9 +34,21 @@ export function HomeScreen() {
   const { toast, clearToast } = useDemoCommerce();
   const [draft, setDraft] = useState("");
   const [reachable, setReachable] = useState<boolean | null>(null);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   const refresh = useCallback(async () => {
     setReachable(await probeServerReachable(apiBase));
+    const session = readSession();
+    if (!session?.accessToken) {
+      setUnreadNotifications(0);
+      return;
+    }
+    try {
+      const inbox = await listInboxNotifications(apiBase, session.accessToken);
+      setUnreadNotifications(inbox.unreadCount);
+    } catch {
+      /* keep last known count */
+    }
   }, []);
 
   useEffect(() => {
@@ -60,9 +72,9 @@ export function HomeScreen() {
             <Link href="/perfil" aria-label="Favoritos" style={iconHit}>
               <IconHeart />
             </Link>
-            <Link href="/pedidos" aria-label="Notificaciones" style={{ ...iconHit, position: "relative" }}>
+            <Link href="/notificaciones" aria-label="Notificaciones" style={{ ...iconHit, position: "relative" }}>
               <IconBell />
-              {homeDemoBadges.notifications > 0 ? <span style={badge}>{homeDemoBadges.notifications}</span> : null}
+              {unreadNotifications > 0 ? <span style={badge}>{unreadNotifications > 9 ? "9+" : unreadNotifications}</span> : null}
             </Link>
           </div>
         </header>

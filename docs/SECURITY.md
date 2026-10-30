@@ -32,11 +32,36 @@ Roles sembrados en la migración `20261026190000_auth_session`: `SUPER_ADMIN`, `
 
 `GET /v1/admin/access` y las rutas `/v1/operator/*` exigen access token vigente y `mfaSatisfied`. El ingreso por OTP deja ese flag en falso, también si el rol no es `CUSTOMER`. Sin token o con sesión revocada responde `unauthorized`. La revisión de pagos responde `forbidden` a un cliente, a un rol que no revisa pagos y a un rol interno sin MFA. El seguimiento manual responde `forbidden` a un cliente, a `SUPPORT_AGENT` y a cualquier operador sin MFA.
 
+Las rutas de solicitudes/cotizaciones (`/v1/product-requests/*` y `/v1/admin/product-requests/*`) usan `AccessGuard` + `StaffGuard` para personal. Un rol distinto de `CUSTOMER` puede administrar solicitudes **sin MFA** (flujo operativo diario). Un cliente solo ve y modifica las suyas; el id de otra persona responde `not_found`. No hay endpoint público para autoasignarse un rol de staff.
+
 El segundo factor de quien opera pagos o seguimiento es TOTP con la librería `otpauth`, después del OTP. El secreto se guarda cifrado con AES-256-GCM de Node, derivado de `AUTH_TOKEN_SECRET`. No se escribe en logs. Confirmar el código actualiza `mfaSatisfied` en la sesión y emite otro access token. El token anterior deja de coincidir con la sesión. No hay una ruta de desarrollo que ponga MFA en verdadero. En las pruebas, ese claim se escribe en la sesión desde el propio test.
 
 En desarrollo, el correo `finanzas@comprausa.test` recibe el rol `FINANCE_AGENT` al entrar. Eso no satisface MFA. En `test` y en producción ese mapa no existe.
 
-La cotización y el pago de este corte viven en memoria si no hay `DATABASE_URL`. Leer un pago filtra por el usuario autenticado. El id de otra persona responde `not_found`. Publicar el importe, verificar y rechazar quedan en las rutas de operador.
+### Asignación segura de rol ADMIN / staff
+
+No existen credenciales administrativas predeterminadas en producción. Tampoco hay UI ni API pública que permita a un usuario elevarse a staff.
+
+Procedimiento restringido (solo operadores con acceso a la base de datos o a un job interno futuro):
+
+1. Crear o identificar la cuenta del operador (OTP/OAuth normal; nace como `CUSTOMER`).
+2. En Postgres, vincular el rol deseado en `UserRole` (y opcionalmente actualizar `Session.roleCode` de sesiones activas, o forzar re-login):
+
+```sql
+-- Ejemplo: promover a OPERATIONS_ADMIN (reemplazar el email)
+INSERT INTO "UserRole" ("userId", "roleId")
+SELECT u.id, r.id
+FROM "User" u
+JOIN "Role" r ON r.code = 'OPERATIONS_ADMIN'
+WHERE u.email = 'operador@example.com'
+ON CONFLICT DO NOTHING;
+```
+
+3. El operador cierra sesión y vuelve a entrar para recibir el claim `role` actualizado en el access token.
+4. Para revisión de pagos / seguimiento, completar TOTP (`mfaSatisfied`) además del rol.
+5. Documentar quién autorizó la promoción fuera del repositorio (ticket interno). No commitear emails reales ni secretos.
+
+La cotización de carrito/catálogo y el pago de ese flujo viven en memoria si no hay `DATABASE_URL`. Las solicitudes de producto (`ProductRequest` / `ProductQuote`) usan Prisma cuando hay `DATABASE_URL` y un repositorio en memoria en pruebas. Leer un pago filtra por el usuario autenticado. El id de otra persona responde `not_found`. Publicar el importe, verificar y rechazar quedan en las rutas de operador.
 
 ## Pagos y archivos
 

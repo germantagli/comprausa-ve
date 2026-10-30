@@ -2,6 +2,13 @@
 
 ## En este corte
 
+### Solicitudes y cotizaciones (persistidas)
+
+- Flujo real `ProductRequest` / `ProductQuote` / historial / inbox en Prisma (`TRS-######`, montos en centavos USD).
+- API cliente + staff (`StaffGuard`, sin MFA para cotizar; pagos siguen con MFA).
+- Misma app TraeLo: `/solicitar`, `/mis-cotizaciones`, `/notificaciones`, `/admin/*` (no hay segundo sitio admin).
+- Aceptar cotización → pedido pendiente de pago (no se marca pagado). Migración `20261030220000_product_requests` lista; **no aplicar en producción sin aprobación**.
+
 ### Pantalla 1 — Splash / Inicio (web móvil + Expo)
 
 - Splash TraeLo con logo oficial (fondo negro), acento naranja de marca, mensaje «Compra en USA, recíbelo en Venezuela», botones **Comenzar** e **Iniciar sesión**.
@@ -18,10 +25,10 @@
 
 ## Siguiente incremento
 
-1. Cargar Resend + Google/Apple client IDs en Railway.
-2. Pantalla interna para publicar precio de cotización.
-3. Persistencia commerce en Postgres.
-4. Pagos solo con medio elegible.
+1. Aprobar y aplicar migración de solicitudes en Postgres/Railway.
+2. Integración real de pagos para pedidos nacidos de cotización aceptada.
+3. Cargar Resend + Google/Apple client IDs en Railway.
+4. Persistencia commerce (carrito) en Postgres.
 
 ## Railway (verificado por HTTP en esta sesión)
 

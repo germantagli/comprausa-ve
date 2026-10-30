@@ -61,12 +61,17 @@ describe("prisma schema contract", () => {
       "TrackingEvent",
       "Delivery",
       "Notification",
+      "InboxNotification",
       "SupportTicket",
       "AuditLog",
       "TotpCredential",
       "PricingRule",
       "CurrencyRate",
       "FeatureFlag",
+      "ProductRequest",
+      "ProductQuote",
+      "ProductRequestStatusHistory",
+      "ProductRequestCounter",
     ];
     for (const model of models) {
       expect(schema).toContain(`model ${model} `);
