@@ -15,17 +15,19 @@ import {
 } from "react-native";
 
 const colors = colorTokens.light;
+const SKY = "#DCEBFF";
+const H_PAD = 16;
 
 const topInset = Platform.select({
-  ios: 52,
-  android: (StatusBar.currentHeight ?? 0) + spaceTokens[3],
-  default: spaceTokens[4],
+  ios: 48,
+  android: (StatusBar.currentHeight ?? 0) + 8,
+  default: 12,
 })!;
 
 const bottomInset = Platform.select({
-  ios: 28,
-  android: spaceTokens[6],
-  default: spaceTokens[6],
+  ios: 24,
+  android: spaceTokens[4],
+  default: spaceTokens[4],
 })!;
 
 const heroes: Record<(typeof onboardingSteps)[number]["id"], ImageSourcePropType> = {
@@ -53,13 +55,57 @@ const icons: Record<OnboardingBulletIcon, ImageSourcePropType> = {
 
 const cartMark = require("../assets/brand/splash/cart.png");
 
-/** Post-registration bienvenida — Expo Android + iOS, parity with web mock. */
+/** Soft multi-stop fade without expo-linear-gradient. */
+function SoftFade({
+  from,
+  height,
+  edge,
+}: {
+  from: "top" | "bottom";
+  height: number;
+  edge: "sky" | "white";
+}) {
+  const base = edge === "sky" ? SKY : "#FFFFFF";
+  const stops = [0.85, 0.62, 0.4, 0.22, 0.1, 0];
+  const ordered = from === "top" ? stops : [...stops].reverse();
+  const strip = height / ordered.length;
+  return (
+    <View pointerEvents="none" style={[styles.fadeHost, from === "top" ? { top: 0, height } : { bottom: 0, height }]}>
+      {ordered.map((opacity, index) => (
+        <View
+          key={`${from}-${index}`}
+          style={{ backgroundColor: base, height: strip, opacity }}
+        />
+      ))}
+    </View>
+  );
+}
+
+function HeroWithSfumatura({
+  source,
+  width,
+  height,
+}: {
+  source: ImageSourcePropType;
+  width: number;
+  height: number;
+}) {
+  return (
+    <View style={[styles.heroWrap, { width, height }]}>
+      <Image source={source} accessibilityLabel="" style={{ width, height }} resizeMode="contain" />
+      <SoftFade from="top" height={56} edge="sky" />
+      <SoftFade from="bottom" height={72} edge="white" />
+    </View>
+  );
+}
+
+/** Post-registration bienvenida — Expo Android + iOS with soft hero blends. */
 export function OnboardingScreen({ onDone }: { onDone: () => void }) {
   const [step, setStep] = useState(0);
   const current = onboardingSteps[step] ?? onboardingSteps[0];
   const last = step >= onboardingSteps.length - 1;
   const { height: windowHeight, width: windowWidth } = useWindowDimensions();
-  const heroHeight = Math.max(240, Math.min(Math.round(windowHeight * 0.42), 380));
+  const heroHeight = Math.max(200, Math.min(Math.round(windowHeight * 0.34), 300));
 
   return (
     <View style={styles.page} accessibilityLabel={`Bienvenida ${APP_BRAND_NAME}`}>
@@ -89,13 +135,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
         </Text>
         <Text style={styles.subtitle}>{current.subtitle}</Text>
 
-        <Image
-          key={current.id}
-          source={heroes[current.id]}
-          accessibilityLabel=""
-          style={[styles.hero, { width: windowWidth, height: heroHeight }]}
-          resizeMode="cover"
-        />
+        <HeroWithSfumatura key={current.id} source={heroes[current.id]} width={windowWidth} height={heroHeight} />
 
         <View style={styles.bullets}>
           {current.bullets.map((bullet) => (
@@ -110,10 +150,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
       <View style={[styles.footer, { paddingBottom: bottomInset }]}>
         <View style={styles.dots} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           {onboardingSteps.map((item, index) => (
-            <View
-              key={item.id}
-              style={[styles.dot, index === step ? styles.dotActive : null, index === step ? styles.dotPill : null]}
-            />
+            <View key={item.id} style={[styles.dot, index === step ? styles.dotActive : null]} />
           ))}
         </View>
         <Pressable
@@ -143,39 +180,38 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   skyWash: {
-    backgroundColor: "#D6E8FF",
-    height: "36%",
+    backgroundColor: SKY,
+    height: "42%",
     left: 0,
-    opacity: 0.85,
     position: "absolute",
     right: 0,
     top: 0,
   },
   scroll: {
-    paddingBottom: spaceTokens[4],
+    paddingBottom: 12,
   },
   header: {
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "center",
-    marginBottom: spaceTokens[3],
-    minHeight: 44,
-    paddingHorizontal: spaceTokens[4],
+    marginBottom: 8,
+    minHeight: 40,
+    paddingHorizontal: H_PAD,
     position: "relative",
   },
   brandRow: {
     alignItems: "center",
     flexDirection: "row",
-    gap: spaceTokens[2],
+    gap: 8,
   },
   cart: {
-    height: 38,
-    width: 48,
+    height: 34,
+    width: 44,
   },
   wordmark: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "800",
-    letterSpacing: -0.8,
+    letterSpacing: -0.6,
   },
   trae: {
     color: colors.primary,
@@ -188,64 +224,71 @@ const styles = StyleSheet.create({
     fontSize: fontTokens.sizes.caption,
     fontWeight: "600",
     position: "absolute",
-    right: spaceTokens[4],
-    top: 12,
+    right: H_PAD,
+    top: 10,
   },
   title: {
     color: colors.deep,
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "800",
-    letterSpacing: -0.6,
-    lineHeight: 34,
-    marginBottom: spaceTokens[2],
-    paddingHorizontal: spaceTokens[4],
+    letterSpacing: -0.5,
+    lineHeight: 32,
+    marginBottom: 6,
+    paddingHorizontal: H_PAD,
     textAlign: "center",
   },
   subtitle: {
     color: colors.primary,
-    fontSize: fontTokens.sizes.body,
-    lineHeight: fontTokens.lineHeight.body,
-    marginBottom: spaceTokens[3],
-    paddingHorizontal: spaceTokens[4],
+    fontSize: 16,
+    lineHeight: 22,
+    marginBottom: 8,
+    paddingHorizontal: H_PAD,
     textAlign: "center",
   },
-  hero: {
+  heroWrap: {
     alignSelf: "center",
-    marginBottom: spaceTokens[4],
+    marginBottom: 4,
+    overflow: "hidden",
+  },
+  fadeHost: {
+    left: 0,
+    position: "absolute",
+    right: 0,
   },
   bullets: {
-    gap: spaceTokens[3],
-    paddingHorizontal: spaceTokens[4],
+    gap: 12,
+    paddingHorizontal: H_PAD,
+    paddingTop: 4,
   },
   bulletRow: {
     alignItems: "flex-start",
     flexDirection: "row",
-    gap: spaceTokens[3],
+    gap: 12,
   },
   bulletIcon: {
-    height: 28,
-    marginTop: 2,
-    width: 28,
+    height: 24,
+    marginTop: 1,
+    width: 24,
   },
   bulletText: {
     color: colors.deep,
     flex: 1,
-    fontSize: fontTokens.sizes.body,
+    fontSize: 15,
     fontWeight: "600",
-    lineHeight: fontTokens.lineHeight.body,
+    lineHeight: 20,
   },
   footer: {
     backgroundColor: "#FFFFFF",
-    gap: spaceTokens[3],
-    paddingHorizontal: spaceTokens[4],
-    paddingTop: spaceTokens[2],
+    gap: 12,
+    paddingHorizontal: H_PAD,
+    paddingTop: 8,
   },
   dots: {
     alignItems: "center",
     flexDirection: "row",
-    gap: 8,
+    gap: 9,
     justifyContent: "center",
-    paddingVertical: spaceTokens[1],
+    paddingVertical: 4,
   },
   dot: {
     backgroundColor: "#D7E0EC",
@@ -256,15 +299,12 @@ const styles = StyleSheet.create({
   dotActive: {
     backgroundColor: colors.primary,
   },
-  dotPill: {
-    width: 22,
-  },
   primary: {
     alignItems: "center",
     backgroundColor: colors.primary,
     borderRadius: radiusTokens.lg,
     justifyContent: "center",
-    minHeight: 52,
+    minHeight: 50,
   },
   primaryText: {
     color: colors.primaryOn,

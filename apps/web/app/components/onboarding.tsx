@@ -6,7 +6,10 @@ import Image from "next/image";
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { buttonStyle, colors } from "./styles";
 
-const padX = spaceTokens[4];
+const padX = 16;
+/** Soft sky that matches hero tops (#e4f2f9 / #dceBff). */
+const SKY = "#DCEBFF";
+const SKY_MID = "#EAF3FF";
 
 export function Onboarding({ onDone }: { onDone: () => void }) {
   const [step, setStep] = useState(0);
@@ -17,7 +20,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
     <main
       aria-label={`Bienvenida ${APP_BRAND_NAME}`}
       style={{
-        background: "linear-gradient(180deg, #D6E8FF 0%, #EAF3FF 18%, #FFFFFF 42%, #FFFFFF 100%)",
+        background: `linear-gradient(180deg, ${SKY} 0%, ${SKY_MID} 22%, #FFFFFF 48%, #FFFFFF 100%)`,
         color: colors.text,
         fontFamily: fontTokens.family,
         minHeight: "100dvh",
@@ -29,10 +32,10 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
           display: "grid",
           gridTemplateRows: "auto auto auto 1fr auto",
           margin: "0 auto",
-          maxWidth: 480,
+          maxWidth: 430,
           minHeight: "100dvh",
-          paddingBottom: `max(${spaceTokens[6]}px, env(safe-area-inset-bottom, 0px))`,
-          paddingTop: `max(${spaceTokens[3]}px, env(safe-area-inset-top, 0px))`,
+          paddingBottom: `max(20px, env(safe-area-inset-bottom, 0px))`,
+          paddingTop: `max(10px, env(safe-area-inset-top, 0px))`,
           width: "100%",
         }}
       >
@@ -41,17 +44,17 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
             alignItems: "center",
             display: "grid",
             gridTemplateColumns: "1fr auto 1fr",
-            minHeight: 44,
+            minHeight: 40,
             paddingLeft: `max(${padX}px, env(safe-area-inset-left, 0px))`,
             paddingRight: `max(${padX}px, env(safe-area-inset-right, 0px))`,
           }}
         >
           <span />
-          <div style={{ alignItems: "center", display: "flex", gap: spaceTokens[2], justifyContent: "center" }}>
-            <Image src="/brand/splash/cart.webp" alt="" width={48} height={38} priority style={{ height: 38, width: "auto" }} />
+          <div style={{ alignItems: "center", display: "flex", gap: 8, justifyContent: "center" }}>
+            <Image src="/brand/splash/cart.webp" alt="" width={44} height={34} priority style={{ height: 34, width: "auto" }} />
             <p style={{ lineHeight: 1, margin: 0 }}>
-              <span style={{ color: colors.primary, fontSize: 28, fontWeight: 800, letterSpacing: "-0.03em" }}>Trae</span>
-              <span style={{ color: colors.accent, fontSize: 28, fontWeight: 800, letterSpacing: "-0.03em" }}>Lo</span>
+              <span style={{ color: colors.primary, fontSize: 26, fontWeight: 800, letterSpacing: "-0.03em" }}>Trae</span>
+              <span style={{ color: colors.accent, fontSize: 26, fontWeight: 800, letterSpacing: "-0.03em" }}>Lo</span>
             </p>
           </div>
           <p
@@ -78,11 +81,11 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
           <h1
             style={{
               color: colors.deep,
-              fontSize: "clamp(24px, 6.2vw, 30px)",
+              fontSize: "clamp(24px, 6vw, 28px)",
               fontWeight: 800,
               letterSpacing: "-0.03em",
-              lineHeight: 1.18,
-              margin: `${spaceTokens[3]}px 0 ${spaceTokens[2]}px`,
+              lineHeight: 1.2,
+              margin: "10px 0 6px",
             }}
           >
             {current.title}
@@ -90,64 +93,35 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
           <p
             style={{
               color: colors.primary,
-              fontSize: fontTokens.sizes.body,
-              lineHeight: `${fontTokens.lineHeight.body}px`,
-              margin: `0 0 ${spaceTokens[3]}px`,
+              fontSize: 16,
+              lineHeight: 1.35,
+              margin: "0 0 8px",
             }}
           >
             {current.subtitle}
           </p>
         </div>
 
-        {/* Full-bleed hero: edge-to-edge within the phone column */}
-        <div
-          aria-hidden="true"
-          className="cve-fade-up-delay"
-          style={{
-            margin: 0,
-            overflow: "hidden",
-            width: "100%",
-          }}
-        >
-          <Image
-            key={current.id}
-            src={`/brand/onboarding/step-${current.id}.webp`}
-            alt=""
-            width={1400}
-            height={1180}
-            priority
-            quality={95}
-            sizes="(max-width: 480px) 100vw, 480px"
-            style={{
-              display: "block",
-              height: "auto",
-              maxHeight: "48dvh",
-              minHeight: 220,
-              objectFit: "cover",
-              objectPosition: "center center",
-              width: "100%",
-            }}
-          />
-        </div>
+        <HeroIllustration stepId={current.id} />
 
         <ul
           style={{
             display: "grid",
-            gap: spaceTokens[3],
+            gap: 12,
             listStyle: "none",
             margin: 0,
-            padding: `${spaceTokens[4]}px max(${padX}px, env(safe-area-inset-left, 0px)) ${spaceTokens[2]}px max(${padX}px, env(safe-area-inset-right, 0px))`,
+            padding: `8px max(${padX}px, env(safe-area-inset-left, 0px)) 4px max(${padX}px, env(safe-area-inset-right, 0px))`,
           }}
         >
           {current.bullets.map((bullet) => (
-            <li key={bullet.text} style={{ alignItems: "flex-start", display: "flex", gap: spaceTokens[3] }}>
+            <li key={bullet.text} style={{ alignItems: "flex-start", display: "flex", gap: 12 }}>
               <BulletIcon name={bullet.icon} />
               <span
                 style={{
                   color: colors.deep,
-                  fontSize: fontTokens.sizes.body,
+                  fontSize: 15,
                   fontWeight: 600,
-                  lineHeight: `${fontTokens.lineHeight.body}px`,
+                  lineHeight: 1.35,
                 }}
               >
                 {bullet.text}
@@ -159,16 +133,16 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
         <div
           style={{
             display: "grid",
-            gap: spaceTokens[3],
+            gap: 12,
             marginTop: "auto",
             paddingLeft: `max(${padX}px, env(safe-area-inset-left, 0px))`,
             paddingRight: `max(${padX}px, env(safe-area-inset-right, 0px))`,
-            paddingTop: spaceTokens[2],
+            paddingTop: 8,
           }}
         >
           <div
             aria-hidden="true"
-            style={{ alignItems: "center", display: "flex", gap: 8, justifyContent: "center", padding: `${spaceTokens[1]}px 0` }}
+            style={{ alignItems: "center", display: "flex", gap: 9, justifyContent: "center", padding: "4px 0" }}
           >
             {onboardingSteps.map((item, index) => (
               <span
@@ -178,8 +152,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
                   borderRadius: 999,
                   display: "block",
                   height: 8,
-                  transition: "width 160ms ease",
-                  width: index === step ? 22 : 8,
+                  width: 8,
                 }}
               />
             ))}
@@ -191,7 +164,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
               borderRadius: radiusTokens.lg,
               fontSize: fontTokens.sizes.body,
               fontWeight: 700,
-              minHeight: 52,
+              minHeight: 50,
               width: "100%",
             }}
             onClick={() => (last ? onDone() : setStep((currentStep) => currentStep + 1))}
@@ -221,17 +194,92 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
   );
 }
 
-const iconBox: CSSProperties = { flexShrink: 0, height: 28, marginTop: 2, width: 28 };
+/**
+ * Full-bleed hero with soft alpha masks so the illustration blends into the
+ * sky wash (top) and white benefits section (bottom) — no hard horizontal cut.
+ */
+function HeroIllustration({ stepId }: { stepId: string }) {
+  // Longer top ramp so the sky wash and hero sky merge without a hard seam.
+  const mask =
+    "linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.55) 10%, #000 20%, #000 68%, rgba(0,0,0,0.45) 86%, transparent 100%)";
+
+  return (
+    <div
+      aria-hidden="true"
+      className="cve-fade-up-delay cve-onboarding-hero"
+      style={{
+        margin: 0,
+        overflow: "hidden",
+        position: "relative",
+        width: "100%",
+      }}
+    >
+      <div
+        style={{
+          WebkitMaskImage: mask,
+          maskImage: mask,
+          WebkitMaskSize: "100% 100%",
+          maskSize: "100% 100%",
+          WebkitMaskRepeat: "no-repeat",
+          maskRepeat: "no-repeat",
+        }}
+      >
+        <Image
+          key={stepId}
+          src={`/brand/onboarding/step-${stepId}.webp`}
+          alt=""
+          width={1400}
+          height={1180}
+          priority
+          quality={95}
+          sizes="(max-width: 480px) 100vw, 430px"
+          style={{
+            display: "block",
+            height: "auto",
+            maxHeight: "min(38dvh, 320px)",
+            objectFit: "contain",
+            objectPosition: "center center",
+            width: "100%",
+          }}
+        />
+      </div>
+      {/* Soft washes — pointer-events none; reinforce blend without hard bands */}
+      <div
+        style={{
+          background: `linear-gradient(180deg, ${SKY} 0%, ${SKY} 18%, rgba(220,235,255,0) 100%)`,
+          height: 58,
+          left: 0,
+          pointerEvents: "none",
+          position: "absolute",
+          right: 0,
+          top: 0,
+        }}
+      />
+      <div
+        style={{
+          background: "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.55) 45%, #FFFFFF 100%)",
+          bottom: 0,
+          height: 72,
+          left: 0,
+          pointerEvents: "none",
+          position: "absolute",
+          right: 0,
+        }}
+      />
+    </div>
+  );
+}
+
+const iconBox: CSSProperties = { flexShrink: 0, height: 24, marginTop: 1, width: 24 };
 
 function BulletIcon({ name }: { name: OnboardingBulletIcon }) {
-  // Brand badges keep raster marks; line icons use crisp SVG strokes matching the mock.
   if (name === "paypal" || name === "zelle" || name === "pago-movil") {
     return (
       <Image
         src={`/brand/onboarding/icons/${name}.webp`}
         alt=""
-        width={28}
-        height={28}
+        width={24}
+        height={24}
         unoptimized
         style={iconBox}
       />
@@ -244,7 +292,7 @@ const stroke = colors.primary;
 
 function Svg({ children }: { children: ReactNode }) {
   return (
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+    <svg width="24" height="24" viewBox="0 0 28 28" fill="none" aria-hidden="true">
       {children}
     </svg>
   );
