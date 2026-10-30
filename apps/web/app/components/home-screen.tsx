@@ -198,7 +198,17 @@ export function HomeScreen() {
                   fill
                   unoptimized
                   sizes="200px"
-                  style={{ objectFit: "cover", objectPosition: "right center" }}
+                  style={{ objectFit: "cover", objectPosition: "85% center" }}
+                />
+                <div
+                  aria-hidden="true"
+                  style={{
+                    ...offerScrim,
+                    background:
+                      offer.id === "fashion"
+                        ? "linear-gradient(90deg, rgba(252,231,243,0.95) 0%, rgba(252,231,243,0.7) 55%, transparent 100%)"
+                        : "linear-gradient(90deg, rgba(253,248,240,0.95) 0%, rgba(253,248,240,0.7) 55%, transparent 100%)",
+                  }}
                 />
                 <div style={offerCopy}>
                   <p style={{ ...offerTitle, color: offer.titleColor }}>{offer.title}</p>
@@ -521,7 +531,15 @@ const offerCard: CSSProperties = {
   position: "relative",
   textAlign: "left",
 };
-const offerCopy: CSSProperties = { maxWidth: "62%", position: "relative", zIndex: 1 };
+const offerScrim: CSSProperties = {
+  bottom: 0,
+  left: 0,
+  position: "absolute",
+  right: 0,
+  top: 0,
+  zIndex: 1,
+};
+const offerCopy: CSSProperties = { maxWidth: "68%", position: "relative", zIndex: 2 };
 const offerTitle: CSSProperties = { fontSize: 13, fontWeight: 800, lineHeight: 1.25, margin: "0 0 4px" };
 const offerBody: CSSProperties = { fontSize: 10, lineHeight: 1.3, margin: "0 0 10px" };
 const offerLinkBtn: CSSProperties = {
