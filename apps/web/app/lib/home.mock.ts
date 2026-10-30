@@ -120,10 +120,11 @@ export const homeDemoRequest = {
   art: "/brand/home/demo/request-art.webp",
 } as const;
 
-/** Presentation badges — DEMO only. */
+/** Presentation badges — DEMO only. Cart badge now comes from demo-commerce state. */
 export const homeDemoBadges = {
   notifications: 1,
-  cart: 3,
+  /** @deprecated Prefer useDemoCommerce().getCartCount() — kept for splash/legacy fallbacks. */
+  cart: 0,
 } as const;
 
 export function formatDemoPrice(value: number): string {

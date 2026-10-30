@@ -224,6 +224,12 @@ a {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .cve-explore-grid {
+    gap: 16px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    max-width: none;
+  }
+
   .cve-store-card-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
@@ -265,6 +271,10 @@ a {
 
 @media (min-width: 1100px) {
   .cve-product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .cve-explore-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 

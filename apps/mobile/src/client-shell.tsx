@@ -1,18 +1,17 @@
 import {
   decideEntryGate,
-  getCart,
   probeServerReachable,
   restoreAuthenticatedSession,
   type AuthenticatedSession,
 } from "@comprausa/api-client";
 import { colorTokens, fontTokens, spaceTokens } from "@comprausa/design-tokens";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { apiBase } from "./api";
 import { ExploreScreen, HelpScreen, HomeScreen, OrdersScreen, ProfileScreen } from "./catalog-screens";
 import { MobileCartScreen, MobileProductScreen, MobileQuoteScreen } from "./commerce-screens";
+import { DemoCommerceProvider, useDemoCommerce } from "./demo-commerce";
 import { MobileOperatorScreen } from "./payment-screens";
-import { homeDemoBadges } from "./home.mock";
 import { MobileRequestScreen } from "./request-screen";
 import { MobileTrackingScreen } from "./tracking-screens";
 import {
@@ -43,6 +42,16 @@ const tabs: readonly { id: Tab; label: string; glyph: string }[] = [
 const tabBottomInset = Platform.select({ ios: 12, android: 6, default: 6 })!;
 
 export function ClientShell() {
+  return (
+    <DemoCommerceProvider>
+      <AppShell />
+    </DemoCommerceProvider>
+  );
+}
+
+function AppShell() {
+  const { getCartCount, ready } = useDemoCommerce();
+  const cartCount = ready ? getCartCount() : 0;
   const [gate, setGate] = useState<Gate>("checking");
   const [serverReachable, setServerReachable] = useState<boolean | null>(null);
   const [tab, setTab] = useState<Tab>("inicio");
@@ -56,21 +65,6 @@ export function ClientShell() {
   const [requestOpen, setRequestOpen] = useState(false);
   const [review, setReview] = useState(false);
   const [tracking, setTracking] = useState(false);
-  const [cartCount, setCartCount] = useState<number>(homeDemoBadges.cart);
-
-  const refreshCartCount = useCallback(async (token: string | undefined) => {
-    if (!token) {
-      setCartCount(homeDemoBadges.cart);
-      return;
-    }
-    try {
-      const cart = await getCart(apiBase, token);
-      const real = cart.groups.reduce((sum, group) => sum + group.items.reduce((inner, item) => inner + item.quantity, 0), 0);
-      setCartCount(real > 0 ? real : homeDemoBadges.cart);
-    } catch {
-      setCartCount(homeDemoBadges.cart);
-    }
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -101,7 +95,6 @@ export function ClientShell() {
           onboardingCompleted,
         }),
       );
-      void refreshCartCount(restored?.accessToken);
 
       void healthPromise.then((reachable) => {
         if (!cancelled) {
@@ -214,7 +207,6 @@ export function ClientShell() {
             onOpenCart={() => {
               setProductId(null);
               setTab("carrito");
-              void refreshCartCount(session?.accessToken);
             }}
           />
         ) : null}
@@ -298,9 +290,6 @@ export function ClientShell() {
                     setExploreQuery("");
                   }
                   setTab(item.id);
-                  if (item.id === "carrito") {
-                    void refreshCartCount(session?.accessToken);
-                  }
                 }}
                 style={styles.tab}
               >

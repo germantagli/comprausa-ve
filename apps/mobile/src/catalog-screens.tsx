@@ -32,49 +32,7 @@ interface ProductCardData {
 }
 
 export { HomeScreen } from "./home-screen";
-
-export function ExploreScreen({
-  onOpenProduct,
-  initialQuery = "",
-}: {
-  onOpenProduct: (productId: string) => void;
-  initialQuery?: string;
-}) {
-  const [draft, setDraft] = useState(initialQuery);
-  const [query, setQuery] = useState(initialQuery);
-
-  useEffect(() => {
-    setDraft(initialQuery);
-    setQuery(initialQuery);
-  }, [initialQuery]);
-
-  return (
-    <ScrollView contentContainerStyle={styles.page}>
-      <Text accessibilityRole="header" style={styles.title}>
-        Explorar
-      </Text>
-      <Text style={styles.caption}>
-        Busca por tienda o categoría. El catálogo demo no publica precios reales; las cotizaciones las arma el equipo.
-      </Text>
-      <SearchBox draft={draft} onChange={setDraft} onSubmit={() => setQuery(draft.trim())} />
-      <NamedSection
-        title="Tiendas partner"
-        empty="Todavía no hay tiendas en el directorio."
-        failure="No pudimos cargar las tiendas."
-        load={() => listInternalStores(apiBase)}
-        chips
-      />
-      <NamedSection
-        title="Categorías"
-        empty="Todavía no hay categorías."
-        failure="No pudimos cargar las categorías."
-        load={() => listCatalogCategories(apiBase)}
-        circles
-      />
-      <ProductSection query={query} title="Resultados del catálogo demo" onOpenProduct={onOpenProduct} />
-    </ScrollView>
-  );
-}
+export { ExploreScreen } from "./explore-screen";
 
 export function OrdersScreen({ session }: { session: AuthenticatedSession | null }) {
   return <MobileOrdersScreen session={session} />;

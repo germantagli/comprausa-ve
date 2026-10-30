@@ -4,6 +4,7 @@ import { decideEntryGate, probeServerReachable, restoreAuthenticatedSession } fr
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { apiBase, ONBOARDING_KEY } from "../lib/api";
+import { DemoCommerceProvider } from "../lib/demo-commerce";
 import { clearSession, readSession, saveSession } from "../lib/session";
 import Image from "next/image";
 import { AppHeader } from "./app-header";
@@ -144,11 +145,13 @@ export function ClientShell({ children }: { children: ReactNode }) {
 
   return (
     <ReplayContext.Provider value={replay}>
-      <div className="cve-shell" style={{ background: colors.background, minHeight: "100vh" }}>
-        <AppHeader />
-        {children}
-        <BottomNav />
-      </div>
+      <DemoCommerceProvider>
+        <div className="cve-shell" style={{ background: colors.background, minHeight: "100vh" }}>
+          <AppHeader />
+          {children}
+          <BottomNav />
+        </div>
+      </DemoCommerceProvider>
     </ReplayContext.Provider>
   );
 }
