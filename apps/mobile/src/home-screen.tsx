@@ -15,17 +15,18 @@ import {
   View,
 } from "react-native";
 import { apiBase } from "./api";
+import { useDemoCommerce } from "./demo-commerce";
 import {
-  formatDemoPrice,
   homeDemoBadges,
   homeDemoCategories,
-  homeDemoFeaturedProducts,
   homeDemoHero,
   homeDemoOffers,
   homeDemoRequest,
 } from "./home.mock";
+import { demoProducts, formatDemoPrice } from "./products.mock";
 
 const colors = colorTokens.light;
+const featuredProducts = demoProducts.slice(0, 3);
 const H_PAD = 16;
 
 const topInset = Platform.select({
@@ -63,6 +64,7 @@ export function HomeScreen({
   const width = Math.min(windowWidth, 430);
   const [draft, setDraft] = useState("");
   const [reachable, setReachable] = useState<boolean | null>(serverReachable);
+  const { addToCart, toggleFavorite, isFavorite, toast, clearToast } = useDemoCommerce();
 
   const refresh = useCallback(async () => {
     setReachable(await probeServerReachable(apiBase));
@@ -154,34 +156,56 @@ export function HomeScreen({
 
         <SectionHeader title="Productos destacados" seeAll="Ver todos" onSeeAll={() => onOpenExplore()} />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.productRow}>
-          {homeDemoFeaturedProducts.map((product) => (
-            <Pressable
-              key={product.id}
-              accessibilityRole="button"
-              onPress={() => onOpenProduct(product.id)}
-              style={styles.productCard}
-            >
-              <View style={styles.productPhoto}>
-                {product.discountPercent ? (
-                  <View style={styles.discountBadge}>
-                    <Text style={styles.discountText}>-{product.discountPercent}%</Text>
+          {featuredProducts.map((product) => {
+            const fav = isFavorite(product.id);
+            return (
+              <View key={product.id} style={styles.productCard}>
+                <Pressable accessibilityRole="button" onPress={() => onOpenProduct(product.id)}>
+                  <View style={styles.productPhoto}>
+                    {product.discountPercent ? (
+                      <View style={styles.discountBadge}>
+                        <Text style={styles.discountText}>-{product.discountPercent}%</Text>
+                      </View>
+                    ) : null}
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => toggleFavorite(product.id)}
+                      style={styles.favHit}
+                    >
+                      <Text style={[styles.fav, fav ? styles.favOn : null]}>{fav ? "♥" : "♡"}</Text>
+                    </Pressable>
+                    <Image source={product.image} style={styles.productImage} resizeMode="contain" />
                   </View>
-                ) : null}
-                <Text style={styles.fav}>♡</Text>
-                <Image source={product.image} style={styles.productImage} resizeMode="contain" />
+                  <Text numberOfLines={2} style={styles.productName}>
+                    {product.name}
+                  </Text>
+                  <View style={styles.priceRow}>
+                    <Text style={styles.productPrice}>{formatDemoPrice(product.price)}</Text>
+                    {product.compareAtPrice ? (
+                      <Text style={styles.comparePrice}>{formatDemoPrice(product.compareAtPrice)}</Text>
+                    ) : null}
+                  </View>
+                  <Text style={styles.rating}>
+                    {"★".repeat(Math.max(1, Math.round(product.rating)))}{" "}
+                    <Text style={styles.reviewCount}>({product.reviewCount})</Text>
+                  </Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => {
+                    if (product.requiresVariant) {
+                      onOpenProduct(product.id);
+                      return;
+                    }
+                    addToCart(product);
+                  }}
+                  style={styles.addBtn}
+                >
+                  <Text style={styles.addText}>⊞ Agregar</Text>
+                </Pressable>
               </View>
-              <Text numberOfLines={2} style={styles.productName}>
-                {product.name}
-              </Text>
-              <View style={styles.priceRow}>
-                <Text style={styles.productPrice}>{formatDemoPrice(product.price)}</Text>
-                {product.compareAtPrice ? <Text style={styles.comparePrice}>{formatDemoPrice(product.compareAtPrice)}</Text> : null}
-              </View>
-              <Text style={styles.rating}>
-                {"★".repeat(product.rating)} <Text style={styles.reviewCount}>({product.reviewCount})</Text>
-              </Text>
-            </Pressable>
-          ))}
+            );
+          })}
         </ScrollView>
 
         <View style={styles.requestBanner}>
@@ -220,6 +244,11 @@ export function HomeScreen({
         </View>
 
       </ScrollView>
+      {toast ? (
+        <Pressable accessibilityRole="button" onPress={clearToast} style={styles.toast}>
+          <Text style={styles.toastText}>{toast}</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -351,13 +380,33 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   discountText: { color: "#FFFFFF", fontSize: 10, fontWeight: "700" },
-  fav: { color: colors.primary, fontSize: 16, position: "absolute", right: 8, top: 6, zIndex: 1 },
+  favHit: { position: "absolute", right: 4, top: 4, zIndex: 2 },
+  fav: { color: colors.primary, fontSize: 16 },
+  favOn: { color: "#E11D48" },
   productName: { color: colors.deep, fontSize: 13, fontWeight: "700", marginBottom: 4, minHeight: 32 },
   priceRow: { alignItems: "baseline", flexDirection: "row", gap: 6, marginBottom: 2 },
   productPrice: { color: colors.primary, fontSize: 15, fontWeight: "800" },
   comparePrice: { color: colors.muted, fontSize: 12, textDecorationLine: "line-through" },
-  rating: { color: "#F5A524", fontSize: 12 },
+  rating: { color: "#F5A524", fontSize: 12, marginBottom: 8 },
   reviewCount: { color: colors.muted },
+  addBtn: {
+    alignItems: "center",
+    backgroundColor: colors.primary,
+    borderRadius: 10,
+    justifyContent: "center",
+    minHeight: 34,
+  },
+  addText: { color: "#FFFFFF", fontSize: 12, fontWeight: "700" },
+  toast: {
+    alignSelf: "center",
+    backgroundColor: colors.deep,
+    borderRadius: 12,
+    bottom: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    position: "absolute",
+  },
+  toastText: { color: "#FFFFFF", fontWeight: "600" },
   requestBanner: {
     alignItems: "center",
     backgroundColor: "#EAF3FF",

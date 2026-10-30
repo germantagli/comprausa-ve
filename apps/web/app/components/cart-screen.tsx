@@ -1,367 +1,216 @@
 "use client";
 
-import {
-  ApiClientError,
-  createQuote,
-  getCart,
-  removeCartItem,
-  saveCartItem,
-  setCartQuantity,
-  type CartView,
-} from "@comprausa/api-client";
-import { subtotalLabel } from "@comprausa/utils";
-import { formatUsdFromMinor } from "@comprausa/utils";
+import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
-import { apiBase } from "../lib/api";
-import { readSession } from "../lib/session";
+import type { CSSProperties } from "react";
+import { useDemoCommerce } from "../lib/demo-commerce";
+import { formatDemoPrice } from "../lib/products.mock";
 import { PageFrame } from "./page-frame";
-import {
-  badgeStyle,
-  bodyStyle,
-  buttonStyle,
-  cardStyle,
-  errorStyle,
-  headingStyle,
-  inputStyle,
-  linkStyle,
-  mutedStyle,
-  secondaryButtonStyle,
-  spaceTokens,
-  colors,
-  summaryBoxStyle,
-  titleStyle,
-} from "./styles";
+import { colors, radiusTokens } from "./styles";
 
-const emptyAddress = { state: "", city: "", municipality: "", reference: "" };
-
+/**
+ * DEMO cart — items come from local mock commerce state (shared with Home / Explorar).
+ * No backend cart / payments. Checkout is intentionally not implemented yet.
+ */
 export function CartScreen() {
-  const router = useRouter();
-  const [phase, setPhase] = useState<"loading" | "signed-out" | "error" | "ready">("loading");
-  const [cart, setCart] = useState<CartView | null>(null);
-  const [attempt, setAttempt] = useState(0);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [address, setAddress] = useState(emptyAddress);
-  const [pastedUrl, setPastedUrl] = useState("");
+  const { cart, ready, updateQuantity, removeFromCart, clearCart, getCartSubtotal, getCartCount } =
+    useDemoCommerce();
 
-  useEffect(() => {
-    const session = readSession();
-    if (!session) {
-      setPhase("signed-out");
-      return;
-    }
-    let cancelled = false;
-    setPhase("loading");
-    getCart(apiBase, session.accessToken)
-      .then((next) => {
-        if (!cancelled) {
-          setCart(next);
-          setPhase("ready");
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setPhase("error");
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [attempt]);
-
-  async function mutate(action: (token: string) => Promise<CartView>): Promise<void> {
-    const session = readSession();
-    if (!session) {
-      setPhase("signed-out");
-      return;
-    }
-    setBusy(true);
-    setError(null);
-    try {
-      setCart(await action(session.accessToken));
-      setPhase("ready");
-    } catch {
-      setError("No pudimos actualizar el carrito.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function requestQuote(event: FormEvent): Promise<void> {
-    event.preventDefault();
-    const session = readSession();
-    if (!session) {
-      setPhase("signed-out");
-      return;
-    }
-    setBusy(true);
-    setError(null);
-    try {
-      const quote = await createQuote(apiBase, session.accessToken, {
-        address,
-        ...(pastedUrl.trim().length > 0 ? { pastedUrl: pastedUrl.trim() } : {}),
-      });
-      router.push(`/cotizacion/${quote.id}`);
-    } catch (caught) {
-      setError(caught instanceof ApiClientError && caught.status === 400 ? "Revisa la dirección y el enlace." : "No pudimos pedir la cotización.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  if (phase === "loading") {
+  if (!ready) {
     return (
-      <PageFrame>
-        <h1 style={titleStyle}>Carrito</h1>
-        <p style={bodyStyle}>Cargando…</p>
-      </PageFrame>
-    );
-  }
-  if (phase === "signed-out") {
-    return (
-      <PageFrame>
-        <h1 style={titleStyle}>Carrito</h1>
-        <div style={cardStyle}>
-          <p style={bodyStyle}>Tu carrito está vacío hasta que entres y agregues un artículo desde una ficha.</p>
-          <p style={mutedStyle}>Abre un producto demo (por ejemplo Caja de demostración Norte) y usa «Agregar al carrito».</p>
-          <p style={bodyStyle}>
-            <Link href="/entrar" style={linkStyle}>
-              Entrar
-            </Link>
-            {" · "}
-            <Link href="/#ofertas" style={linkStyle}>
-              Ver productos demo
-            </Link>
-          </p>
-        </div>
-      </PageFrame>
-    );
-  }
-  if (phase === "error" || !cart) {
-    return (
-      <PageFrame>
-        <h1 style={titleStyle}>Carrito</h1>
-        <p role="alert" style={errorStyle}>
-          No pudimos cargar el carrito.
-        </p>
-        <button type="button" style={buttonStyle} onClick={() => setAttempt((current) => current + 1)}>
-          Reintentar
-        </button>
+      <PageFrame compact>
+        <h1 style={title}>Carrito</h1>
+        <p style={{ color: colors.muted }}>Cargando…</p>
       </PageFrame>
     );
   }
 
-  const activeCount = cart.groups.reduce((count, group) => count + group.items.length, 0);
+  const count = getCartCount();
+  const subtotal = getCartSubtotal();
+
   return (
-    <PageFrame wide>
-      <h1 style={titleStyle}>Carrito</h1>
-      <div className="cve-cart-layout">
-        <div>
-          {activeCount === 0 && cart.saved.length === 0 ? (
-            <div role="status" style={{ ...cardStyle, marginBottom: spaceTokens[4] }}>
-              <p style={bodyStyle}>Tu carrito está vacío.</p>
-              <p style={mutedStyle}>
-                Todavía no agregaste artículos. Abre una ficha del catálogo demo y pulsa «Agregar al carrito». Los productos demo no tienen precio publicado.
-              </p>
-              <Link href="/#ofertas" style={linkStyle}>
-                Ver productos demo
+    <PageFrame compact>
+      <div style={root}>
+        <header style={header}>
+          <h1 style={title}>Carrito</h1>
+          {count > 0 ? (
+            <button type="button" onClick={clearCart} style={clearLink}>
+              Vaciar
+            </button>
+          ) : null}
+        </header>
+
+        {count === 0 ? (
+          <div style={emptyBox} role="status">
+            <p style={emptyTitle}>Tu carrito está vacío</p>
+            <p style={emptyBody}>Explora el catálogo de demostración y agrega productos.</p>
+            <Link href="/explorar" style={primaryCta}>
+              Explorar productos
+            </Link>
+          </div>
+        ) : (
+          <>
+            <ul style={list}>
+              {cart.map((item) => (
+                <li key={item.itemId} style={row}>
+                  <div style={thumb}>
+                    <Image src={item.image} alt="" fill unoptimized sizes="72px" style={{ objectFit: "contain" }} />
+                  </div>
+                  <div style={meta}>
+                    <p style={name}>{item.name}</p>
+                    {item.variant ? <p style={variant}>Variante: {item.variant}</p> : null}
+                    <p style={price}>{formatDemoPrice(item.unitPrice)}</p>
+                    <div style={qtyRow}>
+                      <button
+                        type="button"
+                        aria-label="Disminuir cantidad"
+                        onClick={() => updateQuantity(item.itemId, item.quantity - 1)}
+                        style={qtyBtn}
+                      >
+                        −
+                      </button>
+                      <span style={qtyValue}>{item.quantity}</span>
+                      <button
+                        type="button"
+                        aria-label="Aumentar cantidad"
+                        onClick={() => updateQuantity(item.itemId, item.quantity + 1)}
+                        style={qtyBtn}
+                      >
+                        +
+                      </button>
+                      <button type="button" onClick={() => removeFromCart(item.itemId)} style={removeBtn}>
+                        Quitar
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            <div style={summary}>
+              <div style={summaryRow}>
+                <span>Subtotal DEMO</span>
+                <strong>{formatDemoPrice(subtotal)}</strong>
+              </div>
+              <p style={note}>Precios ficticios para demostración. El checkout real llega en una próxima pantalla.</p>
+              <Link href="/explorar" style={secondaryCta}>
+                Seguir explorando
               </Link>
             </div>
-          ) : null}
-          {cart.groups.map((group) => (
-            <section key={group.storeName} aria-label={group.storeName} style={{ marginBottom: spaceTokens[4] }}>
-              <h2 style={headingStyle}>{group.storeName}</h2>
-              {group.items.map((item) => (
-                <LineEditor
-                  key={item.productId}
-                  item={item}
-                  busy={busy}
-                  onQuantity={(quantity) => void mutate((token) => setCartQuantity(apiBase, token, item.productId, quantity))}
-                  onRemove={() => void mutate((token) => removeCartItem(apiBase, token, item.productId))}
-                  onSave={() => void mutate((token) => saveCartItem(apiBase, token, item.productId, true))}
-                  saveLabel="Guardar para después"
-                />
-              ))}
-            </section>
-          ))}
-          {cart.saved.length > 0 ? (
-            <section aria-label="Guardados para después">
-              <h2 style={headingStyle}>Guardados para después</h2>
-              {cart.saved.map((item) => (
-                <LineEditor
-                  key={item.productId}
-                  item={item}
-                  busy={busy}
-                  onQuantity={(quantity) => void mutate((token) => setCartQuantity(apiBase, token, item.productId, quantity))}
-                  onRemove={() => void mutate((token) => removeCartItem(apiBase, token, item.productId))}
-                  onSave={() => void mutate((token) => saveCartItem(apiBase, token, item.productId, false))}
-                  saveLabel="Volver al carrito"
-                />
-              ))}
-            </section>
-          ) : null}
-
-          <form onSubmit={(event) => void requestQuote(event)} style={{ ...cardStyle, marginTop: spaceTokens[4] }}>
-            <h2 style={headingStyle}>Dirección en Venezuela</h2>
-            <AddressFields address={address} onChange={setAddress} />
-            <label style={{ display: "grid", gap: 8, marginTop: 16 }}>
-              Pegar un enlace
-              <input style={inputStyle} value={pastedUrl} onChange={(event) => setPastedUrl(event.target.value)} inputMode="url" placeholder="https://" />
-            </label>
-            <p style={mutedStyle}>La URL se guarda como texto. No la descargamos.</p>
-            {error ? (
-              <p role="alert" style={errorStyle}>
-                {error}
-              </p>
-            ) : null}
-            <button type="submit" style={buttonStyle} disabled={busy}>
-              {busy ? "Espera…" : "Pedir cotización"}
-            </button>
-            <p style={mutedStyle}>El pago llega después de que el equipo publique el importe de la cotización.</p>
-            <p style={mutedStyle}>
-              Flujo de maqueta móvil:{" "}
-              <Link href="/direccion" style={linkStyle}>
-                dirección
-              </Link>
-              {" → "}
-              <Link href="/pago" style={linkStyle}>
-                pago
-              </Link>
-              {" → "}
-              <Link href="/resumen" style={linkStyle}>
-                resumen
-              </Link>
-              . Sin cobro real.
-            </p>
-          </form>
-        </div>
-
-        <aside style={summaryBoxStyle} aria-label="Resumen del pedido">
-          <h2 style={{ ...headingStyle, margin: 0 }}>Resumen del pedido</h2>
-          <SummaryLine label="Subtotal" value={subtotalLabel(cart.subtotal)} />
-          <SummaryLine label="Envío en USA" value="Por cotización" />
-          <SummaryLine label="Comisión del servicio" value="Por cotización" />
-          <SummaryLine label="Envío a Venezuela" value="Por cotización" />
-          <hr style={{ border: 0, borderTop: `1px solid ${colors.border}`, margin: 0 }} />
-          <p style={{ ...headingStyle, margin: 0 }}>Total estimado</p>
-          <p style={{ ...bodyStyle, fontWeight: 700, margin: 0 }}>{subtotalLabel(cart.subtotal)}</p>
-          <p style={mutedStyle}>Sin montos inventados. El total final sale de la cotización revisada.</p>
-          <Link href="/direccion" style={{ ...buttonStyle, alignItems: "center", display: "inline-flex", justifyContent: "center", textDecoration: "none" }}>
-            Continuar · Dirección →
-          </Link>
-        </aside>
+          </>
+        )}
       </div>
     </PageFrame>
   );
 }
 
-function SummaryLine({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={{ display: "flex", gap: 12, justifyContent: "space-between" }}>
-      <span style={mutedStyle}>{label}</span>
-      <span style={{ ...bodyStyle, margin: 0, textAlign: "right" }}>{value}</span>
-    </div>
-  );
-}
+const root: CSSProperties = { display: "grid", gap: 14, margin: "0 auto", maxWidth: 430, width: "100%" };
+const header: CSSProperties = { alignItems: "center", display: "flex", justifyContent: "space-between" };
+const title: CSSProperties = { color: colors.deep, fontSize: 22, fontWeight: 800, margin: 0 };
+const clearLink: CSSProperties = {
+  background: "none",
+  border: "none",
+  color: "#E11D48",
+  cursor: "pointer",
+  font: "inherit",
+  fontSize: 14,
+  fontWeight: 700,
+};
 
-function LineEditor({
-  item,
-  busy,
-  onQuantity,
-  onRemove,
-  onSave,
-  saveLabel,
-}: {
-  item: CartView["saved"][number];
-  busy: boolean;
-  onQuantity: (quantity: number) => void;
-  onRemove: () => void;
-  onSave: () => void;
-  saveLabel: string;
-}) {
-  const [quantity, setQuantity] = useState(String(item.quantity));
-  return (
-    <article style={{ ...cardStyle, marginBottom: spaceTokens[3] }}>
-      <p style={{ margin: 0 }}>
-        <span style={badgeStyle}>Ficticio</span>
-      </p>
-      <h3 style={{ ...headingStyle, margin: 0 }}>
-        <Link href={`/producto/${item.productId}`}>{item.name}</Link>
-      </h3>
-      <p style={bodyStyle}>{item.unitAmountMinor === null ? "Precio por cotización" : formatUsdFromMinor(item.unitAmountMinor)}</p>
-      <div style={{ alignItems: "center", display: "flex", flexWrap: "wrap", gap: 12 }}>
-        <button
-          type="button"
-          style={{ ...secondaryButtonStyle, minWidth: 44, padding: 0 }}
-          disabled={busy}
-          onClick={() => {
-            const next = Math.max(1, Number(quantity) - 1);
-            setQuantity(String(next));
-            onQuantity(next);
-          }}
-        >
-          −
-        </button>
-        <label style={{ display: "grid", gap: 4 }}>
-          Cantidad
-          <input
-            style={{ ...inputStyle, maxWidth: 72, textAlign: "center" }}
-            value={quantity}
-            inputMode="numeric"
-            onChange={(event) => setQuantity(event.target.value)}
-          />
-        </label>
-        <button
-          type="button"
-          style={{ ...secondaryButtonStyle, minWidth: 44, padding: 0 }}
-          disabled={busy}
-          onClick={() => {
-            const next = Math.max(1, Number(quantity) + 1);
-            setQuantity(String(next));
-            onQuantity(next);
-          }}
-        >
-          +
-        </button>
-      </div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 12 }}>
-        <button type="button" style={secondaryButtonStyle} disabled={busy} onClick={() => onQuantity(Number(quantity))}>
-          Actualizar
-        </button>
-        <button type="button" style={secondaryButtonStyle} disabled={busy} onClick={onRemove}>
-          Eliminar
-        </button>
-        <button type="button" style={secondaryButtonStyle} disabled={busy} onClick={onSave}>
-          {saveLabel}
-        </button>
-      </div>
-    </article>
-  );
-}
+const emptyBox: CSSProperties = {
+  background: "#fff",
+  border: "1px solid #E8EEF5",
+  borderRadius: radiusTokens.md,
+  display: "grid",
+  gap: 10,
+  justifyItems: "center",
+  padding: "32px 16px",
+  textAlign: "center",
+};
+const emptyTitle: CSSProperties = { color: colors.deep, fontSize: 17, fontWeight: 800, margin: 0 };
+const emptyBody: CSSProperties = { color: colors.muted, fontSize: 14, margin: 0 };
 
-function AddressFields({
-  address,
-  onChange,
-}: {
-  address: typeof emptyAddress;
-  onChange: (next: typeof emptyAddress) => void;
-}) {
-  const fields = [
-    ["state", "Estado"],
-    ["city", "Ciudad"],
-    ["municipality", "Municipio"],
-    ["reference", "Punto de referencia"],
-  ] as const;
-  return (
-    <div style={{ display: "grid", gap: 12 }}>
-      {fields.map(([key, label]) => (
-        <label key={key} style={{ display: "grid", gap: 8 }}>
-          {label}
-          <input style={inputStyle} value={address[key]} required onChange={(event) => onChange({ ...address, [key]: event.target.value })} />
-        </label>
-      ))}
-    </div>
-  );
-}
+const list: CSSProperties = { display: "grid", gap: 10, listStyle: "none", margin: 0, padding: 0 };
+const row: CSSProperties = {
+  background: "#fff",
+  border: "1px solid #E8EEF5",
+  borderRadius: 14,
+  display: "flex",
+  gap: 12,
+  padding: 12,
+};
+const thumb: CSSProperties = {
+  background: "#F7FAFD",
+  borderRadius: 10,
+  flex: "0 0 72px",
+  height: 72,
+  overflow: "hidden",
+  position: "relative",
+  width: 72,
+};
+const meta: CSSProperties = { display: "grid", flex: 1, gap: 4, minWidth: 0 };
+const name: CSSProperties = { color: colors.deep, fontSize: 14, fontWeight: 700, margin: 0 };
+const variant: CSSProperties = { color: colors.muted, fontSize: 12, margin: 0 };
+const price: CSSProperties = { color: colors.primary, fontSize: 15, fontWeight: 800, margin: 0 };
+const qtyRow: CSSProperties = { alignItems: "center", display: "flex", gap: 8, marginTop: 4 };
+const qtyBtn: CSSProperties = {
+  alignItems: "center",
+  background: "#F1F4F8",
+  border: "1px solid #E4EAF1",
+  borderRadius: 8,
+  color: colors.deep,
+  cursor: "pointer",
+  display: "inline-flex",
+  font: "inherit",
+  fontWeight: 700,
+  height: 32,
+  justifyContent: "center",
+  width: 32,
+};
+const qtyValue: CSSProperties = { fontWeight: 700, minWidth: 20, textAlign: "center" };
+const removeBtn: CSSProperties = {
+  background: "none",
+  border: "none",
+  color: colors.muted,
+  cursor: "pointer",
+  font: "inherit",
+  fontSize: 12,
+  fontWeight: 600,
+  marginLeft: "auto",
+};
+
+const summary: CSSProperties = {
+  background: "#fff",
+  border: "1px solid #E8EEF5",
+  borderRadius: 14,
+  display: "grid",
+  gap: 10,
+  padding: 14,
+};
+const summaryRow: CSSProperties = {
+  alignItems: "center",
+  color: colors.deep,
+  display: "flex",
+  fontSize: 16,
+  justifyContent: "space-between",
+};
+const note: CSSProperties = { color: colors.muted, fontSize: 12, margin: 0 };
+const primaryCta: CSSProperties = {
+  background: colors.primary,
+  borderRadius: 12,
+  color: "#fff",
+  fontWeight: 700,
+  minHeight: 44,
+  padding: "12px 18px",
+  textDecoration: "none",
+};
+const secondaryCta: CSSProperties = {
+  background: "#EAF3FF",
+  borderRadius: 12,
+  color: colors.primary,
+  fontWeight: 700,
+  minHeight: 44,
+  padding: "12px 18px",
+  textAlign: "center",
+  textDecoration: "none",
+};

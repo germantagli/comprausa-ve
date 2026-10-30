@@ -1,13 +1,9 @@
 "use client";
 
-import { getCart } from "@comprausa/api-client";
 import { fontTokens, spaceTokens } from "@comprausa/design-tokens";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { apiBase } from "../lib/api";
-import { homeDemoBadges } from "../lib/home.mock";
-import { readSession } from "../lib/session";
+import { useDemoCommerce } from "../lib/demo-commerce";
 import { IconCart, IconExplore, IconHome, IconOrders, IconProfile } from "./icons";
 import { colors } from "./styles";
 
@@ -21,31 +17,8 @@ const items = [
 
 export function BottomNav() {
   const pathname = usePathname();
-  const [cartCount, setCartCount] = useState<number>(homeDemoBadges.cart);
-
-  useEffect(() => {
-    let cancelled = false;
-    const session = readSession();
-    if (!session?.accessToken) {
-      setCartCount(homeDemoBadges.cart);
-      return;
-    }
-    getCart(apiBase, session.accessToken)
-      .then((cart) => {
-        if (!cancelled) {
-          const real = cart.groups.reduce((sum, group) => sum + group.items.reduce((inner, item) => inner + item.quantity, 0), 0);
-          setCartCount(real > 0 ? real : homeDemoBadges.cart);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setCartCount(homeDemoBadges.cart);
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [pathname]);
+  const { getCartCount, ready } = useDemoCommerce();
+  const cartCount = ready ? getCartCount() : 0;
 
   return (
     <nav

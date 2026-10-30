@@ -2,7 +2,6 @@
 
 import {
   ApiClientError,
-  addCartItem,
   getCatalogAvailability,
   getCatalogPricing,
   getCatalogProduct,
@@ -11,12 +10,13 @@ import {
   type CatalogPricing,
 } from "@comprausa/api-client";
 import { catalogPriceLabel } from "@comprausa/utils";
+import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { apiBase } from "../lib/api";
+import { useDemoCommerce } from "../lib/demo-commerce";
 import { demoProductDetail, maquetaPriceFor } from "../lib/demo-catalog";
-import { readSession } from "../lib/session";
+import { formatDemoPrice, getDemoProduct } from "../lib/products.mock";
 import { PageFrame } from "./page-frame";
 import {
   badgeStyle,
@@ -28,11 +28,15 @@ import {
   headingStyle,
   linkStyle,
   mutedStyle,
-  rowStyle,
   secondaryButtonStyle,
   spaceTokens,
   titleStyle,
 } from "./styles";
+
+const DEMO_VARIANTS: Record<string, string[]> = {
+  "demo-zapatos": ["36", "37", "38", "39", "40", "41", "42"],
+  "demo-camiseta": ["S", "M", "L", "XL"],
+};
 
 type Detail = {
   product: CatalogDetail;
@@ -41,14 +45,133 @@ type Detail = {
   maquetaPriceLabel?: string;
 };
 
+/**
+ * Product detail — DEMO products from products.mock first; API/demo-catalog fallback otherwise.
+ * Checkout is not implemented yet.
+ */
 export function ProductDetail({ productId }: { productId: string }) {
-  const router = useRouter();
+  const demo = getDemoProduct(productId);
+  if (demo) {
+    return <DemoProductDetail productId={productId} />;
+  }
+  return <LegacyCatalogDetail productId={productId} />;
+}
+
+function DemoProductDetail({ productId }: { productId: string }) {
+  const product = getDemoProduct(productId)!;
+  const { addToCart, toast, clearToast, toggleFavorite, isFavorite } = useDemoCommerce();
+  const variants = DEMO_VARIANTS[product.id] ?? [];
+  const [selected, setSelected] = useState<string | null>(variants[0] ?? null);
+  const favorite = isFavorite(product.id);
+
+  function onAdd(): void {
+    if (product.requiresVariant && !selected) {
+      return;
+    }
+    addToCart(product, selected ?? undefined);
+  }
+
+  return (
+    <PageFrame compact>
+      <div style={demoRoot}>
+        <p style={demoCrumb}>
+          <Link href="/explorar" style={linkStyle}>
+            Explorar
+          </Link>
+          {" / "}
+          {product.name}
+        </p>
+
+        <div style={demoPhoto}>
+          <Image src={product.image} alt={product.name} fill unoptimized sizes="430px" style={{ objectFit: "contain" }} />
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+          <div>
+            <p style={{ margin: "0 0 6px" }}>
+              <span style={badgeStyle}>DEMO</span>
+            </p>
+            <h1 style={{ ...titleStyle, color: colors.deep, marginBottom: 6 }}>{product.name}</h1>
+            <p style={{ color: colors.muted, fontSize: 13, margin: 0 }}>{product.category}</p>
+          </div>
+          <button
+            type="button"
+            aria-label={favorite ? "Quitar de favoritos" : "Agregar a favoritos"}
+            onClick={() => toggleFavorite(product.id)}
+            style={favBtn}
+          >
+            {favorite ? "♥" : "♡"}
+          </button>
+        </div>
+
+        <div style={{ alignItems: "baseline", display: "flex", gap: 8 }}>
+          <span style={{ color: colors.primary, fontSize: 24, fontWeight: 800 }}>{formatDemoPrice(product.price)}</span>
+          {product.compareAtPrice ? (
+            <span style={{ color: "#94A3B8", textDecoration: "line-through" }}>{formatDemoPrice(product.compareAtPrice)}</span>
+          ) : null}
+        </div>
+
+        <p style={{ color: colors.muted, fontSize: 13, margin: 0 }}>
+          ★ {product.rating.toFixed(1)} · {product.reviewCount} reseñas (mock)
+        </p>
+
+        {variants.length > 0 ? (
+          <div>
+            <p style={{ ...headingStyle, marginBottom: 8 }}>Selecciona {product.id === "demo-zapatos" ? "talla" : "talla"}</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {variants.map((variant) => {
+                const on = selected === variant;
+                return (
+                  <button
+                    key={variant}
+                    type="button"
+                    onClick={() => setSelected(variant)}
+                    style={{
+                      background: on ? colors.primary : "#fff",
+                      border: `1px solid ${on ? colors.primary : "#D7E0EC"}`,
+                      borderRadius: 999,
+                      color: on ? "#fff" : colors.deep,
+                      cursor: "pointer",
+                      font: "inherit",
+                      fontWeight: 700,
+                      minHeight: 40,
+                      minWidth: 44,
+                      padding: "0 12px",
+                    }}
+                  >
+                    {variant}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
+
+        <p style={mutedStyle}>
+          Ficha de demostración. Precios y valoraciones son ficticios. El checkout completo llega en una próxima pantalla.
+        </p>
+
+        <button type="button" onClick={onAdd} style={{ ...buttonStyle, width: "100%" }}>
+          Agregar al carrito
+        </button>
+        <Link href="/carrito" style={{ ...secondaryButtonStyle, display: "grid", placeItems: "center", textDecoration: "none" }}>
+          Ver carrito
+        </Link>
+      </div>
+
+      {toast ? (
+        <div role="status" aria-live="polite" onClick={clearToast} style={toastStyle}>
+          {toast}
+        </div>
+      ) : null}
+    </PageFrame>
+  );
+}
+
+function LegacyCatalogDetail({ productId }: { productId: string }) {
   const [phase, setPhase] = useState<"loading" | "error" | "missing" | "ready">("loading");
   const [detail, setDetail] = useState<Detail | null>(null);
   const [attempt, setAttempt] = useState(0);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
 
   useEffect(() => {
@@ -89,29 +212,6 @@ export function ProductDetail({ productId }: { productId: string }) {
     };
   }, [productId, attempt]);
 
-  async function add(thenCart: boolean): Promise<void> {
-    const session = readSession();
-    if (!session) {
-      setError("Entra para usar el carrito.");
-      return;
-    }
-    setBusy(true);
-    setError(null);
-    setMessage(null);
-    try {
-      await addCartItem(apiBase, session.accessToken, productId, 1);
-      if (thenCart) {
-        router.push("/carrito");
-        return;
-      }
-      setMessage("Lo agregamos al carrito.");
-    } catch {
-      setError("No pudimos agregar el artículo.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
   if (phase === "loading") {
     return (
       <PageFrame>
@@ -128,6 +228,9 @@ export function ProductDetail({ productId }: { productId: string }) {
         <p role="status" style={bodyStyle}>
           No encontramos ese artículo.
         </p>
+        <Link href="/explorar" style={linkStyle}>
+          Volver a Explorar
+        </Link>
       </PageFrame>
     );
   }
@@ -147,6 +250,7 @@ export function ProductDetail({ productId }: { productId: string }) {
   const { product, pricing, availability } = detail;
   const maqueta = detail.maquetaPriceLabel ?? maquetaPriceFor(product.id);
   const priceShown = maqueta ?? catalogPriceLabel(pricing);
+
   return (
     <PageFrame wide>
       <p style={mutedStyle}>
@@ -154,145 +258,125 @@ export function ProductDetail({ productId }: { productId: string }) {
           Inicio
         </Link>
         {" / "}
-        <Link href="/tiendas" style={linkStyle}>
-          Tiendas
+        <Link href="/explorar" style={linkStyle}>
+          Explorar
         </Link>
         {" / "}
         {product.name}
       </p>
       <div className="cve-pdp-layout">
         <div style={{ ...cardStyle, gap: spaceTokens[3] }}>
-          <PhotoSlot photos={product.photos} />
+          <div
+            role="status"
+            style={{
+              alignItems: "center",
+              background: `linear-gradient(160deg, ${colors.background}, ${colors.border})`,
+              borderRadius: 12,
+              color: colors.muted,
+              display: "flex",
+              fontWeight: 600,
+              justifyContent: "center",
+              minHeight: 280,
+            }}
+          >
+            Catálogo demo
+          </div>
         </div>
         <article style={{ ...cardStyle, gap: spaceTokens[3] }}>
           <p style={{ margin: 0 }}>
             <span style={badgeStyle}>Ficticio</span>
           </p>
           <h1 style={titleStyle}>{product.name}</h1>
-          <p style={mutedStyle}>Tienda: {product.store?.name ?? "Sin tienda."}</p>
-          <p style={mutedStyle}>Marca: {product.brand ?? "Sin marca en esta ficha."}</p>
           <p style={{ ...headingStyle, fontSize: 22, margin: 0 }}>{priceShown}</p>
-          {maqueta ? (
-            <p style={mutedStyle}>Precio de maqueta visible solo como demostración. No es una oferta real.</p>
+          <p style={bodyStyle}>
+            {availability.status === "UNKNOWN" || availability.quantity === null
+              ? `Disponibilidad desconocida. ${availability.note}`
+              : `Disponibilidad: ${availability.quantity}. ${availability.note}`}
+          </p>
+          {product.variants.length > 0 ? (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {product.variants.map((variant) => {
+                const selected = variant.id === selectedVariant;
+                return (
+                  <button
+                    key={variant.id}
+                    type="button"
+                    onClick={() => setSelectedVariant(variant.id)}
+                    style={{
+                      background: selected ? colors.primary : colors.surface,
+                      border: `1px solid ${selected ? colors.primary : colors.border}`,
+                      borderRadius: 999,
+                      color: selected ? colors.primaryOn : colors.text,
+                      cursor: "pointer",
+                      font: "inherit",
+                      minHeight: 40,
+                      padding: "0 14px",
+                    }}
+                  >
+                    {variant.name}
+                  </button>
+                );
+              })}
+            </div>
           ) : null}
-          <p style={bodyStyle}>{availabilityLabel(availability)}</p>
-          <VariantSlot
-            variants={product.variants}
-            selectedId={selectedVariant}
-            onSelect={setSelectedVariant}
-          />
           <p style={bodyStyle}>{product.description}</p>
-          <p style={mutedStyle}>{product.disclaimer}</p>
-          <div style={rowStyle}>
-            <button type="button" style={{ ...buttonStyle, minWidth: 180 }} disabled={busy} onClick={() => void add(false)}>
-              {busy ? "Espera…" : "Agregar al carrito"}
-            </button>
-            <button type="button" style={secondaryButtonStyle} disabled={busy} onClick={() => void add(true)}>
-              Comprar ahora
-            </button>
-          </div>
-          {message ? (
-            <p role="status" style={{ color: colors.success, marginTop: 12 }}>
-              {message} <Link href="/carrito">Ver carrito</Link>
-            </p>
-          ) : null}
-          {error ? (
-            <p role="alert" style={errorStyle}>
-              {error} {error.startsWith("Entra") ? <Link href="/entrar">Entrar</Link> : null}
-            </p>
-          ) : null}
+          <p style={mutedStyle}>Usa el catálogo DEMO en Explorar para el carrito mock compartido.</p>
+          <Link href="/explorar" style={{ ...buttonStyle, display: "inline-flex", alignItems: "center", textDecoration: "none" }}>
+            Ir a Explorar
+          </Link>
         </article>
       </div>
-      <section style={{ ...cardStyle, marginTop: spaceTokens[6] }}>
-        <h2 style={headingStyle}>Detalle</h2>
-        <p style={bodyStyle}>{product.description}</p>
-        <p style={mutedStyle}>Envío y reseñas reales no forman parte del catálogo demo.</p>
-      </section>
     </PageFrame>
   );
 }
 
-function PhotoSlot({ photos }: { photos: readonly string[] }) {
-  if (photos.length === 0) {
-    return (
-      <div
-        role="status"
-        style={{
-          alignItems: "center",
-          background: `linear-gradient(160deg, ${colors.background}, ${colors.border})`,
-          borderRadius: 12,
-          color: colors.muted,
-          display: "flex",
-          fontWeight: 600,
-          justifyContent: "center",
-          minHeight: 280,
-        }}
-      >
-        No hay fotos.
-      </div>
-    );
-  }
-  return (
-    <ul style={{ display: "grid", gap: 12, listStyle: "none", margin: 0, padding: 0 }}>
-      {photos.map((photo) => (
-        <li key={photo} style={{ ...cardStyle, margin: 0 }}>
-          {photo}
-        </li>
-      ))}
-    </ul>
-  );
-}
+const demoRoot: CSSProperties = {
+  display: "grid",
+  gap: 14,
+  margin: "0 auto",
+  maxWidth: 430,
+  width: "100%",
+};
 
-function VariantSlot({
-  variants,
-  selectedId,
-  onSelect,
-}: {
-  variants: readonly { id: string; name: string }[];
-  selectedId: string | null;
-  onSelect: (id: string) => void;
-}) {
-  if (variants.length === 0) {
-    return (
-      <p role="status" style={mutedStyle}>
-        No hay variantes.
-      </p>
-    );
-  }
-  return (
-    <div>
-      <p style={headingStyle}>Opciones</p>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-        {variants.map((variant) => {
-          const selected = variant.id === selectedId;
-          return (
-            <button
-              key={variant.id}
-              type="button"
-              onClick={() => onSelect(variant.id)}
-              style={{
-                background: selected ? colors.primary : colors.surface,
-                border: `1px solid ${selected ? colors.primary : colors.border}`,
-                borderRadius: 999,
-                color: selected ? colors.primaryOn : colors.text,
-                cursor: "pointer",
-                font: "inherit",
-                minHeight: 40,
-                padding: "0 14px",
-              }}
-            >
-              {variant.name}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+const demoCrumb: CSSProperties = { color: colors.muted, fontSize: 13, margin: 0 };
 
-function availabilityLabel(availability: CatalogAvailability): string {
-  if (availability.status === "UNKNOWN" || availability.quantity === null) {
-    return `Disponibilidad desconocida. ${availability.note}`;
-  }
-  return `Disponibilidad: ${availability.quantity}. ${availability.note}`;
-}
+const demoPhoto: CSSProperties = {
+  aspectRatio: "1 / 1",
+  background: "#FFFFFF",
+  border: "1px solid #E8EEF5",
+  borderRadius: 16,
+  overflow: "hidden",
+  position: "relative",
+  width: "100%",
+};
+
+const favBtn: CSSProperties = {
+  alignItems: "center",
+  background: "#F7FAFD",
+  border: "1px solid #E4EAF1",
+  borderRadius: 999,
+  color: "#E11D48",
+  cursor: "pointer",
+  display: "inline-flex",
+  fontSize: 20,
+  height: 40,
+  justifyContent: "center",
+  width: 40,
+};
+
+const toastStyle: CSSProperties = {
+  background: colors.deep,
+  borderRadius: 12,
+  bottom: "calc(72px + env(safe-area-inset-bottom, 0px))",
+  boxShadow: "0 8px 24px rgba(13,58,122,0.28)",
+  color: "#fff",
+  cursor: "pointer",
+  fontSize: 14,
+  fontWeight: 600,
+  left: "50%",
+  padding: "12px 18px",
+  position: "fixed",
+  transform: "translateX(-50%)",
+  whiteSpace: "nowrap",
+  zIndex: 5,
+};

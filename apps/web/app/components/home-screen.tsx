@@ -7,18 +7,22 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { apiBase } from "../lib/api";
+import { useDemoCommerce } from "../lib/demo-commerce";
 import {
-  formatDemoPrice,
   homeDemoBadges,
   homeDemoCategories,
-  homeDemoFeaturedProducts,
   homeDemoHero,
   homeDemoOffers,
   homeDemoRequest,
 } from "../lib/home.mock";
+import { demoProducts } from "../lib/products.mock";
 import { IconBell, IconHeart, IconSearch } from "./icons";
 import { PageFrame } from "./page-frame";
+import { ProductCard } from "./product-card";
 import { colors, radiusTokens } from "./styles";
+
+/** First three DEMO catalog items — same source as Explorar. */
+const featuredProducts = demoProducts.slice(0, 3);
 
 /**
  * TraeLo Home — DEMO visual presentation matching the approved mock.
@@ -27,6 +31,7 @@ import { colors, radiusTokens } from "./styles";
  */
 export function HomeScreen() {
   const router = useRouter();
+  const { toast, clearToast } = useDemoCommerce();
   const [draft, setDraft] = useState("");
   const [reachable, setReachable] = useState<boolean | null>(null);
 
@@ -135,30 +140,11 @@ export function HomeScreen() {
           </div>
         </Section>
 
-        {/* E — Featured products (DEMO mock) */}
+        {/* E — Featured products (DEMO mock) + Agregar al carrito */}
         <Section title="Productos destacados" seeAllLabel="Ver todos" onSeeAll={() => goExplore()}>
           <div style={productRow}>
-            {homeDemoFeaturedProducts.map((product) => (
-              <article key={product.id} style={productCard}>
-                <div style={productPhoto}>
-                  {product.discountPercent ? <span style={discountBadge}>-{product.discountPercent}%</span> : null}
-                  <button type="button" aria-label="Favorito" style={favHit}>
-                    <IconHeart />
-                  </button>
-                  <div style={productImageFrame}>
-                    <Image src={product.image} alt={product.name} fill unoptimized sizes="132px" style={productImage} />
-                  </div>
-                </div>
-                <p style={productName}>{product.name}</p>
-                <div style={priceRow}>
-                  <span style={productPrice}>{formatDemoPrice(product.price)}</span>
-                  {product.compareAtPrice ? <span style={comparePrice}>{formatDemoPrice(product.compareAtPrice)}</span> : null}
-                </div>
-                <div style={ratingRow} aria-label={`${product.rating} estrellas, ${product.reviewCount} reseñas`}>
-                  <Stars value={product.rating} />
-                  <span style={reviewCount}>({product.reviewCount})</span>
-                </div>
-              </article>
+            {featuredProducts.map((product) => (
+              <ProductCard key={product.id} product={product} variant="compact" />
             ))}
           </div>
         </Section>
@@ -216,15 +202,33 @@ export function HomeScreen() {
         </Section>
 
       </div>
-    </PageFrame>
-  );
-}
 
-function Stars({ value }: { value: number }) {
-  return (
-    <span aria-hidden="true" style={{ color: "#F5A524", fontSize: 12, letterSpacing: 1, lineHeight: 1 }}>
-      {"★".repeat(Math.round(value))}
-    </span>
+      {toast ? (
+        <div
+          role="status"
+          aria-live="polite"
+          onClick={clearToast}
+          style={{
+            background: colors.deep,
+            borderRadius: 12,
+            bottom: "calc(72px + env(safe-area-inset-bottom, 0px))",
+            boxShadow: "0 8px 24px rgba(13,58,122,0.28)",
+            color: "#fff",
+            cursor: "pointer",
+            fontSize: 14,
+            fontWeight: 600,
+            left: "50%",
+            padding: "12px 18px",
+            position: "fixed",
+            transform: "translateX(-50%)",
+            whiteSpace: "nowrap",
+            zIndex: 5,
+          }}
+        >
+          {toast}
+        </div>
+      ) : null}
+    </PageFrame>
   );
 }
 
@@ -417,85 +421,6 @@ const productRow: CSSProperties = {
   msOverflowStyle: "none",
   WebkitOverflowScrolling: "touch",
 };
-
-const productCard: CSSProperties = {
-  background: "#fff",
-  border: "1px solid #E8EEF5",
-  borderRadius: 14,
-  boxShadow: "0 4px 14px rgba(20,36,59,0.06)",
-  display: "flex",
-  flex: "0 0 148px",
-  flexDirection: "column",
-  padding: 8,
-  width: 148,
-};
-
-const productPhoto: CSSProperties = {
-  aspectRatio: "1 / 1",
-  background: "#FFFFFF",
-  borderRadius: 10,
-  marginBottom: 6,
-  overflow: "hidden",
-  position: "relative",
-  width: "100%",
-};
-
-const productImageFrame: CSSProperties = {
-  bottom: 10,
-  left: 10,
-  position: "absolute",
-  right: 10,
-  top: 10,
-};
-
-const productImage: CSSProperties = {
-  objectFit: "contain",
-  objectPosition: "center center",
-};
-
-const discountBadge: CSSProperties = {
-  background: "#E11D48",
-  borderRadius: 6,
-  color: "#fff",
-  fontSize: 10,
-  fontWeight: 700,
-  left: 6,
-  padding: "2px 6px",
-  position: "absolute",
-  top: 6,
-  zIndex: 1,
-};
-
-const favHit: CSSProperties = {
-  alignItems: "center",
-  background: "transparent",
-  border: "none",
-  cursor: "pointer",
-  display: "inline-flex",
-  height: 28,
-  justifyContent: "center",
-  padding: 0,
-  position: "absolute",
-  right: 2,
-  top: 2,
-  width: 28,
-  zIndex: 1,
-};
-
-const productName: CSSProperties = {
-  color: colors.deep,
-  fontSize: 13,
-  fontWeight: 700,
-  lineHeight: 1.25,
-  margin: "0 0 4px",
-  minHeight: 32,
-};
-
-const priceRow: CSSProperties = { alignItems: "baseline", display: "flex", gap: 6, marginBottom: 2, marginTop: "auto" };
-const productPrice: CSSProperties = { color: colors.primary, fontSize: 15, fontWeight: 800 };
-const comparePrice: CSSProperties = { color: colors.muted, fontSize: 12, textDecoration: "line-through" };
-const ratingRow: CSSProperties = { alignItems: "center", display: "flex", gap: 4 };
-const reviewCount: CSSProperties = { color: colors.muted, fontSize: 11 };
 
 const requestBanner: CSSProperties = {
   alignItems: "center",

@@ -120,7 +120,8 @@ export const homeDemoRequest = {
 
 export const homeDemoBadges = {
   notifications: 1,
-  cart: 3,
+  /** @deprecated Prefer useDemoCommerce().getCartCount() */
+  cart: 0,
 } as const;
 
 export function formatDemoPrice(value: number): string {

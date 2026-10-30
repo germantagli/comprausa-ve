@@ -46,16 +46,52 @@ export function IconExplore({ active = false }: { active?: boolean }) {
   );
 }
 
-export function IconHeart({ active = false }: { active?: boolean }) {
-  const stroke = active ? colors.primary : colors.primary;
+export function IconHeart({ active = false, filled = false }: { active?: boolean; filled?: boolean }) {
+  const on = filled || active;
+  const stroke = on ? "#E11D48" : colors.primary;
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" style={base}>
       <path
         d="M12 20s-7-4.4-7-9.2A4.2 4.2 0 0 1 12 7.5a4.2 4.2 0 0 1 7 3.3C19 15.6 12 20 12 20Z"
+        fill={on ? "#E11D48" : "none"}
         stroke={stroke}
         strokeWidth="1.8"
         strokeLinejoin="round"
       />
+    </svg>
+  );
+}
+
+/** Small cart glyph for primary (blue) buttons — white stroke. */
+export function IconCartSmall({ light = false }: { light?: boolean }) {
+  const stroke = light ? "#FFFFFF" : colors.primary;
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true" style={base}>
+      <path
+        d="M3 5h2l2.2 11h10.3l2-8H7.2"
+        stroke={stroke}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="10" cy="19" r="1.4" fill={stroke} />
+      <circle cx="17" cy="19" r="1.4" fill={stroke} />
+    </svg>
+  );
+}
+
+export function IconFilter() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" style={base}>
+      <path d="M4 6h16M7 12h10M10 18h4" stroke={colors.deep} strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconClose() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true" style={base}>
+      <path d="M6 6l12 12M18 6 6 18" stroke={colors.muted} strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
 }
