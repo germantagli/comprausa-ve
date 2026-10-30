@@ -170,28 +170,37 @@ export function HomeScreen() {
 
         {/* F — Request product */}
         <section aria-label="Solicitar producto" style={requestBanner}>
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <Image
+            src={homeDemoRequest.backgroundArt}
+            alt=""
+            fill
+            unoptimized
+            sizes="(max-width: 430px) 100vw, 430px"
+            style={{ objectFit: "cover", objectPosition: "right center" }}
+          />
+          <div style={requestCopy}>
             <h2 style={{ color: colors.deep, fontSize: 16, fontWeight: 800, margin: "0 0 4px" }}>{homeDemoRequest.title}</h2>
             <p style={{ color: colors.muted, fontSize: 12, lineHeight: 1.35, margin: "0 0 12px" }}>{homeDemoRequest.subtitle}</p>
             <Link href="/solicitar" style={requestCta}>
               {homeDemoRequest.cta} →
             </Link>
           </div>
-          <Image src={homeDemoRequest.art} alt="" width={120} height={90} unoptimized style={{ flexShrink: 0, height: 86, objectFit: "contain", width: 120 }} />
         </section>
 
         {/* G — Special offers */}
         <Section title="Ofertas especiales" onSeeAll={() => goExplore()}>
           <div style={offerGrid}>
             {homeDemoOffers.map((offer) => (
-              <button
-                key={offer.id}
-                type="button"
-                onClick={() => goExplore(offer.exploreQuery)}
-                style={{ ...offerCard, background: offer.background }}
-              >
-                <span style={{ ...offerPercent, background: offer.badgeColor }}>%</span>
-                <div style={{ position: "relative", zIndex: 1 }}>
+              <button key={offer.id} type="button" onClick={() => goExplore(offer.exploreQuery)} style={offerCard}>
+                <Image
+                  src={offer.backgroundArt}
+                  alt=""
+                  fill
+                  unoptimized
+                  sizes="200px"
+                  style={{ objectFit: "cover", objectPosition: "right center" }}
+                />
+                <div style={offerCopy}>
                   <p style={{ ...offerTitle, color: offer.titleColor }}>{offer.title}</p>
                   {offer.subtitle ? <p style={{ ...offerBody, color: offer.titleColor, opacity: 0.85 }}>{offer.subtitle}</p> : null}
                   <span
@@ -204,14 +213,6 @@ export function HomeScreen() {
                     Ver ofertas →
                   </span>
                 </div>
-                <Image
-                  src={offer.art}
-                  alt=""
-                  width={90}
-                  height={70}
-                  unoptimized
-                  style={{ bottom: 6, height: 64, objectFit: "contain", position: "absolute", right: 4, width: 88 }}
-                />
               </button>
             ))}
           </div>
@@ -483,14 +484,15 @@ const ratingRow: CSSProperties = { alignItems: "center", display: "flex", gap: 4
 const reviewCount: CSSProperties = { color: colors.muted, fontSize: 11 };
 
 const requestBanner: CSSProperties = {
-  alignItems: "center",
-  background: "linear-gradient(135deg, #EAF3FF 0%, #F5F9FF 100%)",
   borderRadius: 16,
-  display: "flex",
-  gap: 8,
+  isolation: "isolate",
+  minHeight: 128,
   overflow: "hidden",
-  padding: "14px 12px 14px 16px",
+  padding: "16px 14px 16px 16px",
+  position: "relative",
 };
+
+const requestCopy: CSSProperties = { maxWidth: "58%", position: "relative", zIndex: 1 };
 
 const requestCta: CSSProperties = {
   background: "#fff",
@@ -512,29 +514,16 @@ const offerCard: CSSProperties = {
   borderRadius: 14,
   cursor: "pointer",
   font: "inherit",
-  minHeight: 132,
+  isolation: "isolate",
+  minHeight: 148,
   overflow: "hidden",
   padding: "12px 10px",
   position: "relative",
   textAlign: "left",
 };
-const offerPercent: CSSProperties = {
-  alignItems: "center",
-  borderRadius: 8,
-  color: "#fff",
-  display: "inline-flex",
-  fontSize: 11,
-  fontWeight: 800,
-  height: 22,
-  justifyContent: "center",
-  position: "absolute",
-  right: 8,
-  top: 8,
-  width: 22,
-  zIndex: 2,
-};
-const offerTitle: CSSProperties = { fontSize: 13, fontWeight: 800, lineHeight: 1.25, margin: "0 0 4px", maxWidth: "70%" };
-const offerBody: CSSProperties = { fontSize: 10, lineHeight: 1.3, margin: "0 0 10px", maxWidth: "68%" };
+const offerCopy: CSSProperties = { maxWidth: "62%", position: "relative", zIndex: 1 };
+const offerTitle: CSSProperties = { fontSize: 13, fontWeight: 800, lineHeight: 1.25, margin: "0 0 4px" };
+const offerBody: CSSProperties = { fontSize: 10, lineHeight: 1.3, margin: "0 0 10px" };
 const offerLinkBtn: CSSProperties = {
   borderRadius: 999,
   display: "inline-flex",

@@ -28,12 +28,11 @@ export type HomeDemoOffer = {
   title: string;
   subtitle?: string;
   exploreQuery: string;
-  background: string;
   titleColor: string;
   buttonBackground: string;
   buttonColor: string;
-  art: string;
-  badgeColor: string;
+  /** Full banner art — left open for live title/CTA. */
+  backgroundArt: string;
 };
 
 /** Six Home categories — DEMO labels + local mock art. */
@@ -81,24 +80,20 @@ export const homeDemoOffers: readonly HomeDemoOffer[] = [
     id: "electronics",
     title: "Electrónica con descuentos",
     exploreQuery: "Tecnología",
-    background: "linear-gradient(135deg, #F7F1E8 0%, #EEF4FF 100%)",
     titleColor: "#0D3A7A",
     buttonBackground: "#1B5FC7",
     buttonColor: "#FFFFFF",
-    art: "/brand/home/demo/offer-electronics-art.webp",
-    badgeColor: "#F97316",
+    backgroundArt: "/brand/home/demo/offer-electronics.webp",
   },
   {
     id: "fashion",
     title: "Moda y calzado",
     subtitle: "Las mejores marcas a un mejor precio",
     exploreQuery: "Moda",
-    background: "linear-gradient(135deg, #FCE7F3 0%, #FBCFE8 100%)",
     titleColor: "#9D174D",
     buttonBackground: "#DB2777",
     buttonColor: "#FFFFFF",
-    art: "/brand/home/demo/offer-fashion-art.webp",
-    badgeColor: "#EC4899",
+    backgroundArt: "/brand/home/demo/offer-fashion.webp",
   },
 ] as const;
 
@@ -116,6 +111,8 @@ export const homeDemoRequest = {
   title: "¿No encuentras un producto?",
   subtitle: "Envíanos el enlace y te preparamos una cotización.",
   cta: "Solicitar producto",
+  /** Full banner — left open for live title/CTA. */
+  backgroundArt: "/brand/home/demo/request-banner.webp",
   art: "/brand/home/demo/request-art.webp",
 } as const;
 
