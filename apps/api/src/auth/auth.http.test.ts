@@ -50,7 +50,7 @@ describe("auth HTTP", () => {
   let booted: Booted;
 
   beforeAll(async () => {
-    booted = await boot(parseAppEnv({ NODE_ENV: "development", OTP_PROVIDER: "simulated" }));
+    booted = await boot(parseAppEnv({ NODE_ENV: "development", OTP_PROVIDER: "simulated", ALLOW_IN_MEMORY_PERSISTENCE: "true" }));
   });
 
   afterAll(async () => {
@@ -262,7 +262,7 @@ describe("auth HTTP limits", () => {
   let booted: Booted;
 
   beforeAll(async () => {
-    booted = await boot(parseAppEnv({ NODE_ENV: "development", OTP_PROVIDER: "simulated" }), {
+    booted = await boot(parseAppEnv({ NODE_ENV: "development", OTP_PROVIDER: "simulated", ALLOW_IN_MEMORY_PERSISTENCE: "true" }), {
       challenge: { identity: 20, ip: 1, device: 20, windowMs: 60_000 },
       verify: defaultAuthRatePolicy.verify,
     });
@@ -295,7 +295,7 @@ describe("auth HTTP without the simulated provider", () => {
   let booted: Booted;
 
   beforeAll(async () => {
-    booted = await boot(parseAppEnv({ NODE_ENV: "development" }));
+    booted = await boot(parseAppEnv({ NODE_ENV: "development", ALLOW_IN_MEMORY_PERSISTENCE: "true" }));
   });
 
   afterAll(async () => {

@@ -4,20 +4,47 @@ import { DEVELOPMENT_AUTH_TOKEN_SECRET, parseAppEnv } from "./index";
 const productionSecret = "production-secret-value-with-32ch";
 
 describe("parseAppEnv", () => {
-  it("allows development without a database and without simulated OTP", () => {
-    const env = parseAppEnv({ NODE_ENV: "development" });
+  it("refuses development without DATABASE_URL unless memory persistence is explicit", () => {
+    expect(() => parseAppEnv({ NODE_ENV: "development" })).toThrow(/ALLOW_IN_MEMORY_PERSISTENCE/);
+  });
+
+  it("allows development without a database when memory persistence is opted in", () => {
+    const env = parseAppEnv({ NODE_ENV: "development", ALLOW_IN_MEMORY_PERSISTENCE: "true" });
     expect(env.databaseUrl).toBeUndefined();
+    expect(env.allowInMemoryPersistence).toBe(true);
+    expect(env.persistence).toBe("memory");
     expect(env.simulatedOtpAllowed).toBe(false);
     expect(env.otpProvider).toBe("none");
     expect(env.authTokenSecret).toBe(DEVELOPMENT_AUTH_TOKEN_SECRET);
+  });
+
+  it("uses postgres persistence when DATABASE_URL is set in development", () => {
+    const env = parseAppEnv({
+      NODE_ENV: "development",
+      DATABASE_URL: "postgresql://comprausa:comprausa@127.0.0.1:5432/comprausa",
+    });
+    expect(env.persistence).toBe("postgres");
+    expect(env.allowInMemoryPersistence).toBe(false);
   });
 
   it("allows simulated OTP only in development", () => {
     const env = parseAppEnv({
       NODE_ENV: "development",
       OTP_PROVIDER: "simulated",
+      ALLOW_IN_MEMORY_PERSISTENCE: "true",
     });
     expect(env.simulatedOtpAllowed).toBe(true);
+  });
+
+  it("refuses in-memory persistence flag in production", () => {
+    expect(() =>
+      parseAppEnv({
+        NODE_ENV: "production",
+        DATABASE_URL: "postgresql://comprausa:comprausa@127.0.0.1:5432/comprausa",
+        AUTH_TOKEN_SECRET: productionSecret,
+        ALLOW_IN_MEMORY_PERSISTENCE: "true",
+      }),
+    ).toThrow(/ALLOW_IN_MEMORY_PERSISTENCE/);
   });
 
   it("refuses simulated OTP in test and in production", () => {
@@ -57,19 +84,20 @@ describe("parseAppEnv", () => {
   });
 
   it("requires Resend credentials when OTP_PROVIDER=resend", () => {
-    expect(() => parseAppEnv({ NODE_ENV: "development", OTP_PROVIDER: "resend" })).toThrow(/RESEND_API_KEY/);
+    expect(() => parseAppEnv({ NODE_ENV: "development", OTP_PROVIDER: "resend", ALLOW_IN_MEMORY_PERSISTENCE: "true" })).toThrow(/RESEND_API_KEY/);
     const env = parseAppEnv({
       NODE_ENV: "development",
       OTP_PROVIDER: "resend",
       RESEND_API_KEY: "re_test",
       OTP_EMAIL_FROM: "TraeLo <otp@traelo.test>",
+      ALLOW_IN_MEMORY_PERSISTENCE: "true",
     });
     expect(env.otpProvider).toBe("resend");
     expect(env.resendOtp?.from).toContain("otp@traelo.test");
   });
 
   it("requires Twilio credentials when OTP_PROVIDER=twilio", () => {
-    expect(() => parseAppEnv({ NODE_ENV: "development", OTP_PROVIDER: "twilio" })).toThrow(/TWILIO_ACCOUNT_SID/);
+    expect(() => parseAppEnv({ NODE_ENV: "development", OTP_PROVIDER: "twilio", ALLOW_IN_MEMORY_PERSISTENCE: "true" })).toThrow(/TWILIO_ACCOUNT_SID/);
     const env = parseAppEnv({
       NODE_ENV: "production",
       DATABASE_URL: "postgresql://comprausa:comprausa@127.0.0.1:5432/comprausa",
@@ -84,9 +112,9 @@ describe("parseAppEnv", () => {
   });
 
   it("accepts a Stripe test key and refuses a live key", () => {
-    const env = parseAppEnv({ NODE_ENV: "development", STRIPE_SECRET_KEY: "sk_test_local_only" });
+    const env = parseAppEnv({ NODE_ENV: "development", ALLOW_IN_MEMORY_PERSISTENCE: "true", STRIPE_SECRET_KEY: "sk_test_local_only" });
     expect(env.stripeTestKey).toBe("sk_test_local_only");
-    expect(() => parseAppEnv({ NODE_ENV: "development", STRIPE_SECRET_KEY: "sk_live_real" })).toThrow(/live keys/);
-    expect(() => parseAppEnv({ NODE_ENV: "development", STRIPE_WEBHOOK_SECRET: "not-a-webhook-secret" })).toThrow(/webhook/);
+    expect(() => parseAppEnv({ NODE_ENV: "development", ALLOW_IN_MEMORY_PERSISTENCE: "true", STRIPE_SECRET_KEY: "sk_live_real" })).toThrow(/live keys/);
+    expect(() => parseAppEnv({ NODE_ENV: "development", ALLOW_IN_MEMORY_PERSISTENCE: "true", STRIPE_WEBHOOK_SECRET: "not-a-webhook-secret" })).toThrow(/webhook/);
   });
 });

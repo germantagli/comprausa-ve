@@ -25,6 +25,11 @@ const envSchema = z.object({
   PAGO_MOVIL_BANK: z.string().optional(),
   PAGO_MOVIL_PHONE: z.string().optional(),
   PAGO_MOVIL_HOLDER: z.string().optional(),
+  /**
+   * Explicit opt-in for in-memory auth/product-request stores when DATABASE_URL is absent.
+   * Refused in production. Required in development without DATABASE_URL. Allowed implicitly in test.
+   */
+  ALLOW_IN_MEMORY_PERSISTENCE: z.enum(["true", "1", "false", "0"]).optional(),
 });
 
 export interface ResendOtpEnv {
@@ -46,6 +51,13 @@ export interface AppEnv {
   otpProvider: "simulated" | "none" | "resend" | "twilio";
   /** True only when NODE_ENV is development and OTP_PROVIDER is simulated. */
   simulatedOtpAllowed: boolean;
+  /**
+   * When true, repositories may use process memory (no Postgres).
+   * Never true in production. In development requires ALLOW_IN_MEMORY_PERSISTENCE when DATABASE_URL is absent.
+   */
+  allowInMemoryPersistence: boolean;
+  /** Where durable domain data is expected to live. */
+  persistence: "postgres" | "memory";
   resendOtp: ResendOtpEnv | undefined;
   twilioVerify: TwilioVerifyEnv | undefined;
   googleClientIds: string[];
@@ -80,6 +92,7 @@ export interface EnvSource {
   PAGO_MOVIL_BANK?: string;
   PAGO_MOVIL_PHONE?: string;
   PAGO_MOVIL_HOLDER?: string;
+  ALLOW_IN_MEMORY_PERSISTENCE?: string;
 }
 
 export function parseAppEnv(source: EnvSource): AppEnv {
@@ -160,6 +173,9 @@ export function parseAppEnv(source: EnvSource): AppEnv {
   if (pagoMovilHolder) {
     input.PAGO_MOVIL_HOLDER = pagoMovilHolder;
   }
+  if (source.ALLOW_IN_MEMORY_PERSISTENCE) {
+    input.ALLOW_IN_MEMORY_PERSISTENCE = source.ALLOW_IN_MEMORY_PERSISTENCE;
+  }
   const parsed = envSchema.safeParse(input);
   if (!parsed.success) {
     throw new Error(`Invalid environment: ${parsed.error.issues.map((issue) => issue.message).join("; ")}`);
@@ -167,6 +183,7 @@ export function parseAppEnv(source: EnvSource): AppEnv {
 
   const nodeEnv = parsed.data.NODE_ENV;
   const otpProvider = parsed.data.OTP_PROVIDER;
+  const memoryFlag = parsed.data.ALLOW_IN_MEMORY_PERSISTENCE === "true" || parsed.data.ALLOW_IN_MEMORY_PERSISTENCE === "1";
   const issues: string[] = [];
   if (otpProvider === "simulated" && nodeEnv !== "development") {
     issues.push("OTP_PROVIDER=simulated is refused unless NODE_ENV is development");
@@ -193,6 +210,14 @@ export function parseAppEnv(source: EnvSource): AppEnv {
   if (nodeEnv === "production" && parsed.data.DATABASE_URL === undefined) {
     issues.push("DATABASE_URL is required in production");
   }
+  if (nodeEnv === "production" && memoryFlag) {
+    issues.push("ALLOW_IN_MEMORY_PERSISTENCE is refused in production");
+  }
+  if (nodeEnv === "development" && parsed.data.DATABASE_URL === undefined && !memoryFlag) {
+    issues.push(
+      "DATABASE_URL is required in development unless ALLOW_IN_MEMORY_PERSISTENCE=true (ephemeral demo only)",
+    );
+  }
   if (nodeEnv === "production") {
     if (authTokenSecret === undefined || authTokenSecret.length < 32) {
       issues.push("AUTH_TOKEN_SECRET must be at least 32 characters in production");
@@ -212,6 +237,10 @@ export function parseAppEnv(source: EnvSource): AppEnv {
     throw new Error(issues.join("; "));
   }
 
+  const hasDatabase = Boolean(parsed.data.DATABASE_URL);
+  const allowInMemoryPersistence =
+    !hasDatabase && (nodeEnv === "test" || (nodeEnv === "development" && memoryFlag));
+
   return {
     nodeEnv,
     port: parsed.data.PORT,
@@ -219,6 +248,8 @@ export function parseAppEnv(source: EnvSource): AppEnv {
     databaseUrl: parsed.data.DATABASE_URL,
     otpProvider,
     simulatedOtpAllowed: nodeEnv === "development" && otpProvider === "simulated",
+    allowInMemoryPersistence,
+    persistence: hasDatabase ? "postgres" : "memory",
     resendOtp:
       otpProvider === "resend" && resendApiKey && otpEmailFrom
         ? { apiKey: resendApiKey, from: otpEmailFrom }

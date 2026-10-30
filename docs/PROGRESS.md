@@ -25,9 +25,9 @@
 
 ## Siguiente incremento
 
-1. Aprobar y aplicar migración de solicitudes en Postgres/Railway.
+1. Autorizar redeploy/migrate de solicitudes en Railway (ver `docs/RAILWAY_PRODUCT_REQUESTS.md`); rutas ya montadas en prod (`401`), confirmar tablas.
 2. Integración real de pagos para pedidos nacidos de cotización aceptada.
-3. Cargar Resend + Google/Apple client IDs en Railway.
+3. Cargar Google/Apple client IDs en Railway (OTP Resend ya activo en prod).
 4. Persistencia commerce (carrito) en Postgres.
 
 ## Railway (verificado por HTTP en esta sesión)

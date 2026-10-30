@@ -62,7 +62,7 @@ describe("manual order tracking", () => {
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [AuthModule.registerFrom(parseAppEnv({ NODE_ENV: "development", OTP_PROVIDER: "simulated" })), CommerceModule],
+      imports: [AuthModule.registerFrom(parseAppEnv({ NODE_ENV: "development", OTP_PROVIDER: "simulated", ALLOW_IN_MEMORY_PERSISTENCE: "true" })), CommerceModule],
     }).compile();
     app = moduleRef.createNestApplication({ logger: false });
     app.useGlobalFilters(new ZodExceptionFilter());

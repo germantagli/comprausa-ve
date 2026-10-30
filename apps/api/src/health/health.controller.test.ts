@@ -5,8 +5,10 @@ import { HealthController } from "./health.controller";
 
 describe("HealthController", () => {
   it("reports not ready when Postgres is not configured", async () => {
-    const controller = new HealthController(parseAppEnv({ NODE_ENV: "development" }), undefined);
+    const controller = new HealthController(parseAppEnv({ NODE_ENV: "development", ALLOW_IN_MEMORY_PERSISTENCE: "true" }), undefined);
     expect(controller.live().otp).toBe("not_configured");
+    expect(controller.live().persistence).toBe("memory");
+    expect(controller.live().productRequests).toBe("memory");
     await expect(controller.ready()).rejects.toBeInstanceOf(ServiceUnavailableException);
   });
 
@@ -17,6 +19,7 @@ describe("HealthController", () => {
         OTP_PROVIDER: "resend",
         RESEND_API_KEY: "re_test",
         OTP_EMAIL_FROM: "TraeLo <otp@traelo.test>",
+        ALLOW_IN_MEMORY_PERSISTENCE: "true",
       }),
       undefined,
     );
@@ -29,6 +32,7 @@ describe("HealthController", () => {
         TWILIO_ACCOUNT_SID: "ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
         TWILIO_AUTH_TOKEN: "token",
         TWILIO_VERIFY_SERVICE_SID: "VAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        ALLOW_IN_MEMORY_PERSISTENCE: "true",
       }),
       undefined,
     );

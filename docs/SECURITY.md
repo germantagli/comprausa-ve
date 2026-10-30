@@ -24,7 +24,7 @@ Correo y teléfono se normalizan antes de limitar y de emitir. Una cuenta nueva 
 
 La sesión guarda el refresh token solo como SHA-256. El valor opaco sale de `crypto.randomBytes`. Cada refresh rota el token: el anterior queda con `rotatedAt` y `revokedAt`. Presentar un token ya rotado revoca la familia. Cerrar sesión pone `revokedAt` en esa sesión y deja viva al resto de la familia. El access token es un JWT HS256 de 15 minutos firmado con `jose`, con `sub`, `sid`, `role` y `mfa`. El secreto de firma en producción es `AUTH_TOKEN_SECRET` (32 caracteres o más) y no puede ser el marcador de desarrollo. El alta de una cuenta nueva usa un JWT de registro de 10 minutos, de un solo uso, guardado como `RegistrationGrant` sin el OTP.
 
-Sin `DATABASE_URL`, desarrollo y pruebas usan `MemoryAuthRepository`. Producción exige Postgres y `PrismaAuthRepository`. El cliente de Prisma no se construye si falta la URL.
+Sin `DATABASE_URL`, desarrollo exige `ALLOW_IN_MEMORY_PERSISTENCE=true` (repositorios en memoria, efímeros; la UI avisa). En `test` la memoria sigue permitida sin el flag. Producción exige Postgres y rechaza el flag de memoria. Con `DATABASE_URL`, auth y solicitudes usan Prisma. El cliente de Prisma no se construye si falta la URL.
 
 ## Autorización
 

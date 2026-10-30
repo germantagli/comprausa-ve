@@ -42,7 +42,9 @@ Flujo persistido distinto del carrito demo:
 4. Cliente acepta → `ACCEPTED` + pedido en estado pendiente de pago (snapshot de precios; **no** marcado como pagado).
 5. Cliente rechaza → `REJECTED`.
 
-Montos en centavos USD (`BigInt`). Totales calculados solo en el backend. Migración: `20261030220000_product_requests`. No aplicar en producción sin respaldo y aprobación explícita.
+Montos en centavos USD (`BigInt`). Totales calculados solo en el backend. Migración: `20261030220000_product_requests`. Procedimiento Railway: `docs/RAILWAY_PRODUCT_REQUESTS.md`. No aplicar en producción sin respaldo y aprobación explícita.
+
+Producción exige Postgres (`DATABASE_URL`). Desarrollo sin DB exige `ALLOW_IN_MEMORY_PERSISTENCE=true` (efímero; banner en UI).
 
 UI staff: misma app TraeLo en `/admin` y `/admin/solicitudes` (rol distinto de `CUSTOMER`). UI cliente: `/solicitar`, `/mis-cotizaciones`, `/notificaciones`.
 

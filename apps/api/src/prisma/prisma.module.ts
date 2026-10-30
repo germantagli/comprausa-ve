@@ -8,10 +8,11 @@ export class PrismaModule {
   static register(): DynamicModule {
     const env = parseAppEnv(process.env);
     if (env.databaseUrl === undefined) {
-      return { module: PrismaModule };
+      return { module: PrismaModule, global: true };
     }
     return {
       module: PrismaModule,
+      global: true,
       providers: [PrismaService],
       exports: [PrismaService],
     };

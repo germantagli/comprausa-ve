@@ -2,6 +2,8 @@ import { Module, type DynamicModule } from "@nestjs/common";
 import { parseAppEnv } from "@comprausa/config";
 import { MemoryAuthRepository } from "../auth/memory-auth.repository";
 import { StaffGuard } from "../auth/staff.guard";
+import { PrismaModule } from "../prisma/prisma.module";
+import { PrismaService } from "../prisma/prisma.service";
 import { AdminProductRequestController } from "./admin-product-request.controller";
 import { InboxController } from "./inbox.controller";
 import { MemoryProductRequestRepository } from "./memory-product-request.repository";
@@ -14,9 +16,15 @@ import { PrismaProductRequestRepository } from "./prisma-product-request.reposit
 export class ProductRequestModule {
   static register(): DynamicModule {
     const env = parseAppEnv(process.env);
-    const usePrisma = Boolean(env.databaseUrl);
+    const usePrisma = env.persistence === "postgres";
+    if (!usePrisma && !env.allowInMemoryPersistence) {
+      throw new Error(
+        "ProductRequestModule requires DATABASE_URL (Prisma) or ALLOW_IN_MEMORY_PERSISTENCE=true in non-production",
+      );
+    }
     return {
       module: ProductRequestModule,
+      imports: usePrisma ? [PrismaModule.register()] : [],
       controllers: [ProductRequestController, AdminProductRequestController, InboxController],
       providers: [
         ProductRequestService,
@@ -24,7 +32,11 @@ export class ProductRequestModule {
         ...(usePrisma
           ? [
               MemoryProductRequestRepository,
-              PrismaProductRequestRepository,
+              {
+                provide: PrismaProductRequestRepository,
+                useFactory: (prisma: PrismaService) => new PrismaProductRequestRepository(prisma),
+                inject: [PrismaService],
+              },
               { provide: PRODUCT_REQUEST_REPOSITORY, useExisting: PrismaProductRequestRepository },
             ]
           : [
