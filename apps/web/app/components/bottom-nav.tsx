@@ -1,8 +1,12 @@
 "use client";
 
+import { getCart } from "@comprausa/api-client";
 import { fontTokens, spaceTokens } from "@comprausa/design-tokens";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { apiBase } from "../lib/api";
+import { readSession } from "../lib/session";
 import { IconCart, IconExplore, IconHome, IconOrders, IconProfile } from "./icons";
 import { colors } from "./styles";
 
@@ -16,6 +20,31 @@ const items = [
 
 export function BottomNav() {
   const pathname = usePathname();
+  const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    const session = readSession();
+    if (!session?.accessToken) {
+      setCartCount(0);
+      return;
+    }
+    getCart(apiBase, session.accessToken)
+      .then((cart) => {
+        if (!cancelled) {
+          setCartCount(cart.groups.reduce((sum, group) => sum + group.items.reduce((inner, item) => inner + item.quantity, 0), 0));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCartCount(0);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname]);
+
   return (
     <nav
       aria-label="Principal"
@@ -56,7 +85,32 @@ export function BottomNav() {
               textDecoration: "none",
             }}
           >
-            <item.Icon active={current} />
+            <span style={{ display: "inline-flex", position: "relative" }}>
+              <item.Icon active={current} />
+              {item.href === "/carrito" && cartCount > 0 ? (
+                <span
+                  aria-label={`${cartCount} en el carrito`}
+                  style={{
+                    alignItems: "center",
+                    background: "#E11D48",
+                    borderRadius: 999,
+                    color: "#fff",
+                    display: "inline-flex",
+                    fontSize: 10,
+                    fontWeight: 700,
+                    height: 15,
+                    justifyContent: "center",
+                    minWidth: 15,
+                    padding: "0 3px",
+                    position: "absolute",
+                    right: -8,
+                    top: -4,
+                  }}
+                >
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
+              ) : null}
+            </span>
             {item.label}
           </Link>
         );

@@ -1,7 +1,6 @@
 /**
- * Partner destinations and browse categories shown on Home.
- * These are directory labels for navigation/search — not live purchase connectors
- * and not a claim of priced inventory.
+ * Catalog directory labels for navigation.
+ * Not live purchase connectors and not a claim of priced inventory.
  */
 
 export type CatalogDirectoryItem = {
@@ -9,7 +8,10 @@ export type CatalogDirectoryItem = {
   name: string;
 };
 
-/** Popular partner destinations from the product mock (Home grid). */
+/**
+ * Partner store codes retained for internal ops / explore — not shown on Home.
+ * Home is TraeLo’s own catalog (no third-party store logos).
+ */
 export const catalogPartnerStores: readonly CatalogDirectoryItem[] = [
   { id: "amazon", name: "Amazon" },
   { id: "walmart", name: "Walmart" },
@@ -21,10 +23,10 @@ export const catalogPartnerStores: readonly CatalogDirectoryItem[] = [
   { id: "apple", name: "Apple" },
 ] as const;
 
-/** Browse categories shown on Home. No priced products attached. */
+/** Full browse taxonomy. */
 export const catalogBrowseCategories: readonly CatalogDirectoryItem[] = [
-  { id: "electronica", name: "Electrónica" },
-  { id: "ropa", name: "Ropa y Moda" },
+  { id: "electronica", name: "Tecnología" },
+  { id: "ropa", name: "Moda" },
   { id: "calzado", name: "Calzado" },
   { id: "hogar", name: "Hogar" },
   { id: "belleza", name: "Belleza" },
@@ -33,4 +35,14 @@ export const catalogBrowseCategories: readonly CatalogDirectoryItem[] = [
   { id: "supermercado", name: "Supermercado" },
   { id: "videojuegos", name: "Videojuegos" },
   { id: "herramientas", name: "Herramientas" },
+] as const;
+
+/** Six categories featured on the TraeLo Home mock. */
+export const homeFeaturedCategories: readonly CatalogDirectoryItem[] = [
+  { id: "electronica", name: "Tecnología" },
+  { id: "ropa", name: "Moda" },
+  { id: "calzado", name: "Calzado" },
+  { id: "hogar", name: "Hogar" },
+  { id: "belleza", name: "Belleza" },
+  { id: "deportes", name: "Deportes" },
 ] as const;
