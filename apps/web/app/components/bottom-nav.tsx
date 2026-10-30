@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { apiBase } from "../lib/api";
+import { homeDemoBadges } from "../lib/home.mock";
 import { readSession } from "../lib/session";
 import { IconCart, IconExplore, IconHome, IconOrders, IconProfile } from "./icons";
 import { colors } from "./styles";
@@ -20,24 +21,25 @@ const items = [
 
 export function BottomNav() {
   const pathname = usePathname();
-  const [cartCount, setCartCount] = useState(0);
+  const [cartCount, setCartCount] = useState<number>(homeDemoBadges.cart);
 
   useEffect(() => {
     let cancelled = false;
     const session = readSession();
     if (!session?.accessToken) {
-      setCartCount(0);
+      setCartCount(homeDemoBadges.cart);
       return;
     }
     getCart(apiBase, session.accessToken)
       .then((cart) => {
         if (!cancelled) {
-          setCartCount(cart.groups.reduce((sum, group) => sum + group.items.reduce((inner, item) => inner + item.quantity, 0), 0));
+          const real = cart.groups.reduce((sum, group) => sum + group.items.reduce((inner, item) => inner + item.quantity, 0), 0);
+          setCartCount(real > 0 ? real : homeDemoBadges.cart);
         }
       })
       .catch(() => {
         if (!cancelled) {
-          setCartCount(0);
+          setCartCount(homeDemoBadges.cart);
         }
       });
     return () => {

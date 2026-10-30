@@ -12,6 +12,7 @@ import { apiBase } from "./api";
 import { ExploreScreen, HelpScreen, HomeScreen, OrdersScreen, ProfileScreen } from "./catalog-screens";
 import { MobileCartScreen, MobileProductScreen, MobileQuoteScreen } from "./commerce-screens";
 import { MobileOperatorScreen } from "./payment-screens";
+import { homeDemoBadges } from "./home.mock";
 import { MobileRequestScreen } from "./request-screen";
 import { MobileTrackingScreen } from "./tracking-screens";
 import {
@@ -55,18 +56,19 @@ export function ClientShell() {
   const [requestOpen, setRequestOpen] = useState(false);
   const [review, setReview] = useState(false);
   const [tracking, setTracking] = useState(false);
-  const [cartCount, setCartCount] = useState(0);
+  const [cartCount, setCartCount] = useState<number>(homeDemoBadges.cart);
 
   const refreshCartCount = useCallback(async (token: string | undefined) => {
     if (!token) {
-      setCartCount(0);
+      setCartCount(homeDemoBadges.cart);
       return;
     }
     try {
       const cart = await getCart(apiBase, token);
-      setCartCount(cart.groups.reduce((sum, group) => sum + group.items.reduce((inner, item) => inner + item.quantity, 0), 0));
+      const real = cart.groups.reduce((sum, group) => sum + group.items.reduce((inner, item) => inner + item.quantity, 0), 0);
+      setCartCount(real > 0 ? real : homeDemoBadges.cart);
     } catch {
-      setCartCount(0);
+      setCartCount(homeDemoBadges.cart);
     }
   }, []);
 
