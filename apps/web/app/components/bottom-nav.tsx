@@ -3,12 +3,12 @@
 import { fontTokens, spaceTokens } from "@comprausa/design-tokens";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { IconCart, IconHome, IconOrders, IconProfile, IconStores } from "./icons";
+import { IconCart, IconExplore, IconHome, IconOrders, IconProfile } from "./icons";
 import { colors } from "./styles";
 
 const items = [
   { href: "/", label: "Inicio", Icon: IconHome },
-  { href: "/explorar", label: "Explorar", Icon: IconStores },
+  { href: "/explorar", label: "Explorar", Icon: IconExplore },
   { href: "/carrito", label: "Carrito", Icon: IconCart },
   { href: "/pedidos", label: "Pedidos", Icon: IconOrders },
   { href: "/perfil", label: "Perfil", Icon: IconProfile },
@@ -26,6 +26,7 @@ export function BottomNav() {
         bottom: 0,
         boxShadow: "0 -1px 2px rgba(20, 36, 59, 0.08)",
         left: 0,
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
         position: "fixed",
         right: 0,
         /* display lo controla .cve-bottom-nav en globals.css (oculto desde 768px) */

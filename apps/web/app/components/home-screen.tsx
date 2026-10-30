@@ -5,8 +5,9 @@ import { APP_BRAND_NAME } from "@comprausa/types";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { apiBase } from "../lib/api";
+import { IconBell, IconHeart, IconSearch } from "./icons";
 import { PageFrame } from "./page-frame";
 import { colors, fontTokens, radiusTokens, spaceTokens } from "./styles";
 
@@ -14,6 +15,9 @@ type DirectoryLoad =
   | { status: "loading" }
   | { status: "error"; message: string }
   | { status: "ready"; data: NamedCatalogList };
+
+/** First-row categories matching the approved TraeLo Home mock. */
+const HOME_CATEGORY_IDS = ["electronica", "ropa", "calzado", "hogar"] as const;
 
 const storeLogos: Record<string, string> = {
   amazon: "/brand/home/store-amazon.webp",
@@ -39,6 +43,10 @@ const categoryIcons: Record<string, string> = {
   herramientas: "/brand/home/cat-herramientas.webp",
 };
 
+/**
+ * TraeLo Home — mobile-first Next.js surface matching the approved mock.
+ * Stores/categories come from /v1/catalog; no invented prices.
+ */
 export function HomeScreen() {
   const router = useRouter();
   const [draft, setDraft] = useState("");
@@ -70,6 +78,14 @@ export function HomeScreen() {
     void refresh();
   }, [refresh]);
 
+  const homeCategories = useMemo(() => {
+    if (categories.status !== "ready") {
+      return [];
+    }
+    const byId = new Map(categories.data.items.map((item) => [item.id, item]));
+    return HOME_CATEGORY_IDS.map((id) => byId.get(id)).filter((item): item is { id: string; name: string } => Boolean(item));
+  }, [categories]);
+
   function goExplore(query?: string): void {
     if (reachable !== true) {
       window.alert("Sin conexión con el servidor. Revisa la red e inténtalo de nuevo.");
@@ -81,18 +97,25 @@ export function HomeScreen() {
   }
 
   return (
-    <PageFrame>
-      <div className="cve-fade-up" style={{ display: "grid", gap: spaceTokens[4], maxWidth: 480, margin: "0 auto", width: "100%" }}>
-        <header style={{ alignItems: "center", display: "flex", justifyContent: "space-between", minHeight: 44 }}>
+    <PageFrame compact>
+      <div className="cve-fade-up cve-home" style={homeRoot}>
+        <header style={header}>
           <Link href="/" aria-label={APP_BRAND_NAME} style={{ display: "inline-flex", lineHeight: 0 }}>
-            <Image src="/brand/logo-header.webp" alt={APP_BRAND_NAME} width={160} height={40} priority style={{ height: 36, width: "auto" }} />
+            <Image
+              src="/brand/logo-header.webp"
+              alt={APP_BRAND_NAME}
+              width={132}
+              height={32}
+              priority
+              style={{ height: 28, width: "auto" }}
+            />
           </Link>
-          <div style={{ display: "flex", gap: spaceTokens[2] }}>
-            <Link href="/perfil" aria-label="Favoritos" style={iconLink}>
-              ♡
+          <div style={{ alignItems: "center", display: "flex", gap: 4 }}>
+            <Link href="/perfil" aria-label="Favoritos" style={iconHit}>
+              <IconHeart />
             </Link>
-            <Link href="/pedidos" aria-label="Notificaciones" style={{ ...iconLink, position: "relative" }}>
-              🔔
+            <Link href="/pedidos" aria-label="Notificaciones" style={{ ...iconHit, position: "relative" }}>
+              <IconBell />
               <span style={badge}>0</span>
             </Link>
           </div>
@@ -111,24 +134,13 @@ export function HomeScreen() {
           }}
           style={searchShell}
         >
-          <span aria-hidden="true" style={{ color: colors.muted, fontSize: 20 }}>
-            ⌕
-          </span>
+          <IconSearch />
           <input
             aria-label="Buscar productos, marcas, tiendas"
             placeholder="Buscar productos, marcas, tiendas..."
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
-            style={{
-              background: "transparent",
-              border: "none",
-              color: colors.deep,
-              flex: 1,
-              font: "inherit",
-              fontSize: fontTokens.sizes.body,
-              minHeight: 44,
-              outline: "none",
-            }}
+            style={searchInput}
           />
         </form>
 
@@ -139,6 +151,7 @@ export function HomeScreen() {
             width={1750}
             height={698}
             priority
+            sizes="(max-width: 480px) 100vw, 480px"
             style={{ display: "block", height: "auto", width: "100%" }}
           />
         </button>
@@ -147,21 +160,15 @@ export function HomeScreen() {
           {stores.status === "loading" ? <p style={muted}>Cargando tiendas…</p> : null}
           {stores.status === "error" ? <p style={error}>{stores.message}</p> : null}
           {stores.status === "ready" ? (
-            <div
-              style={{
-                display: "grid",
-                gap: spaceTokens[2],
-                gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-              }}
-            >
-              {stores.data.items.map((store) => {
+            <div style={storeGrid}>
+              {stores.data.items.slice(0, 8).map((store) => {
                 const logo = storeLogos[store.id];
                 return (
                   <button key={store.id} type="button" onClick={() => goExplore(store.name)} aria-label={store.name} style={storeTile}>
                     {logo ? (
-                      <Image src={logo} alt="" width={120} height={120} unoptimized style={{ height: "100%", objectFit: "contain", width: "100%" }} />
+                      <Image src={logo} alt="" width={96} height={96} unoptimized style={{ height: "78%", objectFit: "contain", width: "78%" }} />
                     ) : (
-                      <span style={{ fontSize: 12, fontWeight: 700 }}>{store.name}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700 }}>{store.name}</span>
                     )}
                   </button>
                 );
@@ -174,56 +181,24 @@ export function HomeScreen() {
           {categories.status === "loading" ? <p style={muted}>Cargando categorías…</p> : null}
           {categories.status === "error" ? <p style={error}>{categories.message}</p> : null}
           {categories.status === "ready" ? (
-            <div style={{ display: "flex", gap: spaceTokens[3], overflowX: "auto", paddingBottom: spaceTokens[2] }}>
-              {categories.data.items.map((category) => {
+            <div style={catGrid}>
+              {homeCategories.map((category) => {
                 const icon = categoryIcons[category.id];
                 return (
-                  <button
-                    key={category.id}
-                    type="button"
-                    onClick={() => goExplore(category.name)}
-                    aria-label={category.name}
-                    style={{
-                      background: "transparent",
-                      border: "none",
-                      cursor: "pointer",
-                      flex: "0 0 76px",
-                      font: "inherit",
-                      padding: 0,
-                      textAlign: "center",
-                      width: 76,
-                    }}
-                  >
+                  <button key={category.id} type="button" onClick={() => goExplore(category.name)} aria-label={category.name} style={catItem}>
                     {icon ? (
                       <Image
                         src={icon}
                         alt=""
-                        width={72}
-                        height={72}
+                        width={80}
+                        height={80}
                         unoptimized
-                        style={{ borderRadius: radiusTokens.md, display: "block", height: 72, margin: "0 auto 8px", objectFit: "cover", width: 72 }}
+                        style={{ borderRadius: 14, display: "block", height: "auto", margin: "0 auto 6px", objectFit: "cover", width: "100%" }}
                       />
                     ) : (
-                      <span
-                        style={{
-                          alignItems: "center",
-                          background: "#EAF3FF",
-                          borderRadius: radiusTokens.md,
-                          color: colors.primary,
-                          display: "grid",
-                          fontWeight: 800,
-                          height: 72,
-                          margin: "0 auto 8px",
-                          placeItems: "center",
-                          width: 72,
-                        }}
-                      >
-                        {category.name.slice(0, 1)}
-                      </span>
+                      <span style={catFallback}>{category.name.slice(0, 1)}</span>
                     )}
-                    <span style={{ color: colors.muted, display: "block", fontSize: 12, fontWeight: 600, lineHeight: 1.25 }}>
-                      {category.name}
-                    </span>
+                    <span style={catLabel}>{category.name}</span>
                   </button>
                 );
               })}
@@ -231,13 +206,14 @@ export function HomeScreen() {
           ) : null}
         </Section>
 
-        <button type="button" onClick={() => goExplore()} aria-label="Descuentos especiales" style={bannerButton}>
+        <button type="button" onClick={() => goExplore()} aria-label="Descuentos especiales" style={{ ...bannerButton, marginTop: 4 }}>
           <Image
             src="/brand/home/banner-descuentos.webp"
             alt=""
             width={854}
             height={312}
-            style={{ display: "block", height: "auto", width: "100%" }}
+            sizes="(max-width: 480px) 100vw, 480px"
+            style={{ display: "block", height: "auto", maxHeight: 118, objectFit: "cover", objectPosition: "center", width: "100%" }}
           />
         </button>
       </div>
@@ -247,13 +223,13 @@ export function HomeScreen() {
 
 function Section({ title, onSeeAll, children }: { title: string; onSeeAll: () => void; children: ReactNode }) {
   return (
-    <section>
-      <div style={{ alignItems: "center", display: "flex", justifyContent: "space-between", marginBottom: spaceTokens[3] }}>
-        <h2 style={{ color: colors.deep, fontSize: 18, fontWeight: 800, margin: 0 }}>{title}</h2>
+    <section style={{ display: "grid", gap: 10 }}>
+      <div style={{ alignItems: "center", display: "flex", justifyContent: "space-between" }}>
+        <h2 style={{ color: colors.deep, fontSize: 17, fontWeight: 800, letterSpacing: "-0.02em", margin: 0 }}>{title}</h2>
         <button
           type="button"
           onClick={onSeeAll}
-          style={{ background: "none", border: "none", color: colors.primary, cursor: "pointer", font: "inherit", fontWeight: 700 }}
+          style={{ background: "none", border: "none", color: colors.primary, cursor: "pointer", font: "inherit", fontSize: 14, fontWeight: 700 }}
         >
           Ver todas
         </button>
@@ -263,15 +239,28 @@ function Section({ title, onSeeAll, children }: { title: string; onSeeAll: () =>
   );
 }
 
-const iconLink: CSSProperties = {
+const homeRoot: CSSProperties = {
+  display: "grid",
+  gap: 16,
+  margin: "0 auto",
+  maxWidth: 430,
+  width: "100%",
+};
+
+const header: CSSProperties = {
   alignItems: "center",
-  color: colors.deep,
+  display: "flex",
+  justifyContent: "space-between",
+  minHeight: 36,
+};
+
+const iconHit: CSSProperties = {
+  alignItems: "center",
   display: "inline-flex",
-  fontSize: 22,
-  height: 40,
+  height: 36,
   justifyContent: "center",
   textDecoration: "none",
-  width: 40,
+  width: 36,
 };
 
 const badge: CSSProperties = {
@@ -282,13 +271,13 @@ const badge: CSSProperties = {
   display: "inline-flex",
   fontSize: 10,
   fontWeight: 700,
-  height: 16,
+  height: 15,
   justifyContent: "center",
-  minWidth: 16,
+  minWidth: 15,
   padding: "0 3px",
   position: "absolute",
-  right: 2,
-  top: 2,
+  right: 0,
+  top: 0,
 };
 
 const offlineBanner: CSSProperties = {
@@ -298,30 +287,50 @@ const offlineBanner: CSSProperties = {
   color: "#991B1B",
   cursor: "pointer",
   font: "inherit",
+  fontSize: 13,
   fontWeight: 600,
-  padding: spaceTokens[3],
+  padding: 10,
   textAlign: "left",
 };
 
 const searchShell: CSSProperties = {
   alignItems: "center",
-  border: "1.5px solid #D7E0EC",
-  borderRadius: radiusTokens.lg,
+  background: "#F1F4F8",
+  border: "1px solid #E4EAF1",
+  borderRadius: 14,
   display: "flex",
-  gap: spaceTokens[2],
-  minHeight: 48,
-  padding: `0 ${spaceTokens[3]}px`,
+  gap: 8,
+  minHeight: 46,
+  padding: "0 14px",
+};
+
+const searchInput: CSSProperties = {
+  background: "transparent",
+  border: "none",
+  color: colors.deep,
+  flex: 1,
+  font: "inherit",
+  fontSize: 15,
+  minHeight: 44,
+  outline: "none",
 };
 
 const bannerButton: CSSProperties = {
   background: "transparent",
   border: "none",
-  borderRadius: radiusTokens.lg,
+  borderRadius: 16,
   cursor: "pointer",
   display: "block",
+  lineHeight: 0,
   overflow: "hidden",
   padding: 0,
   width: "100%",
+};
+
+const storeGrid: CSSProperties = {
+  display: "grid",
+  gap: 8,
+  gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
 };
 
 const storeTile: CSSProperties = {
@@ -329,13 +338,49 @@ const storeTile: CSSProperties = {
   aspectRatio: "1",
   background: "#fff",
   border: "1px solid #E8EEF5",
-  borderRadius: radiusTokens.md,
+  borderRadius: 12,
   cursor: "pointer",
   display: "grid",
   justifyContent: "center",
   overflow: "hidden",
-  padding: 6,
+  padding: 4,
 };
 
-const muted: CSSProperties = { color: colors.muted, margin: 0 };
-const error: CSSProperties = { color: "#991B1B", margin: 0 };
+const catGrid: CSSProperties = {
+  display: "grid",
+  gap: 10,
+  gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+};
+
+const catItem: CSSProperties = {
+  background: "transparent",
+  border: "none",
+  cursor: "pointer",
+  font: "inherit",
+  padding: 0,
+  textAlign: "center",
+};
+
+const catFallback: CSSProperties = {
+  alignItems: "center",
+  aspectRatio: "1",
+  background: "#EAF3FF",
+  borderRadius: 14,
+  color: colors.primary,
+  display: "grid",
+  fontWeight: 800,
+  margin: "0 auto 6px",
+  placeItems: "center",
+  width: "100%",
+};
+
+const catLabel: CSSProperties = {
+  color: colors.muted,
+  display: "block",
+  fontSize: 11,
+  fontWeight: 600,
+  lineHeight: 1.25,
+};
+
+const muted: CSSProperties = { color: colors.muted, fontSize: fontTokens.sizes.caption, margin: 0 };
+const error: CSSProperties = { color: "#991B1B", fontSize: fontTokens.sizes.caption, margin: 0 };

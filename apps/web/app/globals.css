@@ -54,6 +54,11 @@ a {
   width: 100%;
 }
 
+/* Home and other dense mobile screens: 16px gutters, less vertical waste */
+.cve-page--compact {
+  padding: 12px 16px calc(72px + env(safe-area-inset-bottom, 0px));
+}
+
 .cve-desktop-only,
 .cve-site-header {
   display: none;

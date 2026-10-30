@@ -32,9 +32,9 @@ type Gate = "checking" | "splash" | "onboarding" | "app";
 const tabs: readonly { id: Tab; label: string; glyph: string }[] = [
   { id: "inicio", label: "Inicio", glyph: "⌂" },
   { id: "explorar", label: "Explorar", glyph: "⌕" },
-  { id: "carrito", label: "Carrito", glyph: "◫" },
-  { id: "pedidos", label: "Pedidos", glyph: "👜" },
-  { id: "perfil", label: "Perfil", glyph: "☺" },
+  { id: "carrito", label: "Carrito", glyph: "⊞" },
+  { id: "pedidos", label: "Pedidos", glyph: "▤" },
+  { id: "perfil", label: "Perfil", glyph: "⚬" },
 ];
 
 const tabBottomInset = Platform.select({ ios: 12, android: 6, default: 6 })!;

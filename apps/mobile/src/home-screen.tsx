@@ -7,7 +7,7 @@ import {
 } from "@comprausa/api-client";
 import { colorTokens, fontTokens, radiusTokens, spaceTokens } from "@comprausa/design-tokens";
 import { APP_BRAND_NAME } from "@comprausa/types";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -26,11 +26,15 @@ import {
 import { apiBase } from "./api";
 
 const colors = colorTokens.light;
+const H_PAD = 16;
+const SECTION_GAP = 16;
+const STORE_GAP = 8;
+const HOME_CATEGORY_IDS = ["electronica", "ropa", "calzado", "hogar"] as const;
 
 const topInset = Platform.select({
-  ios: 52,
-  android: (StatusBar.currentHeight ?? 0) + spaceTokens[3],
-  default: spaceTokens[4],
+  ios: 48,
+  android: (StatusBar.currentHeight ?? 0) + 8,
+  default: 12,
 })!;
 
 const headerLogo = require("../assets/brand/logo-header.png");
@@ -66,10 +70,14 @@ type DirectoryLoad =
   | { status: "error"; message: string }
   | { status: "ready"; data: NamedCatalogList };
 
+/**
+ * TraeLo Home — Expo (iOS/Android). Layout mirrors the approved mock:
+ * compact header, search, hero, 4×2 stores, 4 primary categories, offers banner.
+ */
 export function HomeScreen({
-  session,
+  session: _session,
   serverReachable,
-  onOpenCart,
+  onOpenCart: _onOpenCart,
   onOpenOrders,
   onOpenProfile,
   onOpenExplore,
@@ -83,11 +91,12 @@ export function HomeScreen({
   onOpenExplore: (query?: string) => void;
   onOpenWishlist?: () => void;
 }) {
-  const { width } = useWindowDimensions();
-  const contentWidth = Math.min(width, 480);
-  const pad = spaceTokens[4];
-  const storeGap = spaceTokens[2];
-  const storeTile = Math.floor((contentWidth - pad * 2 - storeGap * 3) / 4);
+  const { width: windowWidth } = useWindowDimensions();
+  const width = Math.min(windowWidth, 430);
+  const inner = width - H_PAD * 2;
+  const storeTile = Math.floor((inner - STORE_GAP * 3) / 4);
+  const catTile = Math.floor((inner - 10 * 3) / 4);
+
   const [draft, setDraft] = useState("");
   const [stores, setStores] = useState<DirectoryLoad>({ status: "loading" });
   const [categories, setCategories] = useState<DirectoryLoad>({ status: "loading" });
@@ -121,30 +130,33 @@ export function HomeScreen({
     setReachable(serverReachable);
   }, [serverReachable]);
 
+  const homeCategories = useMemo(() => {
+    if (categories.status !== "ready") {
+      return [];
+    }
+    const byId = new Map(categories.data.items.map((item) => [item.id, item]));
+    return HOME_CATEGORY_IDS.map((id) => byId.get(id)).filter((item): item is { id: string; name: string } => Boolean(item));
+  }, [categories]);
+
   function requireServer(action: () => void): void {
     if (reachable !== true) {
-      Alert.alert(
-        "Sin conexión",
-        "No hay respuesta del servidor. Revisa la red e inténtalo de nuevo antes de continuar.",
-        [
-          { text: "Reintentar", onPress: () => void refreshDirectory() },
-          { text: "Cerrar", style: "cancel" },
-        ],
-      );
+      Alert.alert("Sin conexión", "No hay respuesta del servidor. Revisa la red e inténtalo de nuevo antes de continuar.", [
+        { text: "Reintentar", onPress: () => void refreshDirectory() },
+        { text: "Cerrar", style: "cancel" },
+      ]);
       return;
     }
     action();
   }
 
-  const greeting = session ? "Hola" : `Bienvenido a ${APP_BRAND_NAME}`;
-
   return (
     <View style={styles.root}>
       <StatusBar barStyle="dark-content" />
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingTop: topInset, width: contentWidth, alignSelf: "center" }]}
+        contentContainerStyle={[styles.scroll, { paddingTop: topInset, width, alignSelf: "center" }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        bounces={false}
       >
         <View style={styles.header}>
           <Image source={headerLogo} accessibilityLabel={APP_BRAND_NAME} style={styles.logo} resizeMode="contain" />
@@ -156,7 +168,7 @@ export function HomeScreen({
               onPress={() => requireServer(() => (onOpenWishlist ? onOpenWishlist() : onOpenProfile()))}
               style={styles.iconHit}
             >
-              <Text style={styles.headerIcon}>♡</Text>
+              <Text style={styles.heart}>♡</Text>
             </Pressable>
             <Pressable
               accessibilityRole="button"
@@ -165,7 +177,7 @@ export function HomeScreen({
               onPress={() => requireServer(onOpenOrders)}
               style={styles.iconHit}
             >
-              <Text style={styles.headerIcon}>🔔</Text>
+              <Text style={styles.bell}>🔔</Text>
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>0</Text>
               </View>
@@ -184,7 +196,7 @@ export function HomeScreen({
           <TextInput
             accessibilityLabel="Buscar productos, marcas, tiendas"
             placeholder="Buscar productos, marcas, tiendas..."
-            placeholderTextColor={colors.muted}
+            placeholderTextColor="#8A97A8"
             value={draft}
             onChangeText={setDraft}
             returnKeyType="search"
@@ -193,25 +205,21 @@ export function HomeScreen({
           />
         </View>
 
-        <Text style={styles.srOnly}>{greeting}</Text>
-
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Miles de productos de USA. Ver ofertas"
           onPress={() => requireServer(() => onOpenExplore())}
           style={styles.bannerWrap}
         >
-          <Image source={bannerMiles} style={[styles.banner, { width: contentWidth - pad * 2 }]} resizeMode="cover" />
+          <Image source={bannerMiles} style={[styles.banner, { width: inner }]} resizeMode="contain" />
         </Pressable>
 
         <SectionHeader title="Tiendas populares" onSeeAll={() => requireServer(() => onOpenExplore())} />
-        {stores.status === "loading" ? (
-          <ActivityIndicator color={colors.primary} style={{ marginVertical: spaceTokens[4] }} />
-        ) : null}
+        {stores.status === "loading" ? <ActivityIndicator color={colors.primary} style={{ marginVertical: 12 }} /> : null}
         {stores.status === "error" ? <Text style={styles.error}>{stores.message}</Text> : null}
         {stores.status === "ready" ? (
-          <View style={[styles.storeGrid, { gap: storeGap }]}>
-            {stores.data.items.map((store) => {
+          <View style={styles.storeGrid}>
+            {stores.data.items.slice(0, 8).map((store) => {
               const logo = storeLogos[store.id];
               return (
                 <Pressable
@@ -233,13 +241,11 @@ export function HomeScreen({
         ) : null}
 
         <SectionHeader title="Categorías" onSeeAll={() => requireServer(() => onOpenExplore())} />
-        {categories.status === "loading" ? (
-          <ActivityIndicator color={colors.primary} style={{ marginVertical: spaceTokens[3] }} />
-        ) : null}
+        {categories.status === "loading" ? <ActivityIndicator color={colors.primary} style={{ marginVertical: 12 }} /> : null}
         {categories.status === "error" ? <Text style={styles.error}>{categories.message}</Text> : null}
         {categories.status === "ready" ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.catRow}>
-            {categories.data.items.map((category) => {
+          <View style={styles.catGrid}>
+            {homeCategories.map((category) => {
               const icon = categoryIcons[category.id];
               return (
                 <Pressable
@@ -247,12 +253,12 @@ export function HomeScreen({
                   accessibilityRole="button"
                   accessibilityLabel={category.name}
                   onPress={() => requireServer(() => onOpenExplore(category.name))}
-                  style={styles.catItem}
+                  style={[styles.catItem, { width: catTile }]}
                 >
                   {icon ? (
-                    <Image source={icon} style={styles.catIcon} resizeMode="cover" />
+                    <Image source={icon} style={[styles.catIcon, { width: catTile, height: catTile }]} resizeMode="cover" />
                   ) : (
-                    <View style={[styles.catIcon, styles.catFallback]}>
+                    <View style={[styles.catIcon, styles.catFallback, { width: catTile, height: catTile }]}>
                       <Text style={styles.catFallbackText}>{category.name.slice(0, 1)}</Text>
                     </View>
                   )}
@@ -262,20 +268,20 @@ export function HomeScreen({
                 </Pressable>
               );
             })}
-          </ScrollView>
+          </View>
         ) : null}
 
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Descuentos especiales. Ver todas"
           onPress={() => requireServer(() => onOpenExplore())}
-          style={[styles.bannerWrap, { marginTop: spaceTokens[6] }]}
+          style={[styles.bannerWrap, { marginTop: 4 }]}
         >
-          <Image source={bannerDescuentos} style={[styles.bannerSecondary, { width: contentWidth - pad * 2 }]} resizeMode="cover" />
-        </Pressable>
-
-        <Pressable accessibilityRole="button" onPress={() => requireServer(onOpenCart)} style={styles.footerLink}>
-          <Text style={styles.link}>Ir al carrito</Text>
+          <Image
+            source={bannerDescuentos}
+            style={[styles.bannerSecondary, { width: inner }]}
+            resizeMode="cover"
+          />
         </Pressable>
       </ScrollView>
     </View>
@@ -288,7 +294,7 @@ function SectionHeader({ title, onSeeAll }: { title: string; onSeeAll: () => voi
       <Text accessibilityRole="header" style={styles.sectionTitle}>
         {title}
       </Text>
-      <Pressable accessibilityRole="button" accessibilityLabel={`Ver todas · ${title}`} onPress={onSeeAll}>
+      <Pressable accessibilityRole="button" accessibilityLabel={`Ver todas · ${title}`} onPress={onSeeAll} hitSlop={6}>
         <Text style={styles.seeAll}>Ver todas</Text>
       </Pressable>
     </View>
@@ -301,48 +307,52 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scroll: {
-    paddingBottom: spaceTokens[6],
-    paddingHorizontal: spaceTokens[4],
+    gap: SECTION_GAP,
+    paddingBottom: 20,
+    paddingHorizontal: H_PAD,
   },
   header: {
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: spaceTokens[3],
-    minHeight: 44,
+    minHeight: 36,
   },
   logo: {
-    height: 36,
-    width: 140,
+    height: 28,
+    width: 118,
   },
   headerActions: {
     alignItems: "center",
     flexDirection: "row",
-    gap: spaceTokens[2],
+    gap: 2,
   },
   iconHit: {
     alignItems: "center",
-    height: 40,
+    height: 36,
     justifyContent: "center",
     position: "relative",
-    width: 40,
+    width: 36,
   },
-  headerIcon: {
-    color: colors.deep,
+  heart: {
+    color: colors.primary,
     fontSize: 22,
-    lineHeight: 28,
+    lineHeight: 26,
+  },
+  bell: {
+    fontSize: 18,
+    lineHeight: 24,
   },
   badge: {
     alignItems: "center",
     backgroundColor: "#E11D48",
     borderRadius: 999,
-    height: 16,
+    height: 15,
     justifyContent: "center",
-    minWidth: 16,
+    minWidth: 15,
     paddingHorizontal: 3,
     position: "absolute",
-    right: 2,
-    top: 2,
+    right: 0,
+    top: 0,
   },
   badgeText: {
     color: "#FFFFFF",
@@ -354,8 +364,7 @@ const styles = StyleSheet.create({
     borderColor: "#FECACA",
     borderRadius: radiusTokens.md,
     borderWidth: 1,
-    marginBottom: spaceTokens[3],
-    padding: spaceTokens[3],
+    padding: 10,
   },
   offlineText: {
     color: "#991B1B",
@@ -364,99 +373,91 @@ const styles = StyleSheet.create({
   },
   searchShell: {
     alignItems: "center",
-    borderColor: "#D7E0EC",
-    borderRadius: radiusTokens.lg,
-    borderWidth: 1.5,
+    backgroundColor: "#F1F4F8",
+    borderColor: "#E4EAF1",
+    borderRadius: 14,
+    borderWidth: 1,
     flexDirection: "row",
-    gap: spaceTokens[2],
-    marginBottom: spaceTokens[4],
-    minHeight: 48,
-    paddingHorizontal: spaceTokens[3],
+    gap: 8,
+    minHeight: 46,
+    paddingHorizontal: 14,
   },
   searchGlyph: {
-    color: colors.muted,
-    fontSize: 20,
+    color: "#8A97A8",
+    fontSize: 18,
   },
   searchInput: {
     color: colors.deep,
     flex: 1,
-    fontSize: fontTokens.sizes.body,
-    paddingVertical: Platform.OS === "ios" ? 12 : 8,
-  },
-  srOnly: {
-    height: 0,
-    opacity: 0,
-    position: "absolute",
-    width: 0,
+    fontSize: 15,
+    paddingVertical: Platform.OS === "ios" ? 11 : 8,
   },
   bannerWrap: {
-    borderRadius: radiusTokens.lg,
-    marginBottom: spaceTokens[4],
+    borderRadius: 16,
     overflow: "hidden",
   },
   banner: {
     aspectRatio: 1750 / 698,
-    borderRadius: radiusTokens.lg,
+    borderRadius: 16,
   },
   bannerSecondary: {
     aspectRatio: 854 / 312,
-    borderRadius: radiusTokens.lg,
+    borderRadius: 16,
+    maxHeight: 118,
   },
   sectionHead: {
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: spaceTokens[3],
-    marginTop: spaceTokens[1],
+    marginBottom: -6,
   },
   sectionTitle: {
     color: colors.deep,
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: "800",
+    letterSpacing: -0.2,
   },
   seeAll: {
     color: colors.primary,
-    fontSize: fontTokens.sizes.body,
+    fontSize: 14,
     fontWeight: "700",
   },
   storeGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginBottom: spaceTokens[4],
+    gap: STORE_GAP,
   },
   storeTile: {
     alignItems: "center",
     backgroundColor: "#FFFFFF",
     borderColor: "#E8EEF5",
-    borderRadius: radiusTokens.md,
+    borderRadius: 12,
     borderWidth: 1,
     justifyContent: "center",
     overflow: "hidden",
-    padding: 6,
+    padding: 4,
   },
   storeLogo: {
-    height: "100%",
-    width: "100%",
+    height: "78%",
+    width: "78%",
   },
   storeFallback: {
     color: colors.deep,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "700",
     textAlign: "center",
   },
-  catRow: {
-    gap: spaceTokens[3],
-    paddingBottom: spaceTokens[2],
+  catGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
   },
   catItem: {
     alignItems: "center",
-    width: 76,
   },
   catIcon: {
-    borderRadius: radiusTokens.md,
-    height: 72,
-    marginBottom: spaceTokens[2],
-    width: 72,
+    borderRadius: 14,
+    marginBottom: 6,
   },
   catFallback: {
     alignItems: "center",
@@ -465,29 +466,18 @@ const styles = StyleSheet.create({
   },
   catFallbackText: {
     color: colors.primary,
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "800",
   },
   catLabel: {
     color: colors.muted,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "600",
-    lineHeight: 15,
+    lineHeight: 14,
     textAlign: "center",
   },
   error: {
     color: "#991B1B",
     fontSize: fontTokens.sizes.caption,
-    marginBottom: spaceTokens[3],
-  },
-  footerLink: {
-    alignItems: "center",
-    minHeight: 44,
-    paddingVertical: spaceTokens[3],
-  },
-  link: {
-    color: colors.primary,
-    fontSize: fontTokens.sizes.body,
-    fontWeight: "700",
   },
 });
