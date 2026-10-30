@@ -30,4 +30,4 @@ export {
   storeIntegrationRegistry,
 } from "./integrations";
 export type { CatalogDirectoryItem } from "./catalog-directory";
-export { catalogBrowseCategories, catalogPartnerStores } from "./catalog-directory";
+export { catalogBrowseCategories, catalogPartnerStores, homeFeaturedCategories } from "./catalog-directory";

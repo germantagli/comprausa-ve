@@ -1,16 +1,18 @@
 import {
   decideEntryGate,
+  getCart,
   probeServerReachable,
   restoreAuthenticatedSession,
   type AuthenticatedSession,
 } from "@comprausa/api-client";
 import { colorTokens, fontTokens, spaceTokens } from "@comprausa/design-tokens";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { apiBase } from "./api";
 import { ExploreScreen, HelpScreen, HomeScreen, OrdersScreen, ProfileScreen } from "./catalog-screens";
 import { MobileCartScreen, MobileProductScreen, MobileQuoteScreen } from "./commerce-screens";
 import { MobileOperatorScreen } from "./payment-screens";
+import { MobileRequestScreen } from "./request-screen";
 import { MobileTrackingScreen } from "./tracking-screens";
 import {
   clearStoredSession,
@@ -50,8 +52,23 @@ export function ClientShell() {
   const [session, setSession] = useState<AuthenticatedSession | null>(null);
   const [productId, setProductId] = useState<string | null>(null);
   const [quoteId, setQuoteId] = useState<string | null>(null);
+  const [requestOpen, setRequestOpen] = useState(false);
   const [review, setReview] = useState(false);
   const [tracking, setTracking] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+
+  const refreshCartCount = useCallback(async (token: string | undefined) => {
+    if (!token) {
+      setCartCount(0);
+      return;
+    }
+    try {
+      const cart = await getCart(apiBase, token);
+      setCartCount(cart.groups.reduce((sum, group) => sum + group.items.reduce((inner, item) => inner + item.quantity, 0), 0));
+    } catch {
+      setCartCount(0);
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -82,6 +99,7 @@ export function ClientShell() {
           onboardingCompleted,
         }),
       );
+      void refreshCartCount(restored?.accessToken);
 
       void healthPromise.then((reachable) => {
         if (!cancelled) {
@@ -101,9 +119,19 @@ export function ClientShell() {
     setHelp(false);
     setProductId(null);
     setQuoteId(null);
+    setRequestOpen(false);
     setReview(false);
     setTracking(false);
     setTab("explorar");
+  }
+
+  function closeOverlays(): void {
+    setHelp(false);
+    setProductId(null);
+    setQuoteId(null);
+    setRequestOpen(false);
+    setReview(false);
+    setTracking(false);
   }
 
   if (gate === "checking") {
@@ -162,7 +190,7 @@ export function ClientShell() {
     );
   }
 
-  const overlayOpen = help || Boolean(productId) || Boolean(quoteId) || review || tracking;
+  const overlayOpen = help || Boolean(productId) || Boolean(quoteId) || requestOpen || review || tracking;
 
   return (
     <View style={styles.frame}>
@@ -184,16 +212,32 @@ export function ClientShell() {
             onOpenCart={() => {
               setProductId(null);
               setTab("carrito");
+              void refreshCartCount(session?.accessToken);
             }}
           />
         ) : null}
         {!help && !productId && quoteId ? (
           <MobileQuoteScreen quoteId={quoteId} session={session} onBack={() => setQuoteId(null)} />
         ) : null}
-        {!help && !productId && !quoteId && review && session ? (
+        {!help && !productId && !quoteId && requestOpen ? (
+          <MobileRequestScreen
+            session={session}
+            onBack={() => setRequestOpen(false)}
+            onOpenQuote={(id) => {
+              setRequestOpen(false);
+              setQuoteId(id);
+            }}
+            onSignIn={() => {
+              setRequestOpen(false);
+              setSignInMode("entrar");
+              setSigningIn(true);
+            }}
+          />
+        ) : null}
+        {!help && !productId && !quoteId && !requestOpen && review && session ? (
           <MobileOperatorScreen session={session} onSession={setSession} onBack={() => setReview(false)} />
         ) : null}
-        {!help && !productId && !quoteId && !review && tracking && session ? (
+        {!help && !productId && !quoteId && !requestOpen && !review && tracking && session ? (
           <MobileTrackingScreen session={session} onBack={() => setTracking(false)} />
         ) : null}
         {!overlayOpen && tab === "inicio" ? (
@@ -204,6 +248,8 @@ export function ClientShell() {
             onOpenOrders={() => setTab("pedidos")}
             onOpenProfile={() => setTab("perfil")}
             onOpenExplore={openExplore}
+            onOpenProduct={setProductId}
+            onOpenRequest={() => setRequestOpen(true)}
           />
         ) : null}
         {!overlayOpen && tab === "explorar" ? (
@@ -245,19 +291,25 @@ export function ClientShell() {
                 accessibilityState={{ selected }}
                 accessibilityLabel={item.label}
                 onPress={() => {
-                  setHelp(false);
-                  setProductId(null);
-                  setReview(false);
-                  setTracking(false);
-                  setQuoteId(null);
+                  closeOverlays();
                   if (item.id !== "explorar") {
                     setExploreQuery("");
                   }
                   setTab(item.id);
+                  if (item.id === "carrito") {
+                    void refreshCartCount(session?.accessToken);
+                  }
                 }}
                 style={styles.tab}
               >
-                <Text style={[styles.tabIcon, selected ? styles.tabIconSelected : null]}>{item.glyph}</Text>
+                <View style={styles.tabIconWrap}>
+                  <Text style={[styles.tabIcon, selected ? styles.tabIconSelected : null]}>{item.glyph}</Text>
+                  {item.id === "carrito" && cartCount > 0 ? (
+                    <View style={styles.cartBadge}>
+                      <Text style={styles.cartBadgeText}>{cartCount > 99 ? "99+" : String(cartCount)}</Text>
+                    </View>
+                  ) : null}
+                </View>
                 <Text style={selected ? styles.tabSelected : styles.tabLabel}>{item.label}</Text>
               </Pressable>
             );
@@ -290,6 +342,11 @@ const styles = StyleSheet.create({
     minHeight: 60,
     paddingVertical: spaceTokens[2],
   },
+  tabIconWrap: {
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+  },
   tabIcon: {
     color: colors.muted,
     fontSize: 18,
@@ -297,6 +354,23 @@ const styles = StyleSheet.create({
   },
   tabIconSelected: {
     color: colors.primary,
+  },
+  cartBadge: {
+    alignItems: "center",
+    backgroundColor: "#E11D48",
+    borderRadius: 999,
+    height: 16,
+    justifyContent: "center",
+    minWidth: 16,
+    paddingHorizontal: 3,
+    position: "absolute",
+    right: -10,
+    top: -4,
+  },
+  cartBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "700",
   },
   tabLabel: {
     color: colors.muted,
