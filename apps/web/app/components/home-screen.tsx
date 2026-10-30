@@ -145,14 +145,9 @@ export function HomeScreen() {
                   <button type="button" aria-label="Favorito" style={favHit}>
                     <IconHeart />
                   </button>
-                  <Image
-                    src={product.image}
-                    alt={product.name}
-                    width={160}
-                    height={160}
-                    unoptimized
-                    style={{ height: "100%", objectFit: "contain", width: "100%" }}
-                  />
+                  <div style={productImageFrame}>
+                    <Image src={product.image} alt={product.name} fill unoptimized sizes="132px" style={productImage} />
+                  </div>
                 </div>
                 <p style={productName}>{product.name}</p>
                 <div style={priceRow}>
@@ -168,16 +163,8 @@ export function HomeScreen() {
           </div>
         </Section>
 
-        {/* F — Request product */}
+        {/* F — Request product: 55% text / 45% art, no overlap */}
         <section aria-label="Solicitar producto" style={requestBanner}>
-          <Image
-            src={homeDemoRequest.backgroundArt}
-            alt=""
-            fill
-            unoptimized
-            sizes="(max-width: 430px) 100vw, 430px"
-            style={{ objectFit: "cover", objectPosition: "right center" }}
-          />
           <div style={requestCopy}>
             <h2 style={{ color: colors.deep, fontSize: 16, fontWeight: 800, margin: "0 0 4px" }}>{homeDemoRequest.title}</h2>
             <p style={{ color: colors.muted, fontSize: 12, lineHeight: 1.35, margin: "0 0 12px" }}>{homeDemoRequest.subtitle}</p>
@@ -185,31 +172,28 @@ export function HomeScreen() {
               {homeDemoRequest.cta} →
             </Link>
           </div>
+          <div style={requestArtWrap}>
+            <Image
+              src={homeDemoRequest.art}
+              alt=""
+              width={220}
+              height={120}
+              unoptimized
+              style={requestArt}
+            />
+          </div>
         </section>
 
-        {/* G — Special offers */}
+        {/* G — Special offers: text left, products right */}
         <Section title="Ofertas especiales" onSeeAll={() => goExplore()}>
           <div style={offerGrid}>
             {homeDemoOffers.map((offer) => (
-              <button key={offer.id} type="button" onClick={() => goExplore(offer.exploreQuery)} style={offerCard}>
-                <Image
-                  src={offer.backgroundArt}
-                  alt=""
-                  fill
-                  unoptimized
-                  sizes="200px"
-                  style={{ objectFit: "cover", objectPosition: "85% center" }}
-                />
-                <div
-                  aria-hidden="true"
-                  style={{
-                    ...offerScrim,
-                    background:
-                      offer.id === "fashion"
-                        ? "linear-gradient(90deg, rgba(252,231,243,0.95) 0%, rgba(252,231,243,0.7) 55%, transparent 100%)"
-                        : "linear-gradient(90deg, rgba(253,248,240,0.95) 0%, rgba(253,248,240,0.7) 55%, transparent 100%)",
-                  }}
-                />
+              <button
+                key={offer.id}
+                type="button"
+                onClick={() => goExplore(offer.exploreQuery)}
+                style={{ ...offerCard, background: offer.background }}
+              >
                 <div style={offerCopy}>
                   <p style={{ ...offerTitle, color: offer.titleColor }}>{offer.title}</p>
                   {offer.subtitle ? <p style={{ ...offerBody, color: offer.titleColor, opacity: 0.85 }}>{offer.subtitle}</p> : null}
@@ -222,6 +206,9 @@ export function HomeScreen() {
                   >
                     Ver ofertas →
                   </span>
+                </div>
+                <div style={offerArtWrap}>
+                  <Image src={offer.art} alt="" width={120} height={90} unoptimized style={offerArt} />
                 </div>
               </button>
             ))}
@@ -436,18 +423,34 @@ const productCard: CSSProperties = {
   border: "1px solid #E8EEF5",
   borderRadius: 14,
   boxShadow: "0 4px 14px rgba(20,36,59,0.06)",
+  display: "flex",
   flex: "0 0 148px",
+  flexDirection: "column",
   padding: 8,
   width: 148,
 };
 
 const productPhoto: CSSProperties = {
-  aspectRatio: "1",
+  aspectRatio: "1 / 1",
   background: "#FFFFFF",
   borderRadius: 10,
-  marginBottom: 8,
+  marginBottom: 6,
   overflow: "hidden",
   position: "relative",
+  width: "100%",
+};
+
+const productImageFrame: CSSProperties = {
+  bottom: 10,
+  left: 10,
+  position: "absolute",
+  right: 10,
+  top: 10,
+};
+
+const productImage: CSSProperties = {
+  objectFit: "contain",
+  objectPosition: "center center",
 };
 
 const discountBadge: CSSProperties = {
@@ -485,24 +488,53 @@ const productName: CSSProperties = {
   fontWeight: 700,
   lineHeight: 1.25,
   margin: "0 0 4px",
+  minHeight: 32,
 };
 
-const priceRow: CSSProperties = { alignItems: "baseline", display: "flex", gap: 6, marginBottom: 4 };
+const priceRow: CSSProperties = { alignItems: "baseline", display: "flex", gap: 6, marginBottom: 2, marginTop: "auto" };
 const productPrice: CSSProperties = { color: colors.primary, fontSize: 15, fontWeight: 800 };
 const comparePrice: CSSProperties = { color: colors.muted, fontSize: 12, textDecoration: "line-through" };
 const ratingRow: CSSProperties = { alignItems: "center", display: "flex", gap: 4 };
 const reviewCount: CSSProperties = { color: colors.muted, fontSize: 11 };
 
 const requestBanner: CSSProperties = {
+  alignItems: "center",
+  background: "linear-gradient(135deg, #EAF3FF 0%, #F5F9FF 100%)",
   borderRadius: 16,
-  isolation: "isolate",
-  minHeight: 128,
+  display: "flex",
+  gap: 12,
   overflow: "hidden",
-  padding: "16px 14px 16px 16px",
+  padding: "14px 12px 14px 16px",
   position: "relative",
 };
 
-const requestCopy: CSSProperties = { maxWidth: "58%", position: "relative", zIndex: 1 };
+const requestCopy: CSSProperties = {
+  flex: "1 1 55%",
+  maxWidth: "55%",
+  minWidth: 0,
+  position: "relative",
+  zIndex: 2,
+};
+
+const requestArtWrap: CSSProperties = {
+  alignItems: "center",
+  display: "flex",
+  flex: "0 0 42%",
+  justifyContent: "flex-end",
+  maxWidth: "42%",
+  minWidth: 96,
+  position: "relative",
+  zIndex: 1,
+};
+
+const requestArt: CSSProperties = {
+  height: "auto",
+  maxHeight: 88,
+  maxWidth: "100%",
+  objectFit: "contain",
+  objectPosition: "right center",
+  width: "100%",
+};
 
 const requestCta: CSSProperties = {
   background: "#fff",
@@ -520,34 +552,56 @@ const requestCta: CSSProperties = {
 
 const offerGrid: CSSProperties = { display: "grid", gap: 10, gridTemplateColumns: "1fr 1fr" };
 const offerCard: CSSProperties = {
+  alignItems: "stretch",
   border: "none",
   borderRadius: 14,
   cursor: "pointer",
+  display: "flex",
   font: "inherit",
-  isolation: "isolate",
-  minHeight: 148,
+  gap: 4,
+  minHeight: 132,
   overflow: "hidden",
-  padding: "12px 10px",
+  padding: "12px 8px 12px 10px",
   position: "relative",
   textAlign: "left",
 };
-const offerScrim: CSSProperties = {
-  bottom: 0,
-  left: 0,
-  position: "absolute",
-  right: 0,
-  top: 0,
-  zIndex: 1,
+const offerCopy: CSSProperties = {
+  display: "flex",
+  flex: "1 1 55%",
+  flexDirection: "column",
+  justifyContent: "center",
+  maxWidth: "58%",
+  minWidth: 0,
+  position: "relative",
+  zIndex: 2,
 };
-const offerCopy: CSSProperties = { maxWidth: "68%", position: "relative", zIndex: 2 };
+const offerArtWrap: CSSProperties = {
+  alignItems: "flex-end",
+  alignSelf: "center",
+  display: "flex",
+  flex: "0 0 72px",
+  justifyContent: "flex-end",
+  maxWidth: 78,
+  minWidth: 64,
+  pointerEvents: "none",
+};
+const offerArt: CSSProperties = {
+  height: "auto",
+  maxHeight: 72,
+  maxWidth: "100%",
+  objectFit: "contain",
+  objectPosition: "right center",
+  width: "100%",
+};
 const offerTitle: CSSProperties = { fontSize: 13, fontWeight: 800, lineHeight: 1.25, margin: "0 0 4px" };
 const offerBody: CSSProperties = { fontSize: 10, lineHeight: 1.3, margin: "0 0 10px" };
 const offerLinkBtn: CSSProperties = {
+  alignItems: "center",
+  alignSelf: "flex-start",
   borderRadius: 999,
   display: "inline-flex",
   fontSize: 11,
   fontWeight: 700,
   minHeight: 28,
   padding: "0 10px",
-  alignItems: "center",
 };

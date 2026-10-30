@@ -185,7 +185,6 @@ export function HomeScreen({
         </ScrollView>
 
         <View style={styles.requestBanner}>
-          <Image source={homeDemoRequest.backgroundArt} style={styles.requestBg} resizeMode="cover" accessibilityLabel="" />
           <View style={styles.requestCopy}>
             <Text style={styles.requestTitle}>{homeDemoRequest.title}</Text>
             <Text style={styles.requestBody}>{homeDemoRequest.subtitle}</Text>
@@ -193,19 +192,28 @@ export function HomeScreen({
               <Text style={styles.requestCtaText}>{homeDemoRequest.cta} →</Text>
             </Pressable>
           </View>
+          <View style={styles.requestArtWrap}>
+            <Image source={homeDemoRequest.art} style={styles.requestArt} resizeMode="contain" accessibilityLabel="" />
+          </View>
         </View>
 
         <SectionHeader title="Ofertas especiales" onSeeAll={() => onOpenExplore()} />
         <View style={styles.offerGrid}>
           {homeDemoOffers.map((offer) => (
-            <Pressable key={offer.id} onPress={() => onOpenExplore(offer.exploreQuery)} style={styles.offerCard}>
-              <Image source={offer.backgroundArt} style={styles.offerBg} resizeMode="cover" accessibilityLabel="" />
+            <Pressable
+              key={offer.id}
+              onPress={() => onOpenExplore(offer.exploreQuery)}
+              style={[styles.offerCard, { backgroundColor: offer.background }]}
+            >
               <View style={styles.offerCopy}>
                 <Text style={[styles.offerTitle, { color: offer.titleColor }]}>{offer.title}</Text>
                 {offer.subtitle ? <Text style={[styles.offerBody, { color: offer.titleColor }]}>{offer.subtitle}</Text> : null}
                 <View style={[styles.offerBtn, { backgroundColor: offer.buttonBackground }]}>
                   <Text style={[styles.offerBtnText, { color: offer.buttonColor }]}>Ver ofertas →</Text>
                 </View>
+              </View>
+              <View style={styles.offerArtWrap}>
+                <Image source={offer.art} style={styles.offerArt} resizeMode="contain" accessibilityLabel="" />
               </View>
             </Pressable>
           ))}
@@ -320,11 +328,18 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     backgroundColor: "#FFFFFF",
     borderRadius: 10,
-    marginBottom: 8,
+    marginBottom: 6,
     overflow: "hidden",
     position: "relative",
+    width: "100%",
   },
-  productImage: { height: "100%", width: "100%" },
+  productImage: {
+    ...StyleSheet.absoluteFill,
+    bottom: 10,
+    left: 10,
+    right: 10,
+    top: 10,
+  },
   discountBadge: {
     backgroundColor: "#E11D48",
     borderRadius: 6,
@@ -337,21 +352,34 @@ const styles = StyleSheet.create({
   },
   discountText: { color: "#FFFFFF", fontSize: 10, fontWeight: "700" },
   fav: { color: colors.primary, fontSize: 16, position: "absolute", right: 8, top: 6, zIndex: 1 },
-  productName: { color: colors.deep, fontSize: 13, fontWeight: "700", marginBottom: 4 },
+  productName: { color: colors.deep, fontSize: 13, fontWeight: "700", marginBottom: 4, minHeight: 32 },
   priceRow: { alignItems: "baseline", flexDirection: "row", gap: 6, marginBottom: 2 },
   productPrice: { color: colors.primary, fontSize: 15, fontWeight: "800" },
   comparePrice: { color: colors.muted, fontSize: 12, textDecorationLine: "line-through" },
   rating: { color: "#F5A524", fontSize: 12 },
   reviewCount: { color: colors.muted },
   requestBanner: {
+    alignItems: "center",
+    backgroundColor: "#EAF3FF",
     borderRadius: 16,
-    minHeight: 128,
+    flexDirection: "row",
+    gap: 12,
     overflow: "hidden",
-    padding: 16,
+    paddingLeft: 16,
+    paddingRight: 12,
+    paddingVertical: 14,
     position: "relative",
   },
-  requestBg: { ...StyleSheet.absoluteFill },
-  requestCopy: { maxWidth: "58%", zIndex: 1 },
+  requestCopy: { flexGrow: 1, flexShrink: 1, flexBasis: "55%", maxWidth: "55%", zIndex: 2 },
+  requestArtWrap: {
+    alignItems: "center",
+    flexGrow: 0,
+    flexShrink: 0,
+    justifyContent: "flex-end",
+    maxWidth: "42%",
+    width: "42%",
+  },
+  requestArt: { height: 88, maxWidth: "100%", width: "100%" },
   requestTitle: { color: colors.deep, fontSize: 16, fontWeight: "800", marginBottom: 4 },
   requestBody: { color: colors.muted, fontSize: 12, lineHeight: 17, marginBottom: 10 },
   requestCta: {
@@ -366,9 +394,29 @@ const styles = StyleSheet.create({
   },
   requestCtaText: { color: colors.primary, fontSize: 12, fontWeight: "700" },
   offerGrid: { flexDirection: "row", gap: 10 },
-  offerCard: { borderRadius: 14, flex: 1, minHeight: 148, overflow: "hidden", padding: 12, position: "relative" },
-  offerBg: { ...StyleSheet.absoluteFill },
-  offerCopy: { maxWidth: "62%", zIndex: 1 },
+  offerCard: {
+    alignItems: "center",
+    borderRadius: 14,
+    flex: 1,
+    flexDirection: "row",
+    gap: 4,
+    minHeight: 132,
+    overflow: "hidden",
+    paddingLeft: 10,
+    paddingRight: 6,
+    paddingVertical: 12,
+    position: "relative",
+  },
+  offerCopy: { flexGrow: 1, flexShrink: 1, flexBasis: "55%", maxWidth: "58%", zIndex: 2 },
+  offerArtWrap: {
+    alignItems: "flex-end",
+    flexGrow: 0,
+    flexShrink: 0,
+    justifyContent: "center",
+    maxWidth: 78,
+    width: 72,
+  },
+  offerArt: { height: 72, width: 72 },
   offerTitle: { fontSize: 13, fontWeight: "800", marginBottom: 4 },
   offerBody: { fontSize: 10, lineHeight: 14, marginBottom: 8, opacity: 0.85 },
   offerBtn: {

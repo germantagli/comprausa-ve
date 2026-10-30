@@ -31,8 +31,10 @@ export type HomeDemoOffer = {
   titleColor: string;
   buttonBackground: string;
   buttonColor: string;
-  /** Full banner art — left open for live title/CTA. */
-  backgroundArt: ImageSourcePropType;
+  /** Solid banner fill (cream / pink). */
+  background: string;
+  /** Right-side product illustration only. */
+  art: ImageSourcePropType;
 };
 
 export const homeDemoCategories: readonly HomeDemoCategory[] = [
@@ -81,7 +83,8 @@ export const homeDemoOffers: readonly HomeDemoOffer[] = [
     titleColor: "#0D3A7A",
     buttonBackground: "#1B5FC7",
     buttonColor: "#FFFFFF",
-    backgroundArt: require("../assets/images/home/demo/offer-electronics.png"),
+    background: "#F5EFE6",
+    art: require("../assets/images/home/demo/offer-electronics-art.png"),
   },
   {
     id: "fashion",
@@ -91,7 +94,8 @@ export const homeDemoOffers: readonly HomeDemoOffer[] = [
     titleColor: "#9D174D",
     buttonBackground: "#DB2777",
     buttonColor: "#FFFFFF",
-    backgroundArt: require("../assets/images/home/demo/offer-fashion.png"),
+    background: "#FCE7F3",
+    art: require("../assets/images/home/demo/offer-fashion-art.png"),
   },
 ];
 

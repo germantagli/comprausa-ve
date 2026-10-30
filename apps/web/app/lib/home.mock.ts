@@ -31,8 +31,10 @@ export type HomeDemoOffer = {
   titleColor: string;
   buttonBackground: string;
   buttonColor: string;
-  /** Full banner art — left open for live title/CTA. */
-  backgroundArt: string;
+  /** Solid banner fill (cream / pink). */
+  background: string;
+  /** Right-side product illustration only. */
+  art: string;
 };
 
 /** Six Home categories — DEMO labels + local mock art. */
@@ -83,7 +85,8 @@ export const homeDemoOffers: readonly HomeDemoOffer[] = [
     titleColor: "#0D3A7A",
     buttonBackground: "#1B5FC7",
     buttonColor: "#FFFFFF",
-    backgroundArt: "/brand/home/demo/offer-electronics.webp",
+    background: "#F5EFE6",
+    art: "/brand/home/demo/offer-electronics-art.webp",
   },
   {
     id: "fashion",
@@ -93,7 +96,8 @@ export const homeDemoOffers: readonly HomeDemoOffer[] = [
     titleColor: "#9D174D",
     buttonBackground: "#DB2777",
     buttonColor: "#FFFFFF",
-    backgroundArt: "/brand/home/demo/offer-fashion.webp",
+    background: "#FCE7F3",
+    art: "/brand/home/demo/offer-fashion-art.webp",
   },
 ] as const;
 
