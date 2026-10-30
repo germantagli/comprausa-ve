@@ -17,12 +17,11 @@ import {
 import { colorTokens, fontTokens, radiusTokens, spaceTokens } from "@comprausa/design-tokens";
 import { catalogPriceLabel } from "@comprausa/utils";
 import { useEffect, useState, type ReactNode } from "react";
-import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { apiBase } from "./api";
 import { MobileOrdersScreen } from "./tracking-screens";
 
 const colors = colorTokens.light;
-const headerLogo = require("../assets/brand/logo-header.png");
 
 type Load<T> = { status: "loading" } | { status: "error" } | { status: "ready"; data: T };
 
@@ -32,102 +31,47 @@ interface ProductCardData {
   availability: CatalogAvailability;
 }
 
-export function HomeScreen({
-  session,
-  onOpenCart,
-  onOpenOrders,
+export { HomeScreen } from "./home-screen";
+
+export function ExploreScreen({
   onOpenProduct,
-  onOpenStores,
+  initialQuery = "",
 }: {
-  session: AuthenticatedSession | null;
-  onOpenCart: () => void;
-  onOpenOrders: () => void;
   onOpenProduct: (productId: string) => void;
-  onOpenStores: () => void;
+  initialQuery?: string;
 }) {
-  const greeting = useGreeting(session);
-  const [draft, setDraft] = useState("");
-  const [query, setQuery] = useState("");
+  const [draft, setDraft] = useState(initialQuery);
+  const [query, setQuery] = useState(initialQuery);
+
+  useEffect(() => {
+    setDraft(initialQuery);
+    setQuery(initialQuery);
+  }, [initialQuery]);
 
   return (
     <ScrollView contentContainerStyle={styles.page}>
-      <View style={styles.headerLogoWrap}>
-        <Image source={headerLogo} accessibilityLabel="TraeLo" style={styles.headerLogo} resizeMode="contain" />
-      </View>
       <Text accessibilityRole="header" style={styles.title}>
-        {greeting}
+        Explorar
+      </Text>
+      <Text style={styles.caption}>
+        Busca por tienda o categoría. El catálogo demo no publica precios reales; las cotizaciones las arma el equipo.
       </Text>
       <SearchBox draft={draft} onChange={setDraft} onSubmit={() => setQuery(draft.trim())} />
-      <View accessibilityLabel="Compra en USA, recíbelo en Venezuela" style={styles.banner}>
-        <Text style={styles.bannerTitle}>Compra en tus tiendas favoritas de USA. Recíbelo en Venezuela.</Text>
-        <Text style={styles.bannerBody}>
-          Cotizamos el pedido y el envío. El catálogo demo no publica precios, existencia ni fechas.
-        </Text>
-        <View style={styles.bannerActions}>
-          <Pressable accessibilityRole="button" onPress={onOpenStores} style={styles.bannerPrimary}>
-            <Text style={styles.primaryText}>Ver tiendas</Text>
-          </Pressable>
-          <Pressable accessibilityRole="button" onPress={onOpenCart} style={styles.bannerSecondary}>
-            <Text style={styles.bannerSecondaryText}>Carrito</Text>
-          </Pressable>
-        </View>
-      </View>
       <NamedSection
-        title="Tiendas destacadas"
-        empty="Todavía no hay tiendas internas."
+        title="Tiendas partner"
+        empty="Todavía no hay tiendas en el directorio."
         failure="No pudimos cargar las tiendas."
         load={() => listInternalStores(apiBase)}
         chips
       />
       <NamedSection
-        title="Categorías populares"
+        title="Categorías"
         empty="Todavía no hay categorías."
         failure="No pudimos cargar las categorías."
         load={() => listCatalogCategories(apiBase)}
         circles
       />
-      <ProductSection query={query} title="Ofertas destacadas" onOpenProduct={onOpenProduct} />
-      <View style={styles.section}>
-        <Text accessibilityRole="header" style={styles.heading}>
-          Cómo funciona
-        </Text>
-        {[
-          "Busca en el catálogo demo o pega un enlace de USA.",
-          "Pedimos cotización: el importe lo escribe el equipo.",
-          "Pagas en USD y seguimos el envío a Venezuela.",
-        ].map((step, index) => (
-          <View key={step} style={styles.stepCard}>
-            <Text style={styles.stepIndex}>{index + 1}</Text>
-            <Text style={styles.body}>{step}</Text>
-          </View>
-        ))}
-      </View>
-      <Pressable accessibilityRole="button" onPress={onOpenOrders} style={styles.linkHit}>
-        <Text style={styles.link}>Ver pedidos activos</Text>
-      </Pressable>
-    </ScrollView>
-  );
-}
-
-export function ExploreScreen({ onOpenProduct }: { onOpenProduct: (productId: string) => void }) {
-  const [draft, setDraft] = useState("");
-  const [query, setQuery] = useState("");
-  return (
-    <ScrollView contentContainerStyle={styles.page}>
-      <Text accessibilityRole="header" style={styles.title}>
-        Tiendas y catálogo
-      </Text>
-      <Text style={styles.caption}>Sin logos de marcas externas. Solo catálogo demo e internas.</Text>
-      <SearchBox draft={draft} onChange={setDraft} onSubmit={() => setQuery(draft.trim())} />
-      <Text style={styles.body}>El único filtro del catálogo demo es el nombre.</Text>
-      <NamedSection
-        title="Tiendas internas"
-        empty="Todavía no hay tiendas internas."
-        failure="No pudimos cargar las tiendas."
-        load={() => listInternalStores(apiBase)}
-        chips
-      />
-      <ProductSection query={query} title="Resultados" onOpenProduct={onOpenProduct} />
+      <ProductSection query={query} title="Resultados del catálogo demo" onOpenProduct={onOpenProduct} />
     </ScrollView>
   );
 }
@@ -446,33 +390,6 @@ function Region<T>({
     );
   }
   return render(load.phase.data);
-}
-
-function useGreeting(session: AuthenticatedSession | null): string {
-  const [greeting, setGreeting] = useState("Hola");
-  useEffect(() => {
-    if (!session) {
-      setGreeting("Hola");
-      return;
-    }
-    let cancelled = false;
-    getAccountProfile(apiBase, session.accessToken)
-      .then((profile) => {
-        const name = profile.givenName?.trim();
-        if (!cancelled) {
-          setGreeting(name ? `Hola, ${name}` : "Hola");
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setGreeting("Hola");
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [session]);
-  return greeting;
 }
 
 function useLoad<T>(load: () => Promise<T>, deps: readonly unknown[]): { phase: Load<T>; retry: () => void } {

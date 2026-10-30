@@ -29,3 +29,5 @@ export {
   paymentIntegrationRegistry,
   storeIntegrationRegistry,
 } from "./integrations";
+export type { CatalogDirectoryItem } from "./catalog-directory";
+export { catalogBrowseCategories, catalogPartnerStores } from "./catalog-directory";

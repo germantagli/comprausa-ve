@@ -23,14 +23,23 @@ describe("InternalDemoCatalogProvider", () => {
     }
   });
 
-  it("does not list categories or internal stores", () => {
+  it("lists Home directory labels without inventing priced inventory", () => {
     const controller = new CatalogController();
     expect(controller.filters()).toEqual({ fields: [{ id: "text", label: "Nombre" }] });
-    expect(controller.categories()).toEqual({ items: [] });
-    expect(controller.stores()).toEqual({ items: [] });
-    const blob = JSON.stringify([controller.categories(), controller.stores()]);
+    const categories = controller.categories();
+    const stores = controller.stores();
+    expect(categories.items.length).toBeGreaterThan(0);
+    expect(stores.items.length).toBeGreaterThan(0);
+    for (const item of [...categories.items, ...stores.items]) {
+      expect(item.id.length).toBeGreaterThan(0);
+      expect(item.name.length).toBeGreaterThan(0);
+    }
+    // Partner codes may appear as directory ids; purchase connectors stay blocked.
     for (const store of storeIntegrationRegistry) {
-      expect(blob.includes(store.code)).toBe(false);
+      if (stores.items.some((item) => item.id === store.code)) {
+        expect(store.purchaseConnector).toBe(false);
+        expect(store.mode).toBe("BLOCKED");
+      }
     }
   });
 

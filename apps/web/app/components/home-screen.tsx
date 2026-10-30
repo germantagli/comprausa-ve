@@ -1,277 +1,386 @@
 "use client";
 
-import { getAccountProfile } from "@comprausa/api-client";
+import { listCatalogCategories, listInternalStores, probeServerReachable, type NamedCatalogList } from "@comprausa/api-client";
 import { APP_BRAND_NAME } from "@comprausa/types";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { apiBase } from "../lib/api";
-import { popularCategoryLabels } from "../lib/demo-chrome";
-import { readSession } from "../lib/session";
-import { ProductList, ReferenceStoreCards, SearchForm } from "./catalog-views";
-import { IconBox } from "./icons";
+import { IconBell, IconHeart, IconSearch } from "./icons";
 import { PageFrame } from "./page-frame";
-import {
-  bannerStyle,
-  bodyStyle,
-  buttonStyle,
-  colors,
-  displayStyle,
-  headingStyle,
-  linkStyle,
-  mutedStyle,
-  secondaryButtonStyle,
-  spaceTokens,
-  titleStyle,
-} from "./styles";
+import { colors, fontTokens, radiusTokens, spaceTokens } from "./styles";
 
+type DirectoryLoad =
+  | { status: "loading" }
+  | { status: "error"; message: string }
+  | { status: "ready"; data: NamedCatalogList };
+
+/** First-row categories matching the approved TraeLo Home mock. */
+const HOME_CATEGORY_IDS = ["electronica", "ropa", "calzado", "hogar"] as const;
+
+const storeLogos: Record<string, string> = {
+  amazon: "/brand/home/store-amazon.webp",
+  walmart: "/brand/home/store-walmart.webp",
+  ebay: "/brand/home/store-ebay.webp",
+  shein: "/brand/home/store-shein.webp",
+  nike: "/brand/home/store-nike.webp",
+  "best-buy": "/brand/home/store-bestbuy.webp",
+  target: "/brand/home/store-target.webp",
+  apple: "/brand/home/store-apple.webp",
+};
+
+const categoryIcons: Record<string, string> = {
+  electronica: "/brand/home/cat-electronica.webp",
+  ropa: "/brand/home/cat-ropa.webp",
+  calzado: "/brand/home/cat-calzado.webp",
+  hogar: "/brand/home/cat-hogar.webp",
+  belleza: "/brand/home/cat-belleza.webp",
+  deportes: "/brand/home/cat-deportes.webp",
+  juguetes: "/brand/home/cat-juguetes.webp",
+  supermercado: "/brand/home/cat-supermercado.webp",
+  videojuegos: "/brand/home/cat-videojuegos.webp",
+  herramientas: "/brand/home/cat-herramientas.webp",
+};
+
+/**
+ * TraeLo Home — mobile-first Next.js surface matching the approved mock.
+ * Stores/categories come from /v1/catalog; no invented prices.
+ */
 export function HomeScreen() {
-  const greeting = useGreeting();
   const router = useRouter();
   const [draft, setDraft] = useState("");
+  const [reachable, setReachable] = useState<boolean | null>(null);
+  const [stores, setStores] = useState<DirectoryLoad>({ status: "loading" });
+  const [categories, setCategories] = useState<DirectoryLoad>({ status: "loading" });
+
+  const refresh = useCallback(async () => {
+    setStores({ status: "loading" });
+    setCategories({ status: "loading" });
+    const ok = await probeServerReachable(apiBase);
+    setReachable(ok);
+    if (!ok) {
+      setStores({ status: "error", message: "Sin conexión con el servidor." });
+      setCategories({ status: "error", message: "Sin conexión con el servidor." });
+      return;
+    }
+    try {
+      const [storeList, categoryList] = await Promise.all([listInternalStores(apiBase), listCatalogCategories(apiBase)]);
+      setStores({ status: "ready", data: storeList });
+      setCategories({ status: "ready", data: categoryList });
+    } catch {
+      setStores({ status: "error", message: "No pudimos cargar las tiendas." });
+      setCategories({ status: "error", message: "No pudimos cargar las categorías." });
+    }
+  }, []);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  const homeCategories = useMemo(() => {
+    if (categories.status !== "ready") {
+      return [];
+    }
+    const byId = new Map(categories.data.items.map((item) => [item.id, item]));
+    return HOME_CATEGORY_IDS.map((id) => byId.get(id)).filter((item): item is { id: string; name: string } => Boolean(item));
+  }, [categories]);
+
+  function goExplore(query?: string): void {
+    if (reachable !== true) {
+      window.alert("Sin conexión con el servidor. Revisa la red e inténtalo de nuevo.");
+      void refresh();
+      return;
+    }
+    const text = query?.trim() ?? "";
+    router.push(text.length > 0 ? `/explorar?text=${encodeURIComponent(text)}` : "/explorar");
+  }
 
   return (
-    <PageFrame>
-      <div className="cve-mobile-only" style={{ marginBottom: spaceTokens[4] }}>
-        <Link
-          href="/"
-          aria-label={APP_BRAND_NAME}
-          style={{
-            background: "#000",
-            borderRadius: 12,
-            display: "inline-flex",
-            lineHeight: 0,
-            padding: "8px 12px",
+    <PageFrame compact>
+      <div className="cve-fade-up cve-home" style={homeRoot}>
+        <header style={header}>
+          <Link href="/" aria-label={APP_BRAND_NAME} style={{ display: "inline-flex", lineHeight: 0 }}>
+            <Image
+              src="/brand/logo-header.webp"
+              alt={APP_BRAND_NAME}
+              width={132}
+              height={32}
+              priority
+              style={{ height: 28, width: "auto" }}
+            />
+          </Link>
+          <div style={{ alignItems: "center", display: "flex", gap: 4 }}>
+            <Link href="/perfil" aria-label="Favoritos" style={iconHit}>
+              <IconHeart />
+            </Link>
+            <Link href="/pedidos" aria-label="Notificaciones" style={{ ...iconHit, position: "relative" }}>
+              <IconBell />
+              <span style={badge}>0</span>
+            </Link>
+          </div>
+        </header>
+
+        {reachable === false ? (
+          <button type="button" onClick={() => void refresh()} style={offlineBanner}>
+            Sin conexión con el servidor. Toca para reintentar.
+          </button>
+        ) : null}
+
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            goExplore(draft);
           }}
+          style={searchShell}
         >
-          <Image src="/brand/logo-header.webp" alt={APP_BRAND_NAME} width={180} height={60} priority style={{ height: 36, width: "auto" }} />
-        </Link>
-        <h1 style={{ ...titleStyle, marginTop: spaceTokens[3] }}>{greeting}</h1>
-        <SearchForm
-          value={draft}
-          onChange={setDraft}
-          onSubmit={() => {
-            const text = draft.trim();
-            router.push(text.length > 0 ? `/explorar?text=${encodeURIComponent(text)}` : "/explorar");
-          }}
-        />
+          <IconSearch />
+          <input
+            aria-label="Buscar productos, marcas, tiendas"
+            placeholder="Buscar productos, marcas, tiendas..."
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            style={searchInput}
+          />
+        </form>
+
+        <button type="button" onClick={() => goExplore()} aria-label="Miles de productos de USA. Ver ofertas" style={bannerButton}>
+          <Image
+            src="/brand/home/banner-miles.webp"
+            alt=""
+            width={1750}
+            height={698}
+            priority
+            sizes="(max-width: 480px) 100vw, 480px"
+            style={{ display: "block", height: "auto", width: "100%" }}
+          />
+        </button>
+
+        <Section title="Tiendas populares" onSeeAll={() => goExplore()}>
+          {stores.status === "loading" ? <p style={muted}>Cargando tiendas…</p> : null}
+          {stores.status === "error" ? <p style={error}>{stores.message}</p> : null}
+          {stores.status === "ready" ? (
+            <div style={storeGrid}>
+              {stores.data.items.slice(0, 8).map((store) => {
+                const logo = storeLogos[store.id];
+                return (
+                  <button key={store.id} type="button" onClick={() => goExplore(store.name)} aria-label={store.name} style={storeTile}>
+                    {logo ? (
+                      <Image src={logo} alt="" width={96} height={96} unoptimized style={{ height: "78%", objectFit: "contain", width: "78%" }} />
+                    ) : (
+                      <span style={{ fontSize: 11, fontWeight: 700 }}>{store.name}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+        </Section>
+
+        <Section title="Categorías" onSeeAll={() => goExplore()}>
+          {categories.status === "loading" ? <p style={muted}>Cargando categorías…</p> : null}
+          {categories.status === "error" ? <p style={error}>{categories.message}</p> : null}
+          {categories.status === "ready" ? (
+            <div style={catGrid}>
+              {homeCategories.map((category) => {
+                const icon = categoryIcons[category.id];
+                return (
+                  <button key={category.id} type="button" onClick={() => goExplore(category.name)} aria-label={category.name} style={catItem}>
+                    {icon ? (
+                      <Image
+                        src={icon}
+                        alt=""
+                        width={80}
+                        height={80}
+                        unoptimized
+                        style={{ borderRadius: 14, display: "block", height: "auto", margin: "0 auto 6px", objectFit: "cover", width: "100%" }}
+                      />
+                    ) : (
+                      <span style={catFallback}>{category.name.slice(0, 1)}</span>
+                    )}
+                    <span style={catLabel}>{category.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+        </Section>
+
+        <button type="button" onClick={() => goExplore()} aria-label="Descuentos especiales" style={{ ...bannerButton, marginTop: 4 }}>
+          <Image
+            src="/brand/home/banner-descuentos.webp"
+            alt=""
+            width={854}
+            height={312}
+            sizes="(max-width: 480px) 100vw, 480px"
+            style={{ display: "block", height: "auto", maxHeight: 118, objectFit: "cover", objectPosition: "center", width: "100%" }}
+          />
+        </button>
       </div>
-
-      <p className="cve-desktop-only" style={{ ...mutedStyle, marginBottom: spaceTokens[3] }}>
-        {greeting}. Catálogo de demostración: artículos ficticios, sin precios publicados.
-      </p>
-
-      <section aria-label="Compra en USA, recíbelo en Venezuela" className="cve-fade-up" style={{ ...bannerStyle, marginTop: 0 }}>
-        <div className="cve-hero">
-          <div>
-            <p style={{ ...mutedStyle, color: "rgba(255,255,255,0.82)", marginBottom: spaceTokens[2] }}>TraeLo</p>
-            <h2
-              className="cve-fade-up-delay"
-              style={{
-                ...displayStyle,
-                color: colors.primaryOn,
-                fontSize: "clamp(28px, 3.2vw, 40px)",
-                lineHeight: 1.15,
-                marginBottom: spaceTokens[3],
-              }}
-            >
-              Compra en tus tiendas favoritas de USA. Recíbelo en Venezuela.
-            </h2>
-            <ul style={{ listStyle: "none", margin: `0 0 ${spaceTokens[4]}px`, padding: 0 }}>
-              {["Productos cotizados por el equipo", "Pagas desde Venezuela cuando el importe esté listo", "Envíos coordinados USA → Venezuela"].map((item) => (
-                <li key={item} style={{ alignItems: "center", display: "flex", gap: 10, marginBottom: 8 }}>
-                  <span aria-hidden="true" style={{ color: colors.cyan, fontWeight: 700 }}>
-                    ✓
-                  </span>
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: spaceTokens[3] }}>
-              <Link
-                href="/explorar"
-                style={{
-                  ...buttonStyle,
-                  alignItems: "center",
-                  background: colors.surface,
-                  color: colors.primary,
-                  display: "inline-flex",
-                  textDecoration: "none",
-                }}
-              >
-                Comprar ahora →
-              </Link>
-              <Link
-                href="/carrito"
-                style={{
-                  ...secondaryButtonStyle,
-                  alignItems: "center",
-                  background: "transparent",
-                  borderColor: "rgba(255,255,255,0.45)",
-                  color: colors.primaryOn,
-                  display: "inline-flex",
-                  textDecoration: "none",
-                }}
-              >
-                Ir al carrito
-              </Link>
-            </div>
-          </div>
-          <div className="cve-hero-art cve-hero-art-motion" aria-hidden="true" style={{ alignItems: "center", display: "flex", justifyContent: "center" }}>
-            <div
-              style={{
-                background: "rgba(255,255,255,0.12)",
-                border: "1px solid rgba(255,255,255,0.22)",
-                borderRadius: 24,
-                display: "grid",
-                gap: spaceTokens[3],
-                minHeight: 180,
-                padding: spaceTokens[6],
-                placeItems: "center",
-                width: "100%",
-              }}
-            >
-              <IconBox />
-              <p style={{ fontSize: 13, margin: 0, textAlign: "center" }}>USA → almacén → Venezuela</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <p className="cve-mobile-only" style={{ ...mutedStyle, marginTop: spaceTokens[4] }}>
-        <Link href="/tiendas" style={linkStyle}>
-          Ver tiendas
-        </Link>
-        {" · "}
-        <Link href="/filtros" style={linkStyle}>
-          Filtros
-        </Link>
-        {" · "}
-        <Link href="/explorar" style={linkStyle}>
-          Búsqueda
-        </Link>
-      </p>
-
-      <ProductList query="" />
-
-      <ReferenceStoreCards />
-
-      <section aria-label="Categorías populares" id="categorias" style={{ marginTop: spaceTokens[6] }}>
-        <h2 style={headingStyle}>Categorías populares</h2>
-        <p style={mutedStyle}>Guía visual del diseño. El catálogo demo no publica existencias por categoría.</p>
-        <ul className="cve-category-row">
-          {popularCategoryLabels.map((name) => (
-            <li key={name}>
-              <Link
-                href={`/explorar?text=${encodeURIComponent(name)}`}
-                style={{
-                  alignItems: "center",
-                  color: colors.text,
-                  display: "grid",
-                  gap: spaceTokens[2],
-                  justifyItems: "center",
-                  textDecoration: "none",
-                  width: 88,
-                }}
-              >
-                <span
-                  style={{
-                    alignItems: "center",
-                    background: colors.surface,
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: "50%",
-                    color: colors.primary,
-                    display: "flex",
-                    fontSize: 18,
-                    fontWeight: 700,
-                    height: 72,
-                    justifyContent: "center",
-                    width: 72,
-                  }}
-                >
-                  {name.slice(0, 1)}
-                </span>
-                <span style={{ fontSize: 12, fontWeight: 600, textAlign: "center" }}>{name}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section id="como-funciona" aria-label="Cómo funciona" style={{ marginTop: spaceTokens[8] }}>
-        <h2 style={headingStyle}>Cómo funciona</h2>
-        <ol className="cve-steps-grid" style={{ listStyle: "none", margin: 0, padding: 0 }}>
-          {[
-            "Busca en el catálogo demo o pega el enlace de un producto de USA.",
-            "Pedimos una cotización: el importe lo escribe el equipo, no un robot.",
-            "Pagas en USD con los métodos disponibles y hacemos el seguimiento del envío a Venezuela.",
-          ].map((step, index) => (
-            <li
-              key={step}
-              style={{
-                background: colors.surface,
-                border: `1px solid ${colors.border}`,
-                borderRadius: 12,
-                display: "grid",
-                gap: 8,
-                gridTemplateColumns: "32px 1fr",
-                height: "100%",
-                padding: spaceTokens[4],
-              }}
-            >
-              <span
-                style={{
-                  alignItems: "center",
-                  background: colors.primary,
-                  borderRadius: "50%",
-                  color: colors.primaryOn,
-                  display: "flex",
-                  fontSize: 14,
-                  fontWeight: 700,
-                  height: 32,
-                  justifyContent: "center",
-                  width: 32,
-                }}
-              >
-                {index + 1}
-              </span>
-              <p style={{ ...bodyStyle, margin: 0 }}>{step}</p>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <p style={{ ...bodyStyle, marginTop: spaceTokens[6] }}>
-        <Link href="/pedidos" style={linkStyle}>
-          Ver pedidos activos
-        </Link>
-      </p>
     </PageFrame>
   );
 }
 
-function useGreeting(): string {
-  const [greeting, setGreeting] = useState("Hola");
-
-  useEffect(() => {
-    const session = readSession();
-    if (!session) {
-      return;
-    }
-    let cancelled = false;
-    getAccountProfile(apiBase, session.accessToken)
-      .then((profile) => {
-        const name = profile.givenName?.trim();
-        if (!cancelled && name) {
-          setGreeting(`Hola, ${name}`);
-        }
-      })
-      .catch(() => undefined);
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  return greeting;
+function Section({ title, onSeeAll, children }: { title: string; onSeeAll: () => void; children: ReactNode }) {
+  return (
+    <section style={{ display: "grid", gap: 10 }}>
+      <div style={{ alignItems: "center", display: "flex", justifyContent: "space-between" }}>
+        <h2 style={{ color: colors.deep, fontSize: 17, fontWeight: 800, letterSpacing: "-0.02em", margin: 0 }}>{title}</h2>
+        <button
+          type="button"
+          onClick={onSeeAll}
+          style={{ background: "none", border: "none", color: colors.primary, cursor: "pointer", font: "inherit", fontSize: 14, fontWeight: 700 }}
+        >
+          Ver todas
+        </button>
+      </div>
+      {children}
+    </section>
+  );
 }
+
+const homeRoot: CSSProperties = {
+  display: "grid",
+  gap: 16,
+  margin: "0 auto",
+  maxWidth: 430,
+  width: "100%",
+};
+
+const header: CSSProperties = {
+  alignItems: "center",
+  display: "flex",
+  justifyContent: "space-between",
+  minHeight: 36,
+};
+
+const iconHit: CSSProperties = {
+  alignItems: "center",
+  display: "inline-flex",
+  height: 36,
+  justifyContent: "center",
+  textDecoration: "none",
+  width: 36,
+};
+
+const badge: CSSProperties = {
+  alignItems: "center",
+  background: "#E11D48",
+  borderRadius: 999,
+  color: "#fff",
+  display: "inline-flex",
+  fontSize: 10,
+  fontWeight: 700,
+  height: 15,
+  justifyContent: "center",
+  minWidth: 15,
+  padding: "0 3px",
+  position: "absolute",
+  right: 0,
+  top: 0,
+};
+
+const offlineBanner: CSSProperties = {
+  background: "#FEF2F2",
+  border: "1px solid #FECACA",
+  borderRadius: radiusTokens.md,
+  color: "#991B1B",
+  cursor: "pointer",
+  font: "inherit",
+  fontSize: 13,
+  fontWeight: 600,
+  padding: 10,
+  textAlign: "left",
+};
+
+const searchShell: CSSProperties = {
+  alignItems: "center",
+  background: "#F1F4F8",
+  border: "1px solid #E4EAF1",
+  borderRadius: 14,
+  display: "flex",
+  gap: 8,
+  minHeight: 46,
+  padding: "0 14px",
+};
+
+const searchInput: CSSProperties = {
+  background: "transparent",
+  border: "none",
+  color: colors.deep,
+  flex: 1,
+  font: "inherit",
+  fontSize: 15,
+  minHeight: 44,
+  outline: "none",
+};
+
+const bannerButton: CSSProperties = {
+  background: "transparent",
+  border: "none",
+  borderRadius: 16,
+  cursor: "pointer",
+  display: "block",
+  lineHeight: 0,
+  overflow: "hidden",
+  padding: 0,
+  width: "100%",
+};
+
+const storeGrid: CSSProperties = {
+  display: "grid",
+  gap: 8,
+  gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+};
+
+const storeTile: CSSProperties = {
+  alignItems: "center",
+  aspectRatio: "1",
+  background: "#fff",
+  border: "1px solid #E8EEF5",
+  borderRadius: 12,
+  cursor: "pointer",
+  display: "grid",
+  justifyContent: "center",
+  overflow: "hidden",
+  padding: 4,
+};
+
+const catGrid: CSSProperties = {
+  display: "grid",
+  gap: 10,
+  gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+};
+
+const catItem: CSSProperties = {
+  background: "transparent",
+  border: "none",
+  cursor: "pointer",
+  font: "inherit",
+  padding: 0,
+  textAlign: "center",
+};
+
+const catFallback: CSSProperties = {
+  alignItems: "center",
+  aspectRatio: "1",
+  background: "#EAF3FF",
+  borderRadius: 14,
+  color: colors.primary,
+  display: "grid",
+  fontWeight: 800,
+  margin: "0 auto 6px",
+  placeItems: "center",
+  width: "100%",
+};
+
+const catLabel: CSSProperties = {
+  color: colors.muted,
+  display: "block",
+  fontSize: 11,
+  fontWeight: 600,
+  lineHeight: 1.25,
+};
+
+const muted: CSSProperties = { color: colors.muted, fontSize: fontTokens.sizes.caption, margin: 0 };
+const error: CSSProperties = { color: "#991B1B", fontSize: fontTokens.sizes.caption, margin: 0 };

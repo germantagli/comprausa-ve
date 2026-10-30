@@ -7,14 +7,17 @@ const base: CSSProperties = {
 };
 
 export function IconHome({ active = false }: { active?: boolean }) {
+  const stroke = active ? colors.primary : colors.muted;
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" style={base}>
       <path
         d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z"
-        stroke={active ? colors.primary : colors.muted}
+        fill={active ? colors.primary : "none"}
+        stroke={stroke}
         strokeWidth="1.8"
         strokeLinejoin="round"
       />
+      {active ? <path d="M10 14h4v7h-4V14Z" fill={colors.surface} /> : null}
     </svg>
   );
 }
@@ -28,6 +31,45 @@ export function IconStores({ active = false }: { active?: boolean }) {
         strokeWidth="1.8"
       />
       <path d="M8 8V6a4 4 0 0 1 8 0v2" stroke={active ? colors.primary : colors.muted} strokeWidth="1.8" />
+    </svg>
+  );
+}
+
+/** Magnifying glass — Explorar tab (matches TraeLo Home mock). */
+export function IconExplore({ active = false }: { active?: boolean }) {
+  const stroke = active ? colors.primary : colors.muted;
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" style={base}>
+      <circle cx="11" cy="11" r="6.5" stroke={stroke} strokeWidth="1.8" />
+      <path d="m16.5 16.5 3.2 3.2" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconHeart({ active = false }: { active?: boolean }) {
+  const stroke = active ? colors.primary : colors.primary;
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" style={base}>
+      <path
+        d="M12 20s-7-4.4-7-9.2A4.2 4.2 0 0 1 12 7.5a4.2 4.2 0 0 1 7 3.3C19 15.6 12 20 12 20Z"
+        stroke={stroke}
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function IconBell() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" style={base}>
+      <path
+        d="M6 16h12l-1.2-1.4V10a4.8 4.8 0 1 0-9.6 0v4.6L6 16Z"
+        stroke="#E6A817"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path d="M10 17.5a2 2 0 0 0 4 0" stroke="#E6A817" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
 }
@@ -49,18 +91,16 @@ export function IconCart({ active = false }: { active?: boolean }) {
 }
 
 export function IconOrders({ active = false }: { active?: boolean }) {
+  const stroke = active ? colors.primary : colors.muted;
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" style={base}>
-      <rect
-        x="5"
-        y="3"
-        width="14"
-        height="18"
-        rx="2"
-        stroke={active ? colors.primary : colors.muted}
+      <path
+        d="M7 8h10l-.8 11.2A2 2 0 0 1 14.21 21H9.79a2 2 0 0 1-1.99-1.8L7 8Z"
+        stroke={stroke}
         strokeWidth="1.8"
+        strokeLinejoin="round"
       />
-      <path d="M9 8h6M9 12h6M9 16h4" stroke={active ? colors.primary : colors.muted} strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M9 8V6.5a3 3 0 0 1 6 0V8" stroke={stroke} strokeWidth="1.8" />
     </svg>
   );
 }

@@ -1,6 +1,6 @@
 import { Controller, Get, NotFoundException, Param, Query } from "@nestjs/common";
 import { ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
-import type { ProductProvider } from "@comprausa/types";
+import { catalogBrowseCategories, catalogPartnerStores, type ProductProvider } from "@comprausa/types";
 import { catalogSearchSchema } from "@comprausa/validation";
 import { InternalDemoCatalogProvider } from "./internal-demo-catalog.provider";
 
@@ -16,15 +16,21 @@ export class CatalogController {
   }
 
   @Get("categories")
-  @ApiOperation({ summary: "Categorías del catálogo interno. Hoy la lista está vacía. No inventa rubros." })
+  @ApiOperation({
+    summary:
+      "Categorías de navegación del Home. Son rubros de exploración, no inventario cotizado ni existencias.",
+  })
   categories() {
-    return { items: [] as { id: string; name: string }[] };
+    return { items: catalogBrowseCategories.map((item) => ({ id: item.id, name: item.name })) };
   }
 
   @Get("stores")
-  @ApiOperation({ summary: "Tiendas internas. Hoy no hay ninguna. No lista tiendas externas." })
+  @ApiOperation({
+    summary:
+      "Tiendas partner del directorio Home. Etiquetas de destino para buscar/cotizar; no abren conectores de compra.",
+  })
   stores() {
-    return { items: [] as { id: string; name: string }[] };
+    return { items: catalogPartnerStores.map((item) => ({ id: item.id, name: item.name })) };
   }
 
   @Get("products")
