@@ -17,6 +17,7 @@ export class HealthController {
   @ApiOperation({ summary: "Liveness. No revisa la base de datos ni cobra pagos." })
   @ApiOkResponse({ description: "Proceso vivo. Catálogo de demostración. Pagos sin configurar." })
   live(): HealthReport {
+    const persistence = this.env.persistence;
     return {
       status: "ok",
       service: "api",
@@ -36,6 +37,8 @@ export class HealthController {
       },
       payments: "not_configured",
       stores: "no_external_connector",
+      persistence,
+      productRequests: persistence === "postgres" ? "prisma" : "memory",
     };
   }
 

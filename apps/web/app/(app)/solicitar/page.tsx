@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type CSSProperties, type FormEvent } from "react";
 import { PageFrame } from "../../components/page-frame";
+import { PersistenceBanner } from "../../components/persistence-banner";
 import { buttonStyle, colors, radiusTokens } from "../../components/styles";
 import { apiBase } from "../../lib/api";
 import {
@@ -100,6 +101,7 @@ export default function SolicitarPage() {
         <Link href="/" style={back}>
           ← Volver
         </Link>
+        <PersistenceBanner />
         <div style={hero}>
           <div style={heroIcon} aria-hidden="true">
             📦🔗

@@ -80,7 +80,7 @@ describe("payment review HTTP", () => {
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [AuthModule.registerFrom(parseAppEnv({ NODE_ENV: "development", OTP_PROVIDER: "simulated" })), CommerceModule],
+      imports: [AuthModule.registerFrom(parseAppEnv({ NODE_ENV: "development", OTP_PROVIDER: "simulated", ALLOW_IN_MEMORY_PERSISTENCE: "true" })), CommerceModule],
     })
       .overrideProvider(STRIPE_CLIENT)
       .useValue(stripeClient)

@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import { useEffect, useState, type CSSProperties } from "react";
 import { PageFrame } from "../../components/page-frame";
+import { PersistenceBanner } from "../../components/persistence-banner";
 import { buttonStyle, colors, secondaryButtonStyle } from "../../components/styles";
 import { apiBase } from "../../lib/api";
 import {
@@ -72,6 +73,7 @@ export default function AdminDashboardPage() {
             Ver solicitudes
           </Link>
         </div>
+        <PersistenceBanner />
 
         {phase.status === "loading" ? <p style={body}>Cargando…</p> : null}
         {phase.status === "signed-out" ? (

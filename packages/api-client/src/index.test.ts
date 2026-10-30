@@ -16,10 +16,13 @@ describe("getHealth", () => {
         oauth: { google: false, apple: false },
         payments: "not_configured",
         stores: "no_external_connector",
+        persistence: "postgres",
+        productRequests: "prisma",
       }),
     );
     expect(health.catalog).toBe("internal-demo");
     expect(health.payments).toBe("not_configured");
+    expect(health.persistence).toBe("postgres");
   });
 
   it("rejects a challenge payload that includes the one-time code", async () => {

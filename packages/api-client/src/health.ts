@@ -15,6 +15,8 @@ const healthSchema = z
       .strict(),
     payments: z.literal("not_configured"),
     stores: z.literal("no_external_connector"),
+    persistence: z.enum(["postgres", "memory"]),
+    productRequests: z.enum(["prisma", "memory"]),
   })
   .strict();
 

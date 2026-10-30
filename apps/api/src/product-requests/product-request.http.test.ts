@@ -71,7 +71,7 @@ describe("product request HTTP", () => {
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [
-        AuthModule.registerFrom(parseAppEnv({ NODE_ENV: "development", OTP_PROVIDER: "simulated" })),
+        AuthModule.registerFrom(parseAppEnv({ NODE_ENV: "development", OTP_PROVIDER: "simulated", ALLOW_IN_MEMORY_PERSISTENCE: "true" })),
         ProductRequestModule.register(),
       ],
     }).compile();

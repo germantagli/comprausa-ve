@@ -4,6 +4,7 @@ import { listMyProductRequests, type ProductRequestView } from "@comprausa/api-c
 import Link from "next/link";
 import { useEffect, useState, type CSSProperties } from "react";
 import { PageFrame } from "../../components/page-frame";
+import { PersistenceBanner } from "../../components/persistence-banner";
 import { buttonStyle, colors, secondaryButtonStyle } from "../../components/styles";
 import { apiBase } from "../../lib/api";
 import {
@@ -68,6 +69,7 @@ export default function MisCotizacionesPage() {
           ← Perfil
         </Link>
         <h1 style={title}>Mis cotizaciones</h1>
+        <PersistenceBanner />
 
         <div style={tabs} role="tablist" aria-label="Filtro de estado">
           {filters.map((item) => (

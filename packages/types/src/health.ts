@@ -10,4 +10,7 @@ export interface HealthReport {
   };
   payments: "not_configured";
   stores: "no_external_connector";
+  /** Where product requests / auth persist. Production must be postgres. */
+  persistence: "postgres" | "memory";
+  productRequests: "prisma" | "memory";
 }
