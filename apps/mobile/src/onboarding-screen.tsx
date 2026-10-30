@@ -9,20 +9,19 @@ import {
   StatusBar,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
   type ImageSourcePropType,
 } from "react-native";
 
 const colors = colorTokens.light;
 
-/** Top inset for notch / status bar on both iOS and Android. */
 const topInset = Platform.select({
   ios: 52,
   android: (StatusBar.currentHeight ?? 0) + spaceTokens[3],
   default: spaceTokens[4],
 })!;
 
-/** Bottom inset for home indicator / gesture nav. */
 const bottomInset = Platform.select({
   ios: 28,
   android: spaceTokens[6],
@@ -54,18 +53,18 @@ const icons: Record<OnboardingBulletIcon, ImageSourcePropType> = {
 
 const cartMark = require("../assets/brand/splash/cart.png");
 
-/**
- * Post-registration bienvenida (4 pantallas).
- * Shared Expo UI for Android and iOS — same copy/assets as web mobile.
- */
+/** Post-registration bienvenida — Expo Android + iOS, parity with web mock. */
 export function OnboardingScreen({ onDone }: { onDone: () => void }) {
   const [step, setStep] = useState(0);
   const current = onboardingSteps[step] ?? onboardingSteps[0];
   const last = step >= onboardingSteps.length - 1;
+  const { height: windowHeight, width: windowWidth } = useWindowDimensions();
+  const heroHeight = Math.max(240, Math.min(Math.round(windowHeight * 0.42), 380));
 
   return (
     <View style={styles.page} accessibilityLabel={`Bienvenida ${APP_BRAND_NAME}`}>
       <StatusBar barStyle="dark-content" />
+      <View pointerEvents="none" style={styles.skyWash} />
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingTop: topInset }]}
         bounces={false}
@@ -80,10 +79,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
               <Text style={styles.lo}>Lo</Text>
             </Text>
           </View>
-          <Text
-            accessibilityLabel={`Paso ${step + 1} de ${onboardingSteps.length}`}
-            style={styles.counter}
-          >
+          <Text accessibilityLabel={`Paso ${step + 1} de ${onboardingSteps.length}`} style={styles.counter}>
             {step + 1}/{onboardingSteps.length}
           </Text>
         </View>
@@ -97,8 +93,8 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
           key={current.id}
           source={heroes[current.id]}
           accessibilityLabel=""
-          style={styles.hero}
-          resizeMode="contain"
+          style={[styles.hero, { width: windowWidth, height: heroHeight }]}
+          resizeMode="cover"
         />
 
         <View style={styles.bullets}>
@@ -114,7 +110,10 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
       <View style={[styles.footer, { paddingBottom: bottomInset }]}>
         <View style={styles.dots} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           {onboardingSteps.map((item, index) => (
-            <View key={item.id} style={[styles.dot, index === step ? styles.dotActive : null]} />
+            <View
+              key={item.id}
+              style={[styles.dot, index === step ? styles.dotActive : null, index === step ? styles.dotPill : null]}
+            />
           ))}
         </View>
         <Pressable
@@ -143,9 +142,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     flex: 1,
   },
+  skyWash: {
+    backgroundColor: "#D6E8FF",
+    height: "36%",
+    left: 0,
+    opacity: 0.85,
+    position: "absolute",
+    right: 0,
+    top: 0,
+  },
   scroll: {
     paddingBottom: spaceTokens[4],
-    paddingHorizontal: spaceTokens[4],
   },
   header: {
     alignItems: "center",
@@ -153,6 +160,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: spaceTokens[3],
     minHeight: 44,
+    paddingHorizontal: spaceTokens[4],
     position: "relative",
   },
   brandRow: {
@@ -161,13 +169,13 @@ const styles = StyleSheet.create({
     gap: spaceTokens[2],
   },
   cart: {
-    height: 36,
-    width: 44,
+    height: 38,
+    width: 48,
   },
   wordmark: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: "800",
-    letterSpacing: -0.6,
+    letterSpacing: -0.8,
   },
   trae: {
     color: colors.primary,
@@ -180,16 +188,17 @@ const styles = StyleSheet.create({
     fontSize: fontTokens.sizes.caption,
     fontWeight: "600",
     position: "absolute",
-    right: 0,
+    right: spaceTokens[4],
     top: 12,
   },
   title: {
     color: colors.deep,
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: "800",
-    letterSpacing: -0.5,
-    lineHeight: 32,
+    letterSpacing: -0.6,
+    lineHeight: 34,
     marginBottom: spaceTokens[2],
+    paddingHorizontal: spaceTokens[4],
     textAlign: "center",
   },
   subtitle: {
@@ -197,17 +206,16 @@ const styles = StyleSheet.create({
     fontSize: fontTokens.sizes.body,
     lineHeight: fontTokens.lineHeight.body,
     marginBottom: spaceTokens[3],
+    paddingHorizontal: spaceTokens[4],
     textAlign: "center",
   },
   hero: {
     alignSelf: "center",
-    height: Platform.select({ ios: 240, android: 220, default: 220 }),
     marginBottom: spaceTokens[4],
-    maxWidth: "100%",
-    width: "100%",
   },
   bullets: {
     gap: spaceTokens[3],
+    paddingHorizontal: spaceTokens[4],
   },
   bulletRow: {
     alignItems: "flex-start",
@@ -247,6 +255,9 @@ const styles = StyleSheet.create({
   },
   dotActive: {
     backgroundColor: colors.primary,
+  },
+  dotPill: {
+    width: 22,
   },
   primary: {
     alignItems: "center",
