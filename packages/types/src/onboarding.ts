@@ -72,8 +72,8 @@ export const onboardingSteps = [
     bullets: [
       { icon: "truck", text: "Compra en USA, nosotros gestionamos el envío." },
       { icon: "pin", text: "Recibe tu pedido en Venezuela." },
-      { icon: "shield", text: "Seguimiento en tiempo real." },
-      { icon: "check", text: "Productos 100% originales." },
+      { icon: "shield", text: "Seguimiento de tu pedido." },
+      { icon: "check", text: "Productos originales de tiendas verificadas." },
     ],
     primaryLabel: "Empezar a comprar",
   },
