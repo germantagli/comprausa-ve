@@ -6,7 +6,7 @@ import {
 } from "@comprausa/api-client";
 import { colorTokens, fontTokens, spaceTokens } from "@comprausa/design-tokens";
 import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { apiBase } from "./api";
 import { ExploreScreen, HelpScreen, HomeScreen, OrdersScreen, ProfileScreen } from "./catalog-screens";
 import { MobileCartScreen, MobileProductScreen, MobileQuoteScreen } from "./commerce-screens";
@@ -29,18 +29,21 @@ const colors = colorTokens.light;
 type Tab = "inicio" | "explorar" | "carrito" | "pedidos" | "perfil";
 type Gate = "checking" | "splash" | "onboarding" | "app";
 
-const tabs: readonly { id: Tab; label: string }[] = [
-  { id: "inicio", label: "Inicio" },
-  { id: "explorar", label: "Tiendas" },
-  { id: "carrito", label: "Carrito" },
-  { id: "pedidos", label: "Pedidos" },
-  { id: "perfil", label: "Perfil" },
+const tabs: readonly { id: Tab; label: string; glyph: string }[] = [
+  { id: "inicio", label: "Inicio", glyph: "⌂" },
+  { id: "explorar", label: "Explorar", glyph: "⌕" },
+  { id: "carrito", label: "Carrito", glyph: "◫" },
+  { id: "pedidos", label: "Pedidos", glyph: "👜" },
+  { id: "perfil", label: "Perfil", glyph: "☺" },
 ];
+
+const tabBottomInset = Platform.select({ ios: 12, android: 6, default: 6 })!;
 
 export function ClientShell() {
   const [gate, setGate] = useState<Gate>("checking");
   const [serverReachable, setServerReachable] = useState<boolean | null>(null);
   const [tab, setTab] = useState<Tab>("inicio");
+  const [exploreQuery, setExploreQuery] = useState("");
   const [help, setHelp] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
   const [signInMode, setSignInMode] = useState<"registro" | "entrar">("registro");
@@ -92,6 +95,16 @@ export function ClientShell() {
       cancelled = true;
     };
   }, []);
+
+  function openExplore(query?: string): void {
+    setExploreQuery(query ?? "");
+    setHelp(false);
+    setProductId(null);
+    setQuoteId(null);
+    setReview(false);
+    setTracking(false);
+    setTab("explorar");
+  }
 
   if (gate === "checking") {
     return <SplashScreen loading serverReachable={serverReachable} onComenzar={() => undefined} onIniciarSesion={() => undefined} />;
@@ -149,6 +162,8 @@ export function ClientShell() {
     );
   }
 
+  const overlayOpen = help || Boolean(productId) || Boolean(quoteId) || review || tracking;
+
   return (
     <View style={styles.frame}>
       <View style={styles.body}>
@@ -181,17 +196,20 @@ export function ClientShell() {
         {!help && !productId && !quoteId && !review && tracking && session ? (
           <MobileTrackingScreen session={session} onBack={() => setTracking(false)} />
         ) : null}
-        {!help && !productId && !quoteId && !review && !tracking && tab === "inicio" ? (
+        {!overlayOpen && tab === "inicio" ? (
           <HomeScreen
             session={session}
+            serverReachable={serverReachable}
             onOpenCart={() => setTab("carrito")}
             onOpenOrders={() => setTab("pedidos")}
-            onOpenProduct={setProductId}
-            onOpenStores={() => setTab("explorar")}
+            onOpenProfile={() => setTab("perfil")}
+            onOpenExplore={openExplore}
           />
         ) : null}
-        {!help && !productId && !quoteId && !review && !tracking && tab === "explorar" ? <ExploreScreen onOpenProduct={setProductId} /> : null}
-        {!help && !productId && !quoteId && !review && !tracking && tab === "carrito" ? (
+        {!overlayOpen && tab === "explorar" ? (
+          <ExploreScreen onOpenProduct={setProductId} initialQuery={exploreQuery} />
+        ) : null}
+        {!overlayOpen && tab === "carrito" ? (
           <MobileCartScreen
             session={session}
             onOpenProduct={setProductId}
@@ -199,8 +217,8 @@ export function ClientShell() {
             onSignIn={() => setSigningIn(true)}
           />
         ) : null}
-        {!help && !productId && !quoteId && !review && !tracking && tab === "pedidos" ? <OrdersScreen session={session} /> : null}
-        {!help && !productId && !quoteId && !review && !tracking && tab === "perfil" ? (
+        {!overlayOpen && tab === "pedidos" ? <OrdersScreen session={session} /> : null}
+        {!overlayOpen && tab === "perfil" ? (
           <ProfileScreen
             session={session}
             onSignIn={() => setSigningIn(true)}
@@ -216,29 +234,36 @@ export function ClientShell() {
           />
         ) : null}
       </View>
-      <View accessibilityRole="tablist" style={styles.tabs}>
-        {tabs.map((item) => {
-          const selected = !help && tab === item.id;
-          return (
-            <Pressable
-              key={item.id}
-              accessibilityRole="tab"
-              accessibilityState={{ selected }}
-              onPress={() => {
-                setHelp(false);
-                setProductId(null);
-                setReview(false);
-                setTracking(false);
-                setQuoteId(null);
-                setTab(item.id);
-              }}
-              style={styles.tab}
-            >
-              <Text style={selected ? styles.tabSelected : styles.tabLabel}>{item.label}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      {!overlayOpen ? (
+        <View accessibilityRole="tablist" style={[styles.tabs, { paddingBottom: tabBottomInset }]}>
+          {tabs.map((item) => {
+            const selected = tab === item.id;
+            return (
+              <Pressable
+                key={item.id}
+                accessibilityRole="tab"
+                accessibilityState={{ selected }}
+                accessibilityLabel={item.label}
+                onPress={() => {
+                  setHelp(false);
+                  setProductId(null);
+                  setReview(false);
+                  setTracking(false);
+                  setQuoteId(null);
+                  if (item.id !== "explorar") {
+                    setExploreQuery("");
+                  }
+                  setTab(item.id);
+                }}
+                style={styles.tab}
+              >
+                <Text style={[styles.tabIcon, selected ? styles.tabIconSelected : null]}>{item.glyph}</Text>
+                <Text style={selected ? styles.tabSelected : styles.tabLabel}>{item.label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -260,9 +285,18 @@ const styles = StyleSheet.create({
   tab: {
     alignItems: "center",
     flex: 1,
+    gap: 2,
     justifyContent: "center",
-    minHeight: 56,
+    minHeight: 60,
     paddingVertical: spaceTokens[2],
+  },
+  tabIcon: {
+    color: colors.muted,
+    fontSize: 18,
+    lineHeight: 22,
+  },
+  tabIconSelected: {
+    color: colors.primary,
   },
   tabLabel: {
     color: colors.muted,

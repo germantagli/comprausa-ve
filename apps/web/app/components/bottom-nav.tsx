@@ -8,9 +8,9 @@ import { colors } from "./styles";
 
 const items = [
   { href: "/", label: "Inicio", Icon: IconHome },
-  { href: "/tiendas", label: "Tiendas", Icon: IconStores },
+  { href: "/explorar", label: "Explorar", Icon: IconStores },
   { href: "/carrito", label: "Carrito", Icon: IconCart },
-  { href: "/pedidos", label: "Seguim.", Icon: IconOrders },
+  { href: "/pedidos", label: "Pedidos", Icon: IconOrders },
   { href: "/perfil", label: "Perfil", Icon: IconProfile },
 ] as const;
 

@@ -36,10 +36,22 @@ export function ClientShell({ children }: { children: ReactNode }) {
       const phone = isPhoneViewport();
       const stored = readSession();
       const seenOnboarding = window.localStorage.getItem(ONBOARDING_KEY) === "1";
-      const forceBienvenida = new URLSearchParams(window.location.search).get("bienvenida") === "1";
+      const params = new URLSearchParams(window.location.search);
+      const forceBienvenida = params.get("bienvenida") === "1";
+      const forceInicio = params.get("inicio") === "1";
 
       if (forceBienvenida) {
         setGate("onboarding");
+        void probeServerReachable(apiBase).then((reachable) => {
+          if (!cancelled) {
+            setServerReachable(reachable);
+          }
+        });
+        return;
+      }
+
+      if (forceInicio) {
+        setGate("app");
         void probeServerReachable(apiBase).then((reachable) => {
           if (!cancelled) {
             setServerReachable(reachable);
