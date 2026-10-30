@@ -45,5 +45,20 @@ export {
 export type { CartView, CustomerOrder, OperatorOrder, PaymentMethods, PaymentView, QuoteView, VenezuelaAddressInput } from "./commerce";
 export { getHealth, getReady } from "./health";
 export type { HealthResponse, ReadyResponse } from "./health";
+export {
+  acceptProductQuote,
+  createProductRequest,
+  getAdminProductRequest,
+  getMyProductRequest,
+  getProductRequestMetrics,
+  listAdminProductRequests,
+  listInboxNotifications,
+  listMyProductRequests,
+  markInboxNotificationRead,
+  rejectProductQuote,
+  saveAdminProductQuote,
+  updateAdminProductRequestStatus,
+} from "./product-requests";
+export type { ProductQuoteView, ProductRequestMetrics, ProductRequestView } from "./product-requests";
 export { decideEntryGate, probeServerReachable, restoreAuthenticatedSession } from "./session-bootstrap";
 export type { EntryGate } from "./session-bootstrap";

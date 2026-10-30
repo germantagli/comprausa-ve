@@ -28,9 +28,23 @@ No hay API de almacén ni de aduana. El operador mueve el pedido a mano, un paso
 
 `Warehouse.active` nace en falso. No se inventa una bodega en Miami.
 
-## Cotización
+## Cotización (carrito / catálogo)
 
-La persona pega un enlace. La cotización espera revisión. El operador escribe el monto en centavos o la rechaza. Hasta ese momento `quotedTotalMinor` es nulo y el pedido no pide pago.
+La persona pega un enlace en el flujo de carrito. La cotización espera revisión. El operador escribe el monto en centavos o la rechaza. Hasta ese momento `quotedTotalMinor` es nulo y el pedido no pide pago.
+
+## Solicitudes de producto (TRS)
+
+Flujo persistido distinto del carrito demo:
+
+1. Cliente envía solicitud (`RECEIVED`, número `TRS-######`).
+2. Staff marca `IN_REVIEW` o prepara cotización en borrador (`DRAFT`).
+3. Al enviar cotización: `SENT` + solicitud `QUOTED` + notificación al cliente.
+4. Cliente acepta → `ACCEPTED` + pedido en estado pendiente de pago (snapshot de precios; **no** marcado como pagado).
+5. Cliente rechaza → `REJECTED`.
+
+Montos en centavos USD (`BigInt`). Totales calculados solo en el backend. Migración: `20261030220000_product_requests`. No aplicar en producción sin respaldo y aprobación explícita.
+
+UI staff: misma app TraeLo en `/admin` y `/admin/solicitudes` (rol distinto de `CUSTOMER`). UI cliente: `/solicitar`, `/mis-cotizaciones`, `/notificaciones`.
 
 ## Lo que un operador no debe hacer
 

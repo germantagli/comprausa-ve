@@ -44,6 +44,33 @@ export class MemoryAuthRepository implements AuthRepository {
     return user ? this.toUser(user) : null;
   }
 
+  /** Contact fields for admin product-request views (memory-only; Prisma reads User directly). */
+  peekContact(userId: string): {
+    id: string;
+    email: string | null;
+    phoneE164: string | null;
+    givenName: string | null;
+    familyName: string | null;
+    roleCode: RoleCode;
+  } | null {
+    const user = this.users.get(userId);
+    if (!user) {
+      return null;
+    }
+    return {
+      id: user.id,
+      email: user.email,
+      phoneE164: user.phoneE164,
+      givenName: user.givenName,
+      familyName: user.familyName,
+      roleCode: user.roleCode,
+    };
+  }
+
+  listStaffUserIds(): string[] {
+    return [...this.users.values()].filter((user) => user.roleCode !== "CUSTOMER").map((user) => user.id);
+  }
+
   async findUserByDestination(channel: AuthChannel, destination: string): Promise<AuthUser | null> {
     for (const user of this.users.values()) {
       const value = channel === "email" ? user.email : user.phoneE164;

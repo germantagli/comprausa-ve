@@ -1,53 +1,94 @@
 "use client";
 
-import { createQuote, type VenezuelaAddressInput } from "@comprausa/api-client";
+import { ApiClientError, createProductRequest } from "@comprausa/api-client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type CSSProperties, type FormEvent } from "react";
 import { PageFrame } from "../../components/page-frame";
-import { buttonStyle, colors, radiusTokens, spaceTokens } from "../../components/styles";
+import { buttonStyle, colors, radiusTokens } from "../../components/styles";
 import { apiBase } from "../../lib/api";
+import {
+  clearProductRequestDraft,
+  readProductRequestDraft,
+  writeProductRequestDraft,
+  type ProductRequestDraft,
+} from "../../lib/product-request-ui";
 import { readSession } from "../../lib/session";
 
+const emptyDraft: ProductRequestDraft = {
+  productUrl: "",
+  productName: "",
+  description: "",
+  quantity: 1,
+  size: "",
+  color: "",
+  additionalNotes: "",
+};
+
 /**
- * Product request — paste a USA URL for TraeLo to quote.
- * Uses existing POST /v1/quotes with pastedUrl (no scraping).
+ * Real product-request form. Persists to POST /v1/product-requests.
+ * Draft is kept in localStorage across login redirects. No scraping of the URL.
  */
 export default function SolicitarPage() {
   const router = useRouter();
-  const [url, setUrl] = useState("");
-  const [city, setCity] = useState("");
-  const [state, setState] = useState("");
-  const [municipality, setMunicipality] = useState("");
-  const [reference, setReference] = useState("");
+  const [draft, setDraft] = useState<ProductRequestDraft>(emptyDraft);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldError, setFieldError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const saved = readProductRequestDraft();
+    if (saved) {
+      setDraft(saved);
+    }
+  }, []);
+
+  function update<K extends keyof ProductRequestDraft>(key: K, value: ProductRequestDraft[K]): void {
+    setDraft((current) => {
+      const next = { ...current, [key]: value };
+      writeProductRequestDraft(next);
+      return next;
+    });
+  }
 
   async function submit(event: FormEvent): Promise<void> {
     event.preventDefault();
     setError(null);
+    setFieldError(null);
     const session = readSession();
     if (!session?.accessToken) {
-      setError("Inicia sesión para enviar una solicitud de cotización.");
+      writeProductRequestDraft(draft);
+      router.push(`/entrar?modo=entrar&next=${encodeURIComponent("/solicitar")}`);
       return;
     }
-    const trimmed = url.trim();
-    if (!trimmed.startsWith("http")) {
-      setError("Pega un enlace https del producto.");
+    const url = draft.productUrl.trim();
+    if (!/^https?:\/\/\S+$/i.test(url)) {
+      setFieldError("Por favor ingresa una URL válida (http o https).");
       return;
     }
-    const address: VenezuelaAddressInput = {
-      state: state.trim() || "Distrito Capital",
-      city: city.trim() || "Caracas",
-      municipality: municipality.trim() || "Libertador",
-      reference: reference.trim() || "Solicitud desde Home",
-    };
+    if (!Number.isInteger(draft.quantity) || draft.quantity < 1) {
+      setError("La cantidad debe ser un entero mayor o igual a 1.");
+      return;
+    }
     setBusy(true);
     try {
-      const quote = await createQuote(apiBase, session.accessToken, { address, pastedUrl: trimmed });
-      router.push(`/cotizacion/${encodeURIComponent(quote.id)}`);
-    } catch {
-      setError("No pudimos enviar la solicitud. Inténtalo de nuevo.");
+      const created = await createProductRequest(apiBase, session.accessToken, {
+        productUrl: url,
+        quantity: draft.quantity,
+        ...(draft.productName.trim() ? { productName: draft.productName.trim() } : {}),
+        ...(draft.description.trim() ? { description: draft.description.trim() } : {}),
+        ...(draft.size.trim() ? { size: draft.size.trim() } : {}),
+        ...(draft.color.trim() ? { color: draft.color.trim() } : {}),
+        ...(draft.additionalNotes.trim() ? { additionalNotes: draft.additionalNotes.trim() } : {}),
+      });
+      clearProductRequestDraft();
+      router.push(`/solicitar/confirmacion/${encodeURIComponent(created.id)}`);
+    } catch (caught) {
+      setError(
+        caught instanceof ApiClientError && caught.status === 401
+          ? "Inicia sesión para enviar la solicitud."
+          : "No pudimos guardar la solicitud. Inténtalo de nuevo.",
+      );
     } finally {
       setBusy(false);
     }
@@ -55,50 +96,111 @@ export default function SolicitarPage() {
 
   return (
     <PageFrame compact>
-      <div style={{ display: "grid", gap: spaceTokens[4], margin: "0 auto", maxWidth: 430 }}>
-        <Link href="/" style={{ color: colors.primary, fontWeight: 700, textDecoration: "none" }}>
-          ← Volver al inicio
+      <div style={root}>
+        <Link href="/" style={back}>
+          ← Volver
         </Link>
-        <h1 style={{ color: colors.deep, fontSize: 24, fontWeight: 800, margin: 0 }}>Solicitar producto</h1>
-        <p style={{ color: colors.muted, margin: 0 }}>
-          Envíanos el enlace y te preparamos una cotización. No hacemos scraping automático.
-        </p>
-        <form onSubmit={(event) => void submit(event)} style={{ display: "grid", gap: spaceTokens[3] }}>
-          <Field label="Enlace del producto">
-            <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…" inputMode="url" style={field} />
+        <div style={hero}>
+          <div style={heroIcon} aria-hidden="true">
+            📦🔗
+          </div>
+          <h1 style={title}>¿No encuentras lo que buscas?</h1>
+          <p style={subtitle}>Pega el enlace del producto que deseas y te prepararemos una cotización.</p>
+        </div>
+
+        <form onSubmit={(event) => void submit(event)} style={form}>
+          <Field label="Enlace del producto *" error={fieldError}>
+            <input
+              value={draft.productUrl}
+              onChange={(event) => {
+                setFieldError(null);
+                update("productUrl", event.target.value);
+              }}
+              placeholder="https://…"
+              inputMode="url"
+              autoComplete="url"
+              style={{ ...field, ...(fieldError ? fieldInvalid : null) }}
+            />
           </Field>
-          <Field label="Estado">
-            <input value={state} onChange={(e) => setState(e.target.value)} placeholder="Distrito Capital" style={field} />
+          <Field label="Nombre o descripción (opcional)">
+            <input
+              value={draft.productName}
+              onChange={(event) => update("productName", event.target.value)}
+              placeholder="Ej. Zapatillas Nike Air Max"
+              style={field}
+            />
           </Field>
-          <Field label="Ciudad">
-            <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="Caracas" style={field} />
+          <Field label="Cantidad *">
+            <div style={qtyRow}>
+              <button type="button" style={qtyBtn} onClick={() => update("quantity", Math.max(1, draft.quantity - 1))} aria-label="Disminuir">
+                −
+              </button>
+              <input
+                type="number"
+                min={1}
+                max={50}
+                value={draft.quantity}
+                onChange={(event) => update("quantity", Math.max(1, Number(event.target.value) || 1))}
+                style={{ ...field, textAlign: "center", width: 72 }}
+              />
+              <button type="button" style={qtyBtn} onClick={() => update("quantity", Math.min(50, draft.quantity + 1))} aria-label="Aumentar">
+                +
+              </button>
+            </div>
           </Field>
-          <Field label="Municipio">
-            <input value={municipality} onChange={(e) => setMunicipality(e.target.value)} placeholder="Libertador" style={field} />
+          <Field label="Talla (opcional)">
+            <input value={draft.size} onChange={(event) => update("size", event.target.value)} placeholder="Ej. 42 / M" style={field} />
           </Field>
-          <Field label="Referencia / notas">
-            <input value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Opcional" style={field} />
+          <Field label="Color (opcional)">
+            <input value={draft.color} onChange={(event) => update("color", event.target.value)} placeholder="Ej. Negro" style={field} />
           </Field>
-          {error ? <p style={{ color: "#B91C1C", margin: 0 }}>{error}</p> : null}
-          <button type="submit" disabled={busy} style={{ ...buttonStyle, opacity: busy ? 0.7 : 1 }}>
-            {busy ? "Enviando…" : "Enviar solicitud"}
+          <Field label="Comentarios adicionales (opcional)">
+            <textarea
+              value={draft.additionalNotes}
+              onChange={(event) => update("additionalNotes", event.target.value)}
+              placeholder="Detalles útiles para cotizar"
+              rows={3}
+              style={{ ...field, minHeight: 88, paddingTop: 12, resize: "vertical" }}
+            />
+          </Field>
+          {error ? <p style={errorText}>{error}</p> : null}
+          <button type="submit" disabled={busy} style={{ ...buttonStyle, width: "100%", opacity: busy ? 0.7 : 1 }}>
+            {busy ? "Enviando…" : "✈ Solicitar cotización"}
           </button>
+          <p style={note}>No descargamos ni hacemos scraping del enlace. Solo lo guardamos como texto para revisión humana.</p>
         </form>
       </div>
     </PageFrame>
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children, error }: { label: string; children: React.ReactNode; error?: string | null }) {
   return (
     <label style={{ display: "grid", gap: 6 }}>
-      <span style={{ color: colors.deep, fontWeight: 700 }}>{label}</span>
+      <span style={{ color: colors.deep, fontWeight: 700, fontSize: 14 }}>{label}</span>
       {children}
+      {error ? <span style={{ color: "#B91C1C", fontSize: 12 }}>{error}</span> : null}
     </label>
   );
 }
 
-const field = {
+const root: CSSProperties = { display: "grid", gap: 16, margin: "0 auto", maxWidth: 430, width: "100%" };
+const back: CSSProperties = { color: colors.primary, fontWeight: 700, textDecoration: "none" };
+const hero: CSSProperties = {
+  background: "linear-gradient(180deg, #EAF3FF 0%, #FFFFFF 100%)",
+  border: "1px solid #E4EAF1",
+  borderRadius: 16,
+  display: "grid",
+  gap: 8,
+  justifyItems: "center",
+  padding: "20px 16px",
+  textAlign: "center",
+};
+const heroIcon: CSSProperties = { fontSize: 28 };
+const title: CSSProperties = { color: colors.deep, fontSize: 22, fontWeight: 800, margin: 0 };
+const subtitle: CSSProperties = { color: colors.muted, fontSize: 14, lineHeight: 1.4, margin: 0 };
+const form: CSSProperties = { display: "grid", gap: 14 };
+const field: CSSProperties = {
   background: "#fff",
   border: `1px solid ${colors.border}`,
   borderRadius: radiusTokens.md,
@@ -107,4 +209,22 @@ const field = {
   minHeight: 48,
   padding: "10px 12px",
   width: "100%",
-} as const;
+};
+const fieldInvalid: CSSProperties = { borderColor: "#DC2626", background: "#FEF2F2" };
+const qtyRow: CSSProperties = { alignItems: "center", display: "flex", gap: 8 };
+const qtyBtn: CSSProperties = {
+  alignItems: "center",
+  background: "#F1F4F8",
+  border: `1px solid ${colors.border}`,
+  borderRadius: 10,
+  color: colors.deep,
+  cursor: "pointer",
+  display: "inline-flex",
+  font: "inherit",
+  fontWeight: 700,
+  height: 44,
+  justifyContent: "center",
+  width: 44,
+};
+const errorText: CSSProperties = { color: "#B91C1C", margin: 0 };
+const note: CSSProperties = { color: colors.muted, fontSize: 12, margin: 0 };

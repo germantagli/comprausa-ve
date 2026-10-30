@@ -44,6 +44,7 @@ export function ProfileScreen({
   onSignedOut,
   onHelp,
   onOrders,
+  onMyQuotes,
   onReview,
   onTrack,
 }: {
@@ -52,6 +53,7 @@ export function ProfileScreen({
   onSignedOut: () => void;
   onHelp: () => void;
   onOrders: () => void;
+  onMyQuotes: () => void;
   onReview: () => void;
   onTrack: () => void;
 }) {
@@ -100,16 +102,20 @@ export function ProfileScreen({
     }
   }
 
+  const isStaff = phase.status === "ready" && phase.data.role !== "CUSTOMER";
   const menu: readonly { label: string; note?: string; onPress: () => void }[] = [
     { label: "Mis pedidos", onPress: onOrders },
-    { label: "Revisión de pagos", note: "Cola interna del operador.", onPress: onReview },
-    { label: "Seguimiento de pedidos", note: "Cola y línea de tiempo del operador.", onPress: onTrack },
-    { label: "Direcciones", note: "La dirección se pide al cotizar.", onPress: onHelp },
-    { label: "Métodos de pago", note: "Disponibles en la cotización aceptada.", onPress: onHelp },
-    { label: "Favoritos", note: "Todavía no está disponible.", onPress: onHelp },
-    { label: "Notificaciones", note: "Todavía no está disponible.", onPress: onHelp },
+    { label: "Mis cotizaciones", onPress: onMyQuotes },
+    { label: "Mis favoritos", note: "Todavía no está disponible.", onPress: onHelp },
+    { label: "Mi cuenta", note: "Datos de entrega al cotizar.", onPress: onHelp },
+    ...(isStaff
+      ? [
+          { label: "Administración", note: "Usa la web TraeLo en /admin para cotizar.", onPress: onHelp },
+          { label: "Revisión de pagos", note: "Cola interna del operador.", onPress: onReview },
+          { label: "Seguimiento de pedidos", note: "Cola y línea de tiempo del operador.", onPress: onTrack },
+        ]
+      : []),
     { label: "Ayuda", onPress: onHelp },
-    { label: "Configuración", note: "Todavía no está disponible.", onPress: onHelp },
   ];
 
   return (

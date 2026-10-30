@@ -160,6 +160,26 @@ enum TicketStatus {
   CLOSED
 }
 
+/// Customer product-request lifecycle (Solicitar producto → cotización).
+enum ProductRequestStatus {
+  RECEIVED
+  IN_REVIEW
+  QUOTED
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+/// Versioned quotes attached to a product request. Money is USD cents (BigInt).
+enum ProductQuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  SUPERSEDED
+}
+
 model User {
   id        String     @id @default(uuid()) @db.Uuid
   email     String?    @unique
@@ -179,10 +199,14 @@ model User {
   quotes          Quote[]
   orders          Order[]
   notifications   Notification[]
+  inboxNotifications InboxNotification[]
   tickets         SupportTicket[]
   auditLogs       AuditLog[]
   paymentReviews  PaymentProof[] @relation("PaymentProofReviewer")
   totpCredential  TotpCredential?
+  productRequests ProductRequest[]
+  productQuotesCreated ProductQuote[] @relation("ProductQuoteAuthor")
+  productRequestStatusChanges ProductRequestStatusHistory[] @relation("ProductRequestStatusActor")
 
   @@index([status])
 }
@@ -501,6 +525,7 @@ model Order {
   id                 String             @id @default(uuid()) @db.Uuid
   userId             String             @db.Uuid
   quoteId            String?            @db.Uuid
+  productQuoteId     String?            @unique @db.Uuid
   addressId          String?            @db.Uuid
   status             OrderStatus        @default(DRAFT)
   procurementStatus  ProcurementStatus  @default(NOT_STARTED)
@@ -513,6 +538,7 @@ model Order {
   updatedAt          DateTime           @updatedAt
   user               User               @relation(fields: [userId], references: [id])
   quote              Quote?             @relation(fields: [quoteId], references: [id])
+  productQuote       ProductQuote?      @relation(fields: [productQuoteId], references: [id])
   address            Address?           @relation(fields: [addressId], references: [id])
   items              OrderItem[]
   supplierOrders     SupplierOrder[]
@@ -767,4 +793,98 @@ model FeatureFlag {
   description String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+/// In-app inbox (bell). Distinct from Notification (email/push/sms delivery).
+model InboxNotification {
+  id                 String    @id @default(uuid()) @db.Uuid
+  userId             String    @db.Uuid
+  type               String
+  title              String
+  message            String
+  relatedEntityType  String?
+  relatedEntityId    String?   @db.Uuid
+  readAt             DateTime?
+  createdAt          DateTime  @default(now())
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+}
+
+/// Atomic counter for TRS-###### request numbers.
+model ProductRequestCounter {
+  id        Int @id @default(1)
+  lastValue Int @default(0)
+}
+
+model ProductRequest {
+  id               String               @id @default(uuid()) @db.Uuid
+  requestNumber    String               @unique
+  userId           String               @db.Uuid
+  productUrl       String
+  productName      String?
+  description      String?
+  quantity         Int
+  size             String?
+  color            String?
+  additionalNotes  String?
+  status           ProductRequestStatus @default(RECEIVED)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  user             User                 @relation(fields: [userId], references: [id])
+  quotes           ProductQuote[]
+  statusHistory    ProductRequestStatusHistory[]
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+}
+
+model ProductQuote {
+  id                         String             @id @default(uuid()) @db.Uuid
+  requestId                  String             @db.Uuid
+  version                    Int
+  status                     ProductQuoteStatus @default(DRAFT)
+  currency                   String             @default("USD") @db.Char(3)
+  productUnitPriceMinor      BigInt
+  productSubtotalMinor       BigInt
+  domesticShippingMinor      BigInt             @default(0)
+  internationalShippingMinor BigInt             @default(0)
+  serviceFeeMinor            BigInt             @default(0)
+  taxesMinor                 BigInt             @default(0)
+  additionalCostsMinor       BigInt             @default(0)
+  discountMinor              BigInt             @default(0)
+  totalMinor                 BigInt
+  estimatedDeliveryDays      Int?
+  adminNotes                 String?
+  customerMessage            String?
+  validUntil                 DateTime?
+  createdById                String             @db.Uuid
+  createdAt                  DateTime           @default(now())
+  updatedAt                  DateTime           @updatedAt
+  sentAt                     DateTime?
+  acceptedAt                 DateTime?
+  rejectedAt                 DateTime?
+  rejectionReason            String?
+  request                    ProductRequest     @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  createdBy                  User               @relation("ProductQuoteAuthor", fields: [createdById], references: [id])
+  order                      Order?
+
+  @@unique([requestId, version])
+  @@index([requestId, status])
+  @@index([status, createdAt])
+}
+
+model ProductRequestStatusHistory {
+  id             String                @id @default(uuid()) @db.Uuid
+  requestId      String                @db.Uuid
+  previousStatus ProductRequestStatus?
+  newStatus      ProductRequestStatus
+  changedById    String?               @db.Uuid
+  comment        String?
+  createdAt      DateTime              @default(now())
+  request        ProductRequest        @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  changedBy      User?                 @relation("ProductRequestStatusActor", fields: [changedById], references: [id])
+
+  @@index([requestId, createdAt])
 }

@@ -1,8 +1,7 @@
 import {
   ApiClientError,
-  createQuote,
+  createProductRequest,
   type AuthenticatedSession,
-  type VenezuelaAddressInput,
 } from "@comprausa/api-client";
 import { colorTokens, fontTokens, radiusTokens, spaceTokens } from "@comprausa/design-tokens";
 import { useState } from "react";
@@ -12,57 +11,63 @@ import { apiBase } from "./api";
 const colors = colorTokens.light;
 
 /**
- * Product request — paste a USA URL for TraeLo to quote.
- * Uses existing POST /v1/quotes with pastedUrl (no scraping).
+ * Real product-request form. Persists via POST /v1/product-requests.
+ * Does not scrape or fetch the pasted URL.
  */
 export function MobileRequestScreen({
   session,
   onBack,
-  onOpenQuote,
+  onOpenRequest,
   onSignIn,
 }: {
   session: AuthenticatedSession | null;
   onBack: () => void;
-  onOpenQuote: (quoteId: string) => void;
+  onOpenRequest: (requestId: string) => void;
   onSignIn: () => void;
 }) {
-  const [url, setUrl] = useState("");
-  const [state, setState] = useState("");
-  const [city, setCity] = useState("");
-  const [municipality, setMunicipality] = useState("");
-  const [reference, setReference] = useState("");
+  const [productUrl, setProductUrl] = useState("");
+  const [productName, setProductName] = useState("");
+  const [quantity, setQuantity] = useState("1");
+  const [size, setSize] = useState("");
+  const [color, setColor] = useState("");
+  const [additionalNotes, setAdditionalNotes] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [fieldError, setFieldError] = useState<string | null>(null);
 
   async function submit(): Promise<void> {
     setError(null);
-    setSuccess(null);
+    setFieldError(null);
     if (!session?.accessToken) {
-      setError("Inicia sesión para enviar una solicitud de cotización.");
+      onSignIn();
       return;
     }
-    const trimmed = url.trim();
-    if (!trimmed.startsWith("http")) {
-      setError("Pega un enlace https del producto.");
+    const url = productUrl.trim();
+    if (!/^https?:\/\/\S+$/i.test(url)) {
+      setFieldError("Por favor ingresa una URL válida (http o https).");
       return;
     }
-    const address: VenezuelaAddressInput = {
-      state: state.trim() || "Distrito Capital",
-      city: city.trim() || "Caracas",
-      municipality: municipality.trim() || "Libertador",
-      reference: reference.trim() || "Solicitud desde Home",
-    };
+    const qty = Number(quantity);
+    if (!Number.isInteger(qty) || qty < 1) {
+      setError("La cantidad debe ser un entero mayor o igual a 1.");
+      return;
+    }
     setBusy(true);
     try {
-      const quote = await createQuote(apiBase, session.accessToken, { address, pastedUrl: trimmed });
-      setSuccess("Solicitud enviada. Abriendo cotización…");
-      onOpenQuote(quote.id);
+      const created = await createProductRequest(apiBase, session.accessToken, {
+        productUrl: url,
+        quantity: qty,
+        ...(productName.trim() ? { productName: productName.trim() } : {}),
+        ...(size.trim() ? { size: size.trim() } : {}),
+        ...(color.trim() ? { color: color.trim() } : {}),
+        ...(additionalNotes.trim() ? { additionalNotes: additionalNotes.trim() } : {}),
+      });
+      onOpenRequest(created.id);
     } catch (caught) {
       setError(
-        caught instanceof ApiClientError && caught.status === 400
-          ? "Revisa el enlace y la dirección."
-          : "No pudimos enviar la solicitud. Inténtalo de nuevo.",
+        caught instanceof ApiClientError && caught.status === 401
+          ? "Inicia sesión para enviar la solicitud."
+          : "No pudimos guardar la solicitud. Inténtalo de nuevo.",
       );
     } finally {
       setBusy(false);
@@ -75,97 +80,142 @@ export function MobileRequestScreen({
         <Text style={styles.link}>← Volver al inicio</Text>
       </Pressable>
       <Text accessibilityRole="header" style={styles.title}>
-        Solicitar producto
+        ¿No encuentras lo que buscas?
       </Text>
-      <Text style={styles.body}>Envíanos el enlace y te preparamos una cotización. No hacemos scraping automático.</Text>
+      <Text style={styles.body}>Pega el enlace del producto que deseas y te prepararemos una cotización.</Text>
 
-      {!session ? (
-        <View>
-          <Text style={styles.error}>Inicia sesión para enviar una solicitud.</Text>
-          <Pressable accessibilityRole="button" onPress={onSignIn} style={styles.primary}>
-            <Text style={styles.primaryText}>Entrar</Text>
-          </Pressable>
-        </View>
-      ) : (
-        <View>
-          <Field label="Enlace del producto" value={url} onChange={setUrl} placeholder="https://…" />
-          <Field label="Estado" value={state} onChange={setState} placeholder="Distrito Capital" />
-          <Field label="Ciudad" value={city} onChange={setCity} placeholder="Caracas" />
-          <Field label="Municipio" value={municipality} onChange={setMunicipality} placeholder="Libertador" />
-          <Field label="Referencia / notas" value={reference} onChange={setReference} placeholder="Opcional" />
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-          {success ? <Text style={styles.success}>{success}</Text> : null}
-          <Pressable accessibilityRole="button" disabled={busy} onPress={() => void submit()} style={styles.primary}>
-            <Text style={styles.primaryText}>{busy ? "Enviando…" : "Enviar solicitud"}</Text>
-          </Pressable>
-        </View>
-      )}
+      <Text style={styles.label}>Enlace del producto *</Text>
+      <TextInput
+        value={productUrl}
+        onChangeText={(value) => {
+          setFieldError(null);
+          setProductUrl(value);
+        }}
+        autoCapitalize="none"
+        autoCorrect={false}
+        keyboardType="url"
+        placeholder="https://…"
+        placeholderTextColor={colors.muted}
+        style={[styles.input, fieldError ? styles.inputInvalid : null]}
+      />
+      {fieldError ? <Text style={styles.error}>{fieldError}</Text> : null}
+
+      <Text style={styles.label}>Nombre o descripción (opcional)</Text>
+      <TextInput
+        value={productName}
+        onChangeText={setProductName}
+        placeholder="Ej. Zapatillas Nike Air Max"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+      />
+
+      <Text style={styles.label}>Cantidad *</Text>
+      <View style={styles.qtyRow}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => setQuantity(String(Math.max(1, (Number(quantity) || 1) - 1)))}
+          style={styles.qtyBtn}
+        >
+          <Text style={styles.qtyBtnText}>−</Text>
+        </Pressable>
+        <TextInput
+          value={quantity}
+          onChangeText={setQuantity}
+          keyboardType="number-pad"
+          style={[styles.input, styles.qtyInput]}
+        />
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => setQuantity(String(Math.min(50, (Number(quantity) || 1) + 1)))}
+          style={styles.qtyBtn}
+        >
+          <Text style={styles.qtyBtnText}>+</Text>
+        </Pressable>
+      </View>
+
+      <Text style={styles.label}>Talla (opcional)</Text>
+      <TextInput value={size} onChangeText={setSize} placeholder="Ej. 42 / M" placeholderTextColor={colors.muted} style={styles.input} />
+
+      <Text style={styles.label}>Color (opcional)</Text>
+      <TextInput value={color} onChangeText={setColor} placeholder="Ej. Negro" placeholderTextColor={colors.muted} style={styles.input} />
+
+      <Text style={styles.label}>Comentarios adicionales (opcional)</Text>
+      <TextInput
+        value={additionalNotes}
+        onChangeText={setAdditionalNotes}
+        multiline
+        placeholder="Detalles útiles para cotizar"
+        placeholderTextColor={colors.muted}
+        style={[styles.input, styles.textarea]}
+      />
+
+      {error ? (
+        <Text accessibilityLiveRegion="assertive" style={styles.error}>
+          {error}
+        </Text>
+      ) : null}
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ disabled: busy, busy }}
+        disabled={busy}
+        onPress={() => void submit()}
+        style={styles.primary}
+      >
+        <Text style={styles.primaryText}>{busy ? "Enviando…" : "Solicitar cotización"}</Text>
+      </Pressable>
+      <Text style={styles.caption}>No descargamos ni hacemos scraping del enlace. Solo lo guardamos como texto.</Text>
     </ScrollView>
   );
 }
 
-function Field({
-  label,
-  value,
-  onChange,
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-}) {
-  return (
-    <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
-      <TextInput
-        accessibilityLabel={label}
-        onChangeText={onChange}
-        placeholder={placeholder}
-        placeholderTextColor={colors.muted}
-        style={styles.input}
-        value={value}
-        autoCapitalize="none"
-        autoCorrect={false}
-      />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  page: { backgroundColor: colors.background, padding: spaceTokens[4], paddingBottom: spaceTokens[8] },
+  page: { gap: spaceTokens[3], padding: spaceTokens[4], paddingBottom: spaceTokens[8] },
+  linkHit: { alignSelf: "flex-start", minHeight: 44, justifyContent: "center" },
+  link: { color: colors.primary, fontWeight: "700" },
   title: {
     color: colors.deep,
-    fontSize: fontTokens.sizes.title,
+    fontFamily: fontTokens.family,
+    fontSize: 22,
     fontWeight: "800",
-    lineHeight: fontTokens.lineHeight.title,
-    marginBottom: spaceTokens[2],
   },
-  body: { color: colors.muted, fontSize: fontTokens.sizes.body, lineHeight: fontTokens.lineHeight.body, marginBottom: spaceTokens[4] },
-  field: { marginBottom: spaceTokens[3] },
-  label: { color: colors.deep, fontSize: fontTokens.sizes.body, fontWeight: "700", marginBottom: 6 },
+  body: { color: colors.muted, fontSize: 14, lineHeight: 20, marginBottom: spaceTokens[2] },
+  label: { color: colors.deep, fontSize: 14, fontWeight: "700", marginTop: spaceTokens[2] },
   input: {
-    backgroundColor: colors.surface,
+    backgroundColor: "#fff",
     borderColor: colors.border,
     borderRadius: radiusTokens.md,
     borderWidth: 1,
     color: colors.deep,
+    fontSize: 16,
     minHeight: 48,
-    paddingHorizontal: spaceTokens[3],
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
+  inputInvalid: { backgroundColor: "#FEF2F2", borderColor: "#DC2626" },
+  textarea: { minHeight: 88, textAlignVertical: "top" },
+  qtyRow: { alignItems: "center", flexDirection: "row", gap: 8 },
+  qtyBtn: {
+    alignItems: "center",
+    backgroundColor: "#F1F4F8",
+    borderColor: colors.border,
+    borderRadius: 10,
+    borderWidth: 1,
+    height: 44,
+    justifyContent: "center",
+    width: 44,
+  },
+  qtyBtnText: { color: colors.deep, fontSize: 20, fontWeight: "700" },
+  qtyInput: { flex: 1, textAlign: "center" },
   primary: {
     alignItems: "center",
-    alignSelf: "flex-start",
     backgroundColor: colors.primary,
     borderRadius: radiusTokens.md,
     justifyContent: "center",
-    marginTop: spaceTokens[2],
     minHeight: 48,
-    paddingHorizontal: spaceTokens[4],
+    marginTop: spaceTokens[3],
   },
-  primaryText: { color: colors.primaryOn, fontSize: fontTokens.sizes.body, fontWeight: "700" },
-  link: { color: colors.primary, fontSize: fontTokens.sizes.body, fontWeight: "700" },
-  linkHit: { marginBottom: spaceTokens[3], minHeight: 44, justifyContent: "center" },
-  error: { color: colors.error, fontSize: fontTokens.sizes.body, marginBottom: spaceTokens[3] },
-  success: { color: colors.success, fontSize: fontTokens.sizes.body, marginBottom: spaceTokens[3] },
+  primaryText: { color: colors.primaryOn, fontWeight: "700" },
+  error: { color: "#B91C1C", marginTop: 4 },
+  caption: { color: colors.muted, fontSize: 12, marginTop: 8 },
 });

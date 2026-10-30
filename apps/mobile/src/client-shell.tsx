@@ -12,6 +12,11 @@ import { ExploreScreen, HelpScreen, HomeScreen, OrdersScreen, ProfileScreen } fr
 import { MobileCartScreen, MobileProductScreen, MobileQuoteScreen } from "./commerce-screens";
 import { DemoCommerceProvider, useDemoCommerce } from "./demo-commerce";
 import { MobileOperatorScreen } from "./payment-screens";
+import {
+  MobileMyQuotesScreen,
+  MobileQuoteDetailScreen,
+  MobileRequestConfirmScreen,
+} from "./product-request-screens";
 import { MobileRequestScreen } from "./request-screen";
 import { MobileTrackingScreen } from "./tracking-screens";
 import {
@@ -63,6 +68,9 @@ function AppShell() {
   const [productId, setProductId] = useState<string | null>(null);
   const [quoteId, setQuoteId] = useState<string | null>(null);
   const [requestOpen, setRequestOpen] = useState(false);
+  const [productRequestId, setProductRequestId] = useState<string | null>(null);
+  const [myQuotesOpen, setMyQuotesOpen] = useState(false);
+  const [productRequestDetailId, setProductRequestDetailId] = useState<string | null>(null);
   const [review, setReview] = useState(false);
   const [tracking, setTracking] = useState(false);
 
@@ -115,6 +123,9 @@ function AppShell() {
     setProductId(null);
     setQuoteId(null);
     setRequestOpen(false);
+    setProductRequestId(null);
+    setMyQuotesOpen(false);
+    setProductRequestDetailId(null);
     setReview(false);
     setTracking(false);
     setTab("explorar");
@@ -125,6 +136,9 @@ function AppShell() {
     setProductId(null);
     setQuoteId(null);
     setRequestOpen(false);
+    setProductRequestId(null);
+    setMyQuotesOpen(false);
+    setProductRequestDetailId(null);
     setReview(false);
     setTracking(false);
   }
@@ -185,7 +199,16 @@ function AppShell() {
     );
   }
 
-  const overlayOpen = help || Boolean(productId) || Boolean(quoteId) || requestOpen || review || tracking;
+  const overlayOpen =
+    help ||
+    Boolean(productId) ||
+    Boolean(quoteId) ||
+    requestOpen ||
+    Boolean(productRequestId) ||
+    myQuotesOpen ||
+    Boolean(productRequestDetailId) ||
+    review ||
+    tracking;
 
   return (
     <View style={styles.frame}>
@@ -217,9 +240,9 @@ function AppShell() {
           <MobileRequestScreen
             session={session}
             onBack={() => setRequestOpen(false)}
-            onOpenQuote={(id) => {
+            onOpenRequest={(id) => {
               setRequestOpen(false);
-              setQuoteId(id);
+              setProductRequestId(id);
             }}
             onSignIn={() => {
               setRequestOpen(false);
@@ -228,10 +251,41 @@ function AppShell() {
             }}
           />
         ) : null}
-        {!help && !productId && !quoteId && !requestOpen && review && session ? (
+        {!help && !productId && !quoteId && !requestOpen && productRequestId && session ? (
+          <MobileRequestConfirmScreen
+            session={session}
+            requestId={productRequestId}
+            onBack={() => {
+              setProductRequestId(null);
+              openExplore();
+            }}
+            onOpenList={() => {
+              setProductRequestId(null);
+              setMyQuotesOpen(true);
+            }}
+          />
+        ) : null}
+        {!help && !productId && !quoteId && !requestOpen && !productRequestId && myQuotesOpen && !productRequestDetailId && session ? (
+          <MobileMyQuotesScreen
+            session={session}
+            onBack={() => setMyQuotesOpen(false)}
+            onOpenDetail={(id) => setProductRequestDetailId(id)}
+          />
+        ) : null}
+        {!help && !productId && !quoteId && productRequestDetailId && session ? (
+          <MobileQuoteDetailScreen
+            session={session}
+            requestId={productRequestDetailId}
+            onBack={() => {
+              setProductRequestDetailId(null);
+              setMyQuotesOpen(true);
+            }}
+          />
+        ) : null}
+        {!help && !productId && !quoteId && !requestOpen && !productRequestId && !myQuotesOpen && review && session ? (
           <MobileOperatorScreen session={session} onSession={setSession} onBack={() => setReview(false)} />
         ) : null}
-        {!help && !productId && !quoteId && !requestOpen && !review && tracking && session ? (
+        {!help && !productId && !quoteId && !requestOpen && !productRequestId && !myQuotesOpen && !review && tracking && session ? (
           <MobileTrackingScreen session={session} onBack={() => setTracking(false)} />
         ) : null}
         {!overlayOpen && tab === "inicio" ? (
@@ -269,6 +323,7 @@ function AppShell() {
             }}
             onHelp={() => setHelp(true)}
             onOrders={() => setTab("pedidos")}
+            onMyQuotes={() => setMyQuotesOpen(true)}
             onReview={() => setReview(true)}
             onTrack={() => setTracking(true)}
           />

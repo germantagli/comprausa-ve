@@ -5,8 +5,17 @@ import { CommerceModule } from "./commerce/commerce.module";
 import { AppConfigModule } from "./config/app-config.module";
 import { HealthModule } from "./health/health.module";
 import { PrismaModule } from "./prisma/prisma.module";
+import { ProductRequestModule } from "./product-requests/product-request.module";
 
 @Module({
-  imports: [AppConfigModule, PrismaModule.register(), HealthModule, CatalogModule, AuthModule.register(), CommerceModule],
+  imports: [
+    AppConfigModule,
+    PrismaModule.register(),
+    HealthModule,
+    CatalogModule,
+    AuthModule.register(),
+    CommerceModule,
+    ProductRequestModule.register(),
+  ],
 })
 export class AppModule {}

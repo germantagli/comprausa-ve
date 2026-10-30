@@ -231,9 +231,73 @@ export const paymentRejectionSchema = z
   })
   .strict();
 
+/** Product request (Solicitar producto). URL stored as text — never fetched server-side. */
+export const productRequestCreateSchema = z
+  .object({
+    productUrl: pastedUrlSchema,
+    productName: z.string().trim().min(1).max(160).optional(),
+    description: z.string().trim().min(1).max(500).optional(),
+    quantity: z.number().int().min(1).max(50),
+    size: z.string().trim().min(1).max(80).optional(),
+    color: z.string().trim().min(1).max(80).optional(),
+    additionalNotes: z.string().trim().min(1).max(1000).optional(),
+  })
+  .strict();
+
+export const productRequestStatusFilterSchema = z.enum([
+  "RECEIVED",
+  "IN_REVIEW",
+  "QUOTED",
+  "ACCEPTED",
+  "REJECTED",
+  "CANCELLED",
+]);
+
+export const productRequestListQuerySchema = z
+  .object({
+    status: productRequestStatusFilterSchema.optional(),
+    q: z.string().trim().max(120).optional(),
+    page: z.coerce.number().int().min(1).max(10_000).default(1),
+    pageSize: z.coerce.number().int().min(1).max(50).default(20),
+  })
+  .strict();
+
+export const productRequestStatusUpdateSchema = z
+  .object({
+    status: z.enum(["IN_REVIEW", "CANCELLED"]),
+    comment: z.string().trim().min(1).max(280).optional(),
+  })
+  .strict();
+
+/** Admin quote draft / send. Amounts are integer USD cents. Totals are computed server-side. */
+export const productQuoteWriteSchema = z
+  .object({
+    productUnitPriceMinor: usdMinorSchema,
+    domesticShippingMinor: usdMinorSchema.default(0),
+    internationalShippingMinor: usdMinorSchema.default(0),
+    serviceFeeMinor: usdMinorSchema.default(0),
+    taxesMinor: usdMinorSchema.default(0),
+    additionalCostsMinor: usdMinorSchema.default(0),
+    discountMinor: usdMinorSchema.default(0),
+    estimatedDeliveryDays: z.number().int().min(1).max(365).optional(),
+    validUntil: z.string().datetime().optional(),
+    adminNotes: z.string().trim().min(1).max(1000).optional(),
+    customerMessage: z.string().trim().min(1).max(1000).optional(),
+    send: z.boolean().default(false),
+  })
+  .strict();
+
+export const productQuoteRejectSchema = z
+  .object({
+    reason: z.string().trim().min(1).max(280).optional(),
+  })
+  .strict();
+
 export type MoneyInput = z.infer<typeof moneySchema>;
 export type CatalogSearchInput = z.infer<typeof catalogSearchSchema>;
 export type OtpChallengeInput = z.infer<typeof otpChallengeSchema>;
 export type OtpVerificationInput = z.infer<typeof otpVerificationSchema>;
 export type RegistrationInput = z.infer<typeof registrationSchema>;
 export type OAuthExchangeInput = z.infer<typeof oauthExchangeSchema>;
+export type ProductRequestCreateInput = z.infer<typeof productRequestCreateSchema>;
+export type ProductQuoteWriteInput = z.infer<typeof productQuoteWriteSchema>;
