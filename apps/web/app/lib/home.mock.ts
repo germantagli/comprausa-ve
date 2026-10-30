@@ -107,8 +107,9 @@ export const homeDemoHero = {
   titleAccent: "Venezuela",
   subtitle: "Miles de productos seleccionados para ti, con envío seguro.",
   cta: "Comprar ahora",
+  /** Full illustration — left open sky for live text/CTA overlay. */
+  backgroundArt: "/brand/home/demo/hero-banner.webp",
   art: "/brand/home/demo/hero-art.webp",
-  backgroundArt: "/brand/home/demo/hero-bg.webp",
 } as const;
 
 export const homeDemoRequest = {

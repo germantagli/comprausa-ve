@@ -122,6 +122,8 @@ export function HomeScreen({
         </View>
 
         <View style={styles.hero}>
+          <Image source={homeDemoHero.backgroundArt} style={styles.heroBg} resizeMode="cover" accessibilityLabel="" />
+          <View style={styles.heroScrim} />
           <View style={styles.heroCopy}>
             <Text style={styles.heroTitle}>
               {homeDemoHero.titleBefore}
@@ -132,7 +134,6 @@ export function HomeScreen({
               <Text style={styles.heroCtaText}>{homeDemoHero.cta} →</Text>
             </Pressable>
           </View>
-          <Image source={homeDemoHero.art} style={styles.heroArt} resizeMode="contain" accessibilityLabel="" />
         </View>
 
         <SectionHeader title="Categorías" onSeeAll={() => onOpenExplore()} />
@@ -275,19 +276,26 @@ const styles = StyleSheet.create({
   searchGlyph: { color: "#8A97A8", fontSize: 18 },
   searchInput: { color: colors.deep, flex: 1, fontSize: 14, paddingVertical: Platform.OS === "ios" ? 11 : 8 },
   hero: {
-    alignItems: "center",
-    backgroundColor: "#2F7BE8",
     borderRadius: 18,
-    flexDirection: "row",
-    gap: 4,
+    minHeight: 168,
     overflow: "hidden",
-    paddingHorizontal: 12,
-    paddingVertical: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 18,
+    position: "relative",
   },
-  heroCopy: { flex: 1 },
+  heroBg: { ...StyleSheet.absoluteFill },
+  heroScrim: {
+    backgroundColor: "rgba(18,68,168,0.55)",
+    bottom: 0,
+    left: 0,
+    position: "absolute",
+    top: 0,
+    width: "58%",
+  },
+  heroCopy: { maxWidth: "62%", zIndex: 1 },
   heroTitle: { color: "#FFFFFF", fontSize: 18, fontWeight: "800", letterSpacing: -0.3, lineHeight: 22, marginBottom: 6 },
   heroAccent: { color: colors.accent },
-  heroSub: { color: "rgba(255,255,255,0.92)", fontSize: 12, lineHeight: 17, marginBottom: 10 },
+  heroSub: { color: "rgba(255,255,255,0.95)", fontSize: 12, lineHeight: 17, marginBottom: 10 },
   heroCta: {
     alignSelf: "flex-start",
     backgroundColor: "#FFFFFF",
@@ -297,7 +305,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   heroCtaText: { color: colors.primary, fontSize: 13, fontWeight: "700" },
-  heroArt: { height: 108, width: 118 },
   sectionHead: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", marginBottom: -4 },
   sectionTitle: { color: colors.deep, fontSize: 17, fontWeight: "800" },
   seeAll: { color: colors.primary, fontSize: 14, fontWeight: "700" },

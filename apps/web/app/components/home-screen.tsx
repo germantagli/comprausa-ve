@@ -86,8 +86,18 @@ export function HomeScreen() {
           />
         </form>
 
-        {/* C — Hero: real text/CTA over decorative art */}
+        {/* C — Hero: live text/CTA over provided illustration */}
         <section aria-label="Banner principal" style={hero}>
+          <Image
+            src={homeDemoHero.backgroundArt}
+            alt=""
+            fill
+            priority
+            unoptimized
+            sizes="(max-width: 430px) 100vw, 430px"
+            style={{ objectFit: "cover", objectPosition: "right center" }}
+          />
+          <div style={heroScrim} aria-hidden="true" />
           <div style={heroCopy}>
             <h1 style={heroTitle}>
               {homeDemoHero.titleBefore}
@@ -98,15 +108,6 @@ export function HomeScreen() {
               {homeDemoHero.cta} →
             </button>
           </div>
-          <Image
-            src={homeDemoHero.art}
-            alt=""
-            width={355}
-            height={245}
-            priority
-            unoptimized
-            style={{ height: "auto", maxWidth: "46%", objectFit: "contain", width: "46%" }}
-          />
         </section>
         <div aria-hidden="true" style={heroDots}>
           <span style={{ ...dot, background: colors.primary, width: 18 }} />
@@ -334,16 +335,26 @@ const searchInput: CSSProperties = {
 };
 
 const hero: CSSProperties = {
-  alignItems: "center",
-  background: "linear-gradient(135deg, #1B5FC7 0%, #2F7BE8 55%, #4A9AF0 100%)",
   borderRadius: 18,
-  display: "flex",
-  gap: 4,
+  display: "grid",
+  isolation: "isolate",
+  minHeight: 168,
   overflow: "hidden",
-  padding: "16px 10px 16px 14px",
+  padding: "18px 14px 18px 16px",
+  position: "relative",
 };
 
-const heroCopy: CSSProperties = { flex: 1, minWidth: 0 };
+const heroScrim: CSSProperties = {
+  background: "linear-gradient(90deg, rgba(20,70,170,0.72) 0%, rgba(20,70,170,0.38) 42%, rgba(20,70,170,0.08) 68%, transparent 100%)",
+  bottom: 0,
+  left: 0,
+  position: "absolute",
+  right: 0,
+  top: 0,
+  zIndex: 1,
+};
+
+const heroCopy: CSSProperties = { maxWidth: "58%", position: "relative", zIndex: 2 };
 const heroTitle: CSSProperties = {
   color: "#fff",
   fontSize: 18,
@@ -351,8 +362,15 @@ const heroTitle: CSSProperties = {
   letterSpacing: "-0.02em",
   lineHeight: 1.2,
   margin: "0 0 6px",
+  textShadow: "0 1px 2px rgba(0,40,100,0.35)",
 };
-const heroSub: CSSProperties = { color: "rgba(255,255,255,0.92)", fontSize: 12, lineHeight: 1.35, margin: "0 0 12px" };
+const heroSub: CSSProperties = {
+  color: "rgba(255,255,255,0.95)",
+  fontSize: 12,
+  lineHeight: 1.35,
+  margin: "0 0 12px",
+  textShadow: "0 1px 2px rgba(0,40,100,0.3)",
+};
 const heroCta: CSSProperties = {
   background: "#fff",
   border: "none",
